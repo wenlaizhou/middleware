@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-var MiddlewareLogger = GetLogger("middleware")
+var mLogger = GetLogger("middleware")
 
 type Server struct {
 	Host        string
@@ -69,7 +69,7 @@ func (this *Server) Start() {
 	this.Unlock()
 	http.HandleFunc("/", this.ServeHTTP)
 	hostStr := fmt.Sprintf("%s:%d", this.Host, this.Port)
-	MiddlewareLogger.Info("server start " + hostStr)
+	mLogger.Info("server start " + hostStr)
 	log.Fatal(http.ListenAndServe(hostStr, nil))
 }
 
@@ -146,7 +146,7 @@ func (this *Server) RegisterTemplate(filePath string) {
 	this.Lock()
 	defer this.Unlock()
 	this.baseTpl, _ = includeTemplate(this.baseTpl, ".html", []string{filePath}...)
-	MiddlewareLogger.InfoLn(this.baseTpl.DefinedTemplates())
+	mLogger.InfoLn(this.baseTpl.DefinedTemplates())
 }
 
 func RegisterTemplate(filePath string) {
@@ -169,7 +169,7 @@ func includeTemplate(tpl *template.Template, suffix string, filePaths ...string)
 	for _, filePath := range filePaths {
 		info, err := os.Stat(filePath)
 		if err != nil {
-			MiddlewareLogger.Error(err.Error())
+			mLogger.Error(err.Error())
 			continue
 		}
 		if info.IsDir() {
@@ -188,8 +188,8 @@ func includeTemplate(tpl *template.Template, suffix string, filePaths ...string)
 			}
 		}
 	}
-	MiddlewareLogger.InfoLn("获取模板文件列表")
-	MiddlewareLogger.InfoLn(strings.Join(fileList, ","))
+	mLogger.InfoLn("获取模板文件列表")
+	mLogger.InfoLn(strings.Join(fileList, ","))
 	if tpl == nil {
 		return template.ParseFiles(fileList...)
 	}
@@ -269,7 +269,7 @@ func StaticProcessor(ctx Context) {
 // false 无错误
 func ProcessError(err error) bool {
 	if err != nil {
-		MiddlewareLogger.Error(err.Error())
+		mLogger.Error(err.Error())
 		return true
 	}
 	return false

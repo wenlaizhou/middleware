@@ -3,6 +3,7 @@ package middleware
 import "fmt"
 import "encoding/json"
 
+// add swagger support
 var apiList = make(map[string]ApiDesc)
 
 type ApiDesc struct {
