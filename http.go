@@ -147,6 +147,7 @@ func (this *Server) RegisterTemplate(filePath string) {
 	this.baseTpl, _ = includeTemplate(this.baseTpl, ".html", []string{filePath}...)
 	this.Unlock()
 	mLogger.InfoLn(this.baseTpl.DefinedTemplates())
+	mLogger.InfoLn("render template done!")
 }
 
 func RegisterTemplate(filePath string) {
