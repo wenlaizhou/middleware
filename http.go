@@ -144,7 +144,11 @@ func RegisterStatic(path string) {
 
 func (this *Server) RegisterTemplate(filePath string) {
 	this.Lock()
-	this.baseTpl, _ = includeTemplate(this.baseTpl, ".html", []string{filePath}...)
+	var err error
+	this.baseTpl, err = includeTemplate(this.baseTpl, ".html", []string{filePath}...)
+	if err != nil {
+		mLogger.Error(err.Error())
+	}
 	this.Unlock()
 	mLogger.InfoLn(this.baseTpl.DefinedTemplates())
 	mLogger.InfoLn("render template done!")
