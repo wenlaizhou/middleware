@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -53,7 +54,7 @@ func GetLogger(name string) Logger {
 	if err != nil {
 		//filepath exist
 	}
-	fs, err := os.OpenFile("log/console.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
+	fs, err := os.OpenFile(fmt.Sprintf("log/%s.log", name), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	res = logger{
 		*log.New(fs, "", log.LstdFlags),
 	}
@@ -62,4 +63,4 @@ func GetLogger(name string) Logger {
 }
 
 //默认日志对象
-var DefaultLogger = GetLogger("default")
+var DefaultLogger = GetLogger("console")

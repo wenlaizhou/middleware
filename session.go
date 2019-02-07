@@ -70,3 +70,11 @@ func init() {
 		}
 	})
 }
+
+func (this *Context) SessionSet(key string, value interface{}) {
+	getSession(*this).Set(key, value)
+}
+
+func (this *Context) SessionGet(key string) interface{} {
+	return getSession(*this).Get(key)
+}

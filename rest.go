@@ -1,6 +1,7 @@
 package middleware
 
 import "fmt"
+import "encoding/json"
 
 var apiList = make(map[string]ApiDesc)
 
@@ -82,6 +83,20 @@ func RegisterApi(path string,
 		handler)
 }
 
+func (this *Context) ApiResponse(code int, message string, data interface{}) error {
+	model := make(map[string]interface{})
+	model["code"] = code
+	model["message"] = message
+	model["data"] = data
+	res, err := json.Marshal(model)
+	if ProcessError(err) {
+		return err
+	}
+	err = this.OK(ApplicationJson, res)
+	return err
+}
+
 //直接注册带界面api:
 //1. 使用accept进行界面或json区分
 //2. 调用权限区分
+//3. swagger

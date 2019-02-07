@@ -357,14 +357,6 @@ func (this *Context) SetCookie(c *http.Cookie) {
 	http.SetCookie(this.Response, c)
 }
 
-func (this *Context) SessionSet(key string, value interface{}) {
-	getSession(*this).Set(key, value)
-}
-
-func (this *Context) SessionGet(key string) interface{} {
-	return getSession(*this).Get(key)
-}
-
 // 302跳转
 func (this *Context) Redirect(path string) error {
 	this.Lock()
@@ -418,26 +410,6 @@ func (this *Context) Error(static int, htmlStr string) error {
 	return nil
 }
 
-func (this *Context) RenderTemplate(name string, model interface{}) error {
-	if this.tpl != nil {
-		return this.tpl.ExecuteTemplate(this.Response, name, model)
-	}
-	return errors.New("template 不存在")
-}
-
-func (this *Context) RenderTemplateKV(name string, kvs ...interface{}) error {
-	if this.tpl == nil {
-		return errors.New("template 不存在")
-	}
-	model := make(map[string]interface{})
-	for i := 0; i < len(kvs); i += 2 {
-		if v, ok := kvs[i].(string); ok {
-			model[v] = kvs[i+1]
-		}
-	}
-	return this.tpl.ExecuteTemplate(this.Response, name, model)
-}
-
 func (this *Context) SetHeader(key string, value string) {
 	this.Response.Header().Set(key, value)
 }
@@ -461,19 +433,6 @@ func (this *Context) GetMethod() string {
 
 func (this *Context) JSON(jsonStr string) error {
 	err := this.OK(ApplicationJson, []byte(jsonStr))
-	return err
-}
-
-func (this *Context) ApiResponse(code int, message string, data interface{}) error {
-	model := make(map[string]interface{})
-	model["code"] = code
-	model["message"] = message
-	model["data"] = data
-	res, err := json.Marshal(model)
-	if ProcessError(err) {
-		return err
-	}
-	err = this.OK(ApplicationJson, res)
 	return err
 }
 
