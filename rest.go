@@ -25,7 +25,7 @@ type ApiResult struct {
 }
 
 func apiProcessor(context Context) {
-	context.ApiResponse(0, "", apiList)
+	_ = context.ApiResponse(0, "", apiList)
 	return
 }
 

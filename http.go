@@ -259,7 +259,6 @@ type pathProcessor struct {
 }
 
 func StaticProcessor(ctx Context) {
-	//解决?参数问题
 	http.ServeFile(ctx.Response, ctx.Request, ctx.Request.URL.Path[1:])
 }
 
