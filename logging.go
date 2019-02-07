@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-var LogFormatter = "[%s] [%v]"
+var LogFormatter = "%s %v"
 
 //日志对象
 type Logger interface {
@@ -73,47 +73,47 @@ func (this *logger) LogTemplate(tpl string, models ...interface{}) {
 
 //记录一行日志
 func (this *logger) Info(msg string) {
-	this.Printf(LogFormatter, "info", msg)
+	this.Printf(LogFormatter, "INFO", msg)
 }
 
 //记录一行格式化日志
 func (this *logger) InfoF(formatter string, records ...interface{}) {
-	this.Printf(LogFormatter, "info", fmt.Sprintf(formatter, records...))
+	this.Printf(LogFormatter, "INFO", fmt.Sprintf(formatter, records...))
 }
 
 //记录模板日志
 func (this *logger) InfoTemplate(tpl string, models ...interface{}) {
-	this.Printf(LogFormatter, "info", fmt.Sprintf(tpl, models...))
+	this.Printf(LogFormatter, "INFO", fmt.Sprintf(tpl, models...))
 }
 
 //记录一行日志
 func (this *logger) Error(msg string) {
-	this.Printf(LogFormatter, "error", msg)
+	this.Printf(LogFormatter, "ERROR", msg)
 }
 
 //记录一行格式化日志
 func (this *logger) ErrorF(formatter string, records ...interface{}) {
-	this.Printf(LogFormatter, "error", fmt.Sprintf(formatter, records...))
+	this.Printf(LogFormatter, "ERROR", fmt.Sprintf(formatter, records...))
 }
 
 //记录模板日志
 func (this *logger) ErrorTemplate(tpl string, models ...interface{}) {
-	this.Printf(LogFormatter, "error", fmt.Sprintf(tpl, models...))
+	this.Printf(LogFormatter, "ERROR", fmt.Sprintf(tpl, models...))
 }
 
 //记录一行日志
 func (this *logger) Warn(msg string) {
-	this.Printf(LogFormatter, "warn", msg)
+	this.Printf(LogFormatter, "WARN", msg)
 }
 
 //记录一行格式化日志
 func (this *logger) WarnF(formatter string, records ...interface{}) {
-	this.Printf(LogFormatter, "warn", fmt.Sprintf(formatter, records...))
+	this.Printf(LogFormatter, "WARN", fmt.Sprintf(formatter, records...))
 }
 
 //记录模板日志
 func (this *logger) WarnTemplate(tpl string, models ...interface{}) {
-	this.Printf(LogFormatter, "warn", fmt.Sprintf(tpl, models...))
+	this.Printf(LogFormatter, "WARN", fmt.Sprintf(tpl, models...))
 }
 
 //获取日志服务
