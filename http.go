@@ -144,8 +144,8 @@ func RegisterStatic(path string) {
 
 func (this *Server) RegisterTemplate(filePath string) {
 	this.Lock()
-	defer this.Unlock()
 	this.baseTpl, _ = includeTemplate(this.baseTpl, ".html", []string{filePath}...)
+	this.Unlock()
 	mLogger.InfoLn(this.baseTpl.DefinedTemplates())
 }
 
