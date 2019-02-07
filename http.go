@@ -15,6 +15,8 @@ import (
 	"sync"
 )
 
+var MiddlewareLogger = GetLogger("middleware")
+
 type Server struct {
 	Host        string
 	Port        int
@@ -70,7 +72,7 @@ func (this *Server) Start() {
 	this.Unlock()
 	hostStr := fmt.Sprintf("%s:%d", this.Host, this.Port)
 	log.Println("server start " + hostStr)
-	http.ListenAndServe(hostStr, this)
+	http.ListenAndServe(hostStr, nil)
 }
 
 func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

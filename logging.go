@@ -7,6 +7,8 @@ import (
 	"sync"
 )
 
+var LogFormatter = "[%s] [%v]"
+
 //日志对象
 type Logger interface {
 	//打印字符串类型日志
