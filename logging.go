@@ -23,6 +23,9 @@ type Logger interface {
 	//打印字符串类型日志
 	Info(msg string)
 
+	//逐行打印info日志信息
+	InfoLn(v ...interface{})
+
 	//打印格式化内容日志
 	InfoF(formatter string, records ...interface{})
 
@@ -74,6 +77,10 @@ func (this *logger) LogTemplate(tpl string, models ...interface{}) {
 //记录一行日志
 func (this *logger) Info(msg string) {
 	this.Printf(LogFormatter, "INFO", msg)
+}
+
+func (this *logger) InfoLn(v ...interface{}) {
+	this.Println(v...)
 }
 
 //记录一行格式化日志

@@ -1,11 +1,8 @@
 package middleware
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -70,9 +67,10 @@ func (this *Server) Start() {
 	}
 	this.status = 1
 	this.Unlock()
+	http.HandleFunc("/", this.ServeHTTP)
 	hostStr := fmt.Sprintf("%s:%d", this.Host, this.Port)
-	log.Println("server start " + hostStr)
-	http.ListenAndServe(hostStr, nil)
+	MiddlewareLogger.Info("server start " + hostStr)
+	log.Fatal(http.ListenAndServe(hostStr, nil))
 }
 
 func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +81,7 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx.SetHeader(AccessControlAllowMethods, METHODS)
 		ctx.SetHeader(AccessControlAllowHeaders, "*")
 		if strings.ToUpper(ctx.GetMethod()) == OPTIONS {
-			ctx.Code(202)
+			_ = ctx.Code(202)
 			return
 		}
 	}
@@ -116,7 +114,7 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	ctx.Error(StatusNotFound, StatusNotFoundView)
+	_ = ctx.Error(StatusNotFound, StatusNotFoundView)
 	return
 }
 
@@ -148,7 +146,7 @@ func (this *Server) RegisterTemplate(filePath string) {
 	this.Lock()
 	defer this.Unlock()
 	this.baseTpl, _ = includeTemplate(this.baseTpl, ".html", []string{filePath}...)
-	log.Println(this.baseTpl.DefinedTemplates())
+	MiddlewareLogger.InfoLn(this.baseTpl.DefinedTemplates())
 }
 
 func RegisterTemplate(filePath string) {
@@ -171,11 +169,11 @@ func includeTemplate(tpl *template.Template, suffix string, filePaths ...string)
 	for _, filePath := range filePaths {
 		info, err := os.Stat(filePath)
 		if err != nil {
-			log.Println(err.Error())
+			MiddlewareLogger.Error(err.Error())
 			continue
 		}
 		if info.IsDir() {
-			filepath.Walk(filePath, func(path string, innerInfo os.FileInfo, err error) error {
+			_ = filepath.Walk(filePath, func(path string, innerInfo os.FileInfo, err error) error {
 				if !innerInfo.IsDir() {
 					//后缀名过滤
 					if filepath.Ext(innerInfo.Name()) == suffix {
@@ -272,185 +270,8 @@ func StaticProcessor(ctx Context) {
 // false 无错误
 func ProcessError(err error) bool {
 	if err != nil {
-		log.Println(err)
+		MiddlewareLogger.Error(err.Error())
 		return true
 	}
 	return false
-}
-
-type Context struct {
-	Request    *http.Request
-	Response   http.ResponseWriter
-	body       []byte
-	tpl        *template.Template
-	pathParams map[string]string
-	writeable  bool
-	sync.RWMutex
-}
-
-/*
-获取路径参数, /{参数名称}
-*/
-func (this *Context) GetPathParam(key string) string {
-	value, ok := this.pathParams[key]
-	if ok {
-		return value
-	}
-	return ""
-}
-
-func (this *Context) GetBody() []byte {
-	this.Lock()
-	defer this.Unlock()
-	if len(this.body) > 0 {
-		return this.body
-	}
-	data, err := ioutil.ReadAll(this.Request.Body)
-	this.body = data
-	if err == nil && len(data) > 0 {
-		this.body = data
-		return this.body
-	}
-	return nil
-}
-
-func (this *Context) GetJSON() (map[string]interface{}, error) {
-	res := make(map[string]interface{})
-	if len(this.GetBody()) > 0 {
-		err := json.Unmarshal(this.GetBody(), &res)
-		return res, err
-	}
-	return res, nil
-}
-
-/*
-获取query参数
-*/
-func (this *Context) GetQueryParam(key string) string {
-	return this.Request.URL.Query().Get(key)
-}
-
-func (this *Context) WriteJSON(data interface{}) error {
-	res, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	err = this.OK(ApplicationJson, res)
-	return err
-}
-
-func (this *Context) GetContentType() string {
-	return this.Request.Header.Get(ContentType)
-}
-
-func (this *Context) GetHeader(key string) string {
-	return this.Request.Header.Get(key)
-}
-
-func (this *Context) GetCookie(key string) string {
-	cook, err := this.Request.Cookie(key)
-	if err != nil {
-		return ""
-	}
-	return cook.Value
-}
-
-func (this *Context) SetCookie(c *http.Cookie) {
-	http.SetCookie(this.Response, c)
-}
-
-// 302跳转
-func (this *Context) Redirect(path string) error {
-	this.Lock()
-	defer this.Unlock()
-	if !this.writeable {
-		return errors.New("禁止重复写入response")
-	}
-	this.writeable = false
-	http.Redirect(this.Response, this.Request, path, http.StatusFound)
-	return nil
-}
-
-func (this *Context) OK(contentType string, content []byte) error {
-	this.Lock()
-	defer this.Unlock()
-	if !this.writeable {
-		return errors.New("禁止重复写入response")
-	}
-	this.writeable = false
-	if len(contentType) > 0 {
-		this.SetHeader(ContentType, contentType)
-	}
-	this.SetHeader("server", "framework")
-	_, err := this.Response.Write(content)
-	return err
-}
-
-func (this *Context) Code(static int) error {
-	this.Lock()
-	defer this.Unlock()
-	if !this.writeable {
-		return errors.New("禁止重复写入response")
-	}
-	this.writeable = false
-	this.SetHeader("server", "framework")
-	this.Response.WriteHeader(static)
-	return nil
-}
-
-func (this *Context) Error(static int, htmlStr string) error {
-	this.Lock()
-	defer this.Unlock()
-	if !this.writeable {
-		return errors.New("禁止重复写入response")
-	}
-	this.writeable = false
-	this.SetHeader("server", "framework")
-	this.SetHeader(ContentType, Html)
-	this.Response.WriteHeader(static)
-	this.Response.Write([]byte(htmlStr))
-	return nil
-}
-
-func (this *Context) SetHeader(key string, value string) {
-	this.Response.Header().Set(key, value)
-}
-
-func (this *Context) DelHeader(key string) {
-	this.Response.Header().Del(key)
-}
-
-func newContext(w http.ResponseWriter, r *http.Request) Context {
-	return Context{
-		writeable:  true,
-		Response:   w,
-		Request:    r,
-		pathParams: make(map[string]string),
-	}
-}
-
-func (this *Context) GetMethod() string {
-	return this.Request.Method
-}
-
-func (this *Context) JSON(jsonStr string) error {
-	err := this.OK(ApplicationJson, []byte(jsonStr))
-	return err
-}
-
-func (this *Context) RemoteAddr() string {
-	return this.Request.RemoteAddr
-}
-
-/*
-http文件服务
-*/
-func (this *Context) ServeFile(filePath string) {
-	this.Lock()
-	defer this.Unlock()
-	if !this.writeable {
-		return
-	}
-	http.ServeFile(this.Response, this.Request, filePath)
-	this.writeable = false
 }
