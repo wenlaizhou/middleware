@@ -188,8 +188,8 @@ func includeTemplate(tpl *template.Template, suffix string, filePaths ...string)
 			}
 		}
 	}
-	log.Println("获取模板文件列表")
-	log.Println(strings.Join(fileList, ","))
+	MiddlewareLogger.InfoLn("获取模板文件列表")
+	MiddlewareLogger.InfoLn(strings.Join(fileList, ","))
 	if tpl == nil {
 		return template.ParseFiles(fileList...)
 	}
