@@ -60,15 +60,15 @@ func (this Session) Id() string {
 
 func init() {
 	//session过期
-	Schedule("session-expire", 30*60, func() {
-		for k, v := range globalSession {
-			v.Lock()
-			if time.Now().Sub(v.lastTouchTime).Seconds() > globalSessionExpireSeconds {
-				delete(globalSession, k)
-			}
-			v.Unlock()
-		}
-	})
+	//Schedule("session-expire", 30*60, func() {
+	//	for k, v := range globalSession {
+	//		v.Lock()
+	//		if time.Now().Sub(v.lastTouchTime).Seconds() > globalSessionExpireSeconds {
+	//			delete(globalSession, k)
+	//		}
+	//		v.Unlock()
+	//	}
+	//})
 }
 
 func (this *Context) SessionSet(key string, value interface{}) {
