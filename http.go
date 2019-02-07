@@ -150,7 +150,6 @@ func (this *Server) RegisterTemplate(filePath string) {
 		mLogger.Error(err.Error())
 	}
 	this.Unlock()
-	mLogger.InfoLn(this.baseTpl.DefinedTemplates())
 	mLogger.InfoLn("render template done!")
 }
 
