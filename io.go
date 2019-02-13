@@ -124,7 +124,7 @@ func Exists(fp string) bool {
 }
 
 func Mkdir(path string) {
-	os.Mkdir(path, os.ModePerm)
+	os.MkdirAll(path, os.ModePerm)
 }
 
 func WriteBytes(filePath string, b []byte) (int, error) {
