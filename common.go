@@ -23,6 +23,8 @@ func ReplaceStr(ori string, old string, newFunc func() string) string {
 	}
 }
 
+const TimeFormat = "2006-1-2 15:04:05"
+
 const (
 	defaultServerName  = "middleware"
 	defaultUserAgent   = "middleware"

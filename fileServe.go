@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-const TimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
+const HttpTimeFormattor = "Mon, 02 Jan 2006 15:04:05 GMT"
 const sniffLen = 512
 
 // if name is empty, filename is unknown. (used for mime type, before sniffing)
@@ -164,7 +164,7 @@ func FileProcessor(context Context) {
 		//	writeNotModified(context)
 		//	return
 		//}
-		//context.SetHeader("Last-Modified", d.ModTime().UTC().Format(TimeFormat))
+		//context.SetHeader("Last-Modified", d.ModTime().UTC().Format(HttpTimeFormattor))
 		//dirList(w, r, f)
 
 		context.Error(StatusNotFound, StatusNotFoundView)
@@ -411,7 +411,7 @@ func isZeroTime(t time.Time) bool {
 
 func setLastModified(context Context, modtime time.Time) {
 	if !isZeroTime(modtime) {
-		context.SetHeader("Last-Modified", modtime.UTC().Format(TimeFormat))
+		context.SetHeader("Last-Modified", modtime.UTC().Format(HttpTimeFormattor))
 	}
 }
 
