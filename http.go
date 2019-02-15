@@ -87,21 +87,21 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, filterNode := range this.filter {
-		if filterNode.pathReg.MatchString(r.RequestURI) {
+		if filterNode.pathReg.MatchString(r.URL.Path) {
 			if !filterNode.handler(ctx) {
 				return
 			}
 		}
 	}
 
-	if this.hasIndex && r.RequestURI == "/" {
+	if this.hasIndex && r.URL.Path == "/" {
 		this.index.handler(ctx)
 		return
 	}
 
 	for _, pathNode := range this.pathNodes {
 		if pathNode.pathReg.MatchString(r.URL.Path) {
-			pathParams := pathNode.pathReg.FindAllStringSubmatch(r.RequestURI, 10) //最多10个路径参数
+			pathParams := pathNode.pathReg.FindAllStringSubmatch(r.URL.Path, 10) // 最多10个路径参数
 			if len(pathParams) > 0 && len(pathParams[0]) > 0 {
 				for i, pathParam := range pathParams[0][1:] {
 					if len(pathNode.params) < i+1 {
@@ -179,7 +179,7 @@ func includeTemplate(tpl *template.Template, suffix string, filePaths ...string)
 		if info.IsDir() {
 			_ = filepath.Walk(filePath, func(path string, innerInfo os.FileInfo, err error) error {
 				if !innerInfo.IsDir() {
-					//后缀名过滤
+					// 后缀名过滤
 					if filepath.Ext(innerInfo.Name()) == suffix {
 						fileList = append(fileList, path)
 					}
