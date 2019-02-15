@@ -47,6 +47,7 @@ func NewServer(host string, port int) Server {
 		Port:        port,
 		CrossDomain: false,
 		hasIndex:    false,
+		baseTpl:     template.New("middleware.Base"),
 	}
 
 	srv.pathNodes = make(map[string]pathProcessor)
