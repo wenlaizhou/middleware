@@ -9,6 +9,7 @@ import (
 	"sync"
 )
 
+// 上下文数据结构
 type Context struct {
 	Request    *http.Request
 	Response   http.ResponseWriter
@@ -19,9 +20,7 @@ type Context struct {
 	sync.RWMutex
 }
 
-/*
-获取路径参数, /{参数名称}
-*/
+// 获取路径参数, /{参数名称}
 func (this *Context) GetPathParam(key string) string {
 	value, ok := this.pathParams[key]
 	if ok {
@@ -30,6 +29,7 @@ func (this *Context) GetPathParam(key string) string {
 	return ""
 }
 
+// 获取请求体
 func (this *Context) GetBody() []byte {
 	this.Lock()
 	defer this.Unlock()
@@ -45,6 +45,9 @@ func (this *Context) GetBody() []byte {
 	return nil
 }
 
+// 获取body中
+//
+// json类型数据体
 func (this *Context) GetJSON() (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 	if len(this.GetBody()) > 0 {
@@ -54,9 +57,7 @@ func (this *Context) GetJSON() (map[string]interface{}, error) {
 	return res, nil
 }
 
-/*
-获取query参数
-*/
+// 获取query参数
 func (this *Context) GetQueryParam(key string) string {
 	return this.Request.URL.Query().Get(key)
 }
@@ -173,9 +174,7 @@ func (this *Context) RemoteAddr() string {
 	return this.Request.RemoteAddr
 }
 
-/*
-http文件服务
-*/
+// http文件服务
 func (this *Context) ServeFile(filePath string) {
 	this.Lock()
 	defer this.Unlock()
@@ -184,4 +183,11 @@ func (this *Context) ServeFile(filePath string) {
 	}
 	http.ServeFile(this.Response, this.Request, filePath)
 	this.writeable = false
+	return
+}
+
+func (this *Context) DownloadContent(data []byte) {
+	this.SetHeader("Content-disposition", "attachment;filename=config")
+	_, _ = this.Response.Write(data)
+	return
 }
