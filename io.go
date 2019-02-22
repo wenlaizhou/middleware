@@ -170,3 +170,19 @@ func ReadString(filePath string) string {
 	}
 	return string(content)
 }
+
+// 参数中是否含有空字符串
+//
+// return: true 包含空字符串
+// false 不包含空字符串
+func HasEmptyString(strs ...string) bool {
+	if len(strs) <= 0 {
+		return true
+	}
+	for _, s := range strs {
+		if len(s) <= 0 {
+			return true
+		}
+	}
+	return false
+}
