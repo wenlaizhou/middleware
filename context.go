@@ -3,6 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -186,8 +187,8 @@ func (this *Context) ServeFile(filePath string) {
 	return
 }
 
-func (this *Context) DownloadContent(data []byte) {
-	this.SetHeader("Content-disposition", "attachment;filename=config")
+func (this *Context) DownloadContent(fileName string, data []byte) {
+	this.SetHeader("Content-disposition", fmt.Sprintf("attachment;filename=%s", fileName))
 	_, _ = this.Response.Write(data)
 	return
 }
