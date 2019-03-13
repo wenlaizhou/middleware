@@ -34,14 +34,18 @@ package middleware
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strconv"
 )
 
 const ConfDir = "CONF_DIR"
 
 type Config map[string]interface{}
 
+// 读取json类型配置文件
 func LoadConfig(confPath string) Config {
 	res := make(Config)
 	if !Exists(confPath) {
@@ -57,4 +61,35 @@ func LoadConfig(confPath string) Config {
 	}
 	res[ConfDir] = filepath.Dir(confPath)
 	return res
+}
+
+// 获取配置中的value值
+func ConfValue(conf Config, key string) (interface{}, error) {
+	if len(key) <= 0 {
+		return -1, errors.New("key 不为空")
+	}
+	v, hasData := conf[key]
+	if !hasData {
+		return nil, errors.New("没有匹配的value")
+	}
+	return v, nil
+}
+
+// 获取配置中的数值类型值
+func ConfInt(conf Config, key string) (int, error) {
+	v, err := ConfValue(conf, key)
+	if err != nil {
+		return -1, err
+	}
+	vStr := fmt.Sprintf("%s", v)
+	return strconv.Atoi(vStr)
+}
+
+// 获取配置中的字符串类型值
+func ConfString(conf Config, key string) (string, error) {
+	v, err := ConfValue(conf, key)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s", v), nil
 }
