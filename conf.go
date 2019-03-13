@@ -81,7 +81,7 @@ func ConfInt(conf Config, key string) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	vStr := fmt.Sprintf("%s", v)
+	vStr := fmt.Sprintf("%v", v)
 	return strconv.Atoi(vStr)
 }
 
@@ -91,7 +91,7 @@ func ConfString(conf Config, key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s", v), nil
+	return fmt.Sprintf("%v", v), nil
 }
 
 // 获取配置中的value值
@@ -110,7 +110,7 @@ func ConfIntUnsafe(conf Config, key string) int {
 	if err != nil {
 		return -1
 	}
-	res, _ := strconv.Atoi(fmt.Sprintf("%s", v))
+	res, _ := strconv.Atoi(fmt.Sprintf("%v", v))
 	return res
 }
 
@@ -122,5 +122,5 @@ func ConfStringUnsafe(conf Config, key string) string {
 	if err != nil {
 		return ""
 	}
-	return fmt.Sprintf("%s", v)
+	return fmt.Sprintf("%v", v)
 }
