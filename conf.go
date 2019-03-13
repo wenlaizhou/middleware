@@ -93,3 +93,34 @@ func ConfString(conf Config, key string) (string, error) {
 	}
 	return fmt.Sprintf("%s", v), nil
 }
+
+// 获取配置中的value值
+//
+// 没有该值, 返回nil
+func ConfValueUnsafe(conf Config, key string) interface{} {
+	v, _ := ConfValue(conf, key)
+	return v
+}
+
+// 获取配置中的数值类型值
+//
+// 错误返回-1
+func ConfIntUnsafe(conf Config, key string) int {
+	v, err := ConfValue(conf, key)
+	if err != nil {
+		return -1
+	}
+	res, _ := strconv.Atoi(fmt.Sprintf("%s", v))
+	return res
+}
+
+// 获取配置中的字符串类型值
+//
+// 错误返回""
+func ConfStringUnsafe(conf Config, key string) string {
+	v, err := ConfValue(conf, key)
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf("%s", v)
+}
