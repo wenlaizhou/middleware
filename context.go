@@ -58,6 +58,17 @@ func (this *Context) GetJSON() (map[string]interface{}, error) {
 	return res, nil
 }
 
+// 获取json对象中key对应的字符串
+//
+// 没有该key则返回""
+func GetJsonParamStr(key string, jsonObj map[string]interface{}) string {
+	val, hasVal := jsonObj[key]
+	if !hasVal {
+		return ""
+	}
+	return fmt.Sprintf("%v", val)
+}
+
 // 获取query参数
 func (this *Context) GetQueryParam(key string) string {
 	return this.Request.URL.Query().Get(key)
