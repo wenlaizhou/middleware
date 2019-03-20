@@ -34,10 +34,10 @@ func init() {
 	RegisterHandler("api", apiProcessor)
 }
 
-//参数列表,
-//返回值说明,
-//接口描述,
-//异常说明
+// 参数列表,
+// 返回值说明,
+// 接口描述,
+// 异常说明
 func (this *Server) RegisterApi(
 	path string,
 	method string,
@@ -97,7 +97,7 @@ func (this *Context) ApiResponse(code int, message string, data interface{}) err
 	return err
 }
 
-//直接注册带界面api:
-//1. 使用accept进行界面或json区分
-//2. 调用权限区分
-//3. swagger
+// 直接注册带界面api:
+// 1. 使用accept进行界面或json区分
+// 2. 调用权限区分
+// 3. swagger
