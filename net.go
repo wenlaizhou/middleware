@@ -13,10 +13,10 @@ const (
 
 // 测试网络连通
 // tcp, udp
-func IsActive(protocol string, ip string, port int) bool {
+func IsActive(protocol string, ip string, port int, timeoutSecond int) bool {
 	switch protocol {
 	case PROTOCOL_TCP, PROTOCOL_UDP:
-		conn, err := net.DialTimeout(protocol, fmt.Sprintf("%s:%v", ip, port), 3*time.Second)
+		conn, err := net.DialTimeout(protocol, fmt.Sprintf("%s:%v", ip, port), time.Duration(timeoutSecond)*time.Second)
 		if err != nil {
 			return false
 		}
