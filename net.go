@@ -14,8 +14,7 @@ const (
 // tcp, udp
 func IsActive(protocol string, ip string, port int) bool {
 	switch protocol {
-	case "tcp":
-	case "udp":
+	case PROTOCOL_TCP, PROTOCOL_UDP:
 		conn, err := net.Dial(protocol, fmt.Sprintf("%s:%v", ip, port))
 		if err != nil {
 			return false
@@ -25,5 +24,4 @@ func IsActive(protocol string, ip string, port int) bool {
 	default:
 		return false
 	}
-	return false
 }
