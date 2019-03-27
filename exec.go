@@ -29,3 +29,25 @@ func ExecCmdWithTimeout(timeout int, cmd string, args ...string) (string, error)
 	_ = cmdHandler.Wait()
 	return fmt.Sprintf("%s\n%s", outStr, errStr), err
 }
+
+// 交互式命令行服务
+// func InterExec() chan string {
+// 	cmd := exec.Command("", )
+// 	w, _ := cmd.StdinPipe()
+// 	o, _ := cmd.StdoutPipe()
+// 	channel := make(chan string)
+// 	go func() {
+// 		for {
+// 			select {
+// 			case cmd := <-channel:
+// 				_, _ = w.Write([]byte(cmd))
+// 				break
+// 			case timeout:
+// 				// destroy cmd
+// 				break
+// 			default:
+// 				break
+// 			}
+// 		}
+// 	}()
+// }
