@@ -10,9 +10,9 @@ import (
 func IsActive(ip string, port int) bool {
 
 	conn, err := net.Dial("TCP", fmt.Sprintf("%s:%v", ip, port))
-	defer conn.Close()
 	if err != nil {
 		return false
 	}
+	conn.Close()
 	return true
 }
