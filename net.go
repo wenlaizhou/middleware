@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net"
+	"time"
 )
 
 const (
@@ -15,7 +16,7 @@ const (
 func IsActive(protocol string, ip string, port int) bool {
 	switch protocol {
 	case PROTOCOL_TCP, PROTOCOL_UDP:
-		conn, err := net.Dial(protocol, fmt.Sprintf("%s:%v", ip, port))
+		conn, err := net.DialTimeout(protocol, fmt.Sprintf("%s:%v", ip, port), 3*time.Second)
 		if err != nil {
 			return false
 		}
