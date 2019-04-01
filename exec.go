@@ -7,6 +7,9 @@ import "time"
 import "bytes"
 import "io"
 
+// 执行命令带超时时间
+//
+// timeout: 超时时间(单位秒)
 func ExecCmdWithTimeout(timeout int, cmd string, args ...string) (string, error) {
 	var err error
 	var cmdHandler *exec.Cmd
