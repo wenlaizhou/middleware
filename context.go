@@ -74,6 +74,7 @@ func (this *Context) GetQueryParam(key string) string {
 	return this.Request.URL.Query().Get(key)
 }
 
+// 返回json类型数据
 func (this *Context) WriteJSON(data interface{}) error {
 	res, err := json.Marshal(data)
 	if err != nil {
@@ -83,14 +84,17 @@ func (this *Context) WriteJSON(data interface{}) error {
 	return err
 }
 
+// 获取content-type值
 func (this *Context) GetContentType() string {
 	return this.Request.Header.Get(ContentType)
 }
 
+// 获取header对应值
 func (this *Context) GetHeader(key string) string {
 	return this.Request.Header.Get(key)
 }
 
+// 获取cookie值
 func (this *Context) GetCookie(key string) string {
 	cook, err := this.Request.Cookie(key)
 	if err != nil {
@@ -99,6 +103,7 @@ func (this *Context) GetCookie(key string) string {
 	return cook.Value
 }
 
+// 设置cookie值
 func (this *Context) SetCookie(c *http.Cookie) {
 	http.SetCookie(this.Response, c)
 }
@@ -115,6 +120,7 @@ func (this *Context) Redirect(path string) error {
 	return nil
 }
 
+// 返回http: 200
 func (this *Context) OK(contentType string, content []byte) error {
 	this.Lock()
 	defer this.Unlock()
@@ -130,6 +136,7 @@ func (this *Context) OK(contentType string, content []byte) error {
 	return err
 }
 
+// 返回对应http编码
 func (this *Context) Code(static int) error {
 	this.Lock()
 	defer this.Unlock()
@@ -142,6 +149,7 @@ func (this *Context) Code(static int) error {
 	return nil
 }
 
+// 返回http错误响应
 func (this *Context) Error(static int, htmlStr string) error {
 	this.Lock()
 	defer this.Unlock()
@@ -156,10 +164,12 @@ func (this *Context) Error(static int, htmlStr string) error {
 	return nil
 }
 
+// 设置httpheader值
 func (this *Context) SetHeader(key string, value string) {
 	this.Response.Header().Set(key, value)
 }
 
+// 删除httpheader对应值
 func (this *Context) DelHeader(key string) {
 	this.Response.Header().Del(key)
 }
@@ -173,15 +183,18 @@ func newContext(w http.ResponseWriter, r *http.Request) Context {
 	}
 }
 
+// 获取http方法
 func (this *Context) GetMethod() string {
 	return this.Request.Method
 }
 
+// 返回json数据
 func (this *Context) JSON(jsonStr string) error {
 	err := this.OK(ApplicationJson, []byte(jsonStr))
 	return err
 }
 
+// 获取http请求address
 func (this *Context) RemoteAddr() string {
 	return this.Request.RemoteAddr
 }
@@ -198,6 +211,7 @@ func (this *Context) ServeFile(filePath string) {
 	return
 }
 
+// 下载二进制文件
 func (this *Context) DownloadContent(fileName string, data []byte) {
 	this.SetHeader("Content-disposition", fmt.Sprintf("attachment;filename=%s", fileName))
 	_, _ = this.Response.Write(data)
