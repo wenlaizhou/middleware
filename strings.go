@@ -21,7 +21,7 @@ func RenderTemplateKV(tpl string, kvs ...interface{}) (string, error) {
 			model[v] = kvs[i+1]
 		}
 	}
-	err = t.Execute(buff, kvs)
+	err = t.Execute(buff, model)
 	if err != nil {
 		return tpl, err
 	}
