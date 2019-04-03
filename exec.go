@@ -49,12 +49,6 @@ func InterExec() chan string {
 	o, _ := cmd.StdoutPipe()
 	channel := make(chan string)
 	go func() {
-		if cmd.Stdout != nil {
-			return
-		}
-		if cmd.Stderr != nil {
-			return
-		}
 		var b bytes.Buffer
 		cmd.Stdout = &b
 		cmd.Stderr = &b
