@@ -18,7 +18,6 @@ pom.xml.versionsBackup
 
 # intellij files
 .idea/
-*.iml
 *.ipr
 *.iws
 build-idea/
@@ -65,3 +64,6 @@ backwards/
 eclipse-build
 
 *.zip
+
+log/
+test/

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"io/ioutil"
 	"os/exec"
 	"strings"
 )
@@ -39,24 +40,43 @@ func ExecCmdWithTimeout(timeout int, cmd string, args ...string) (string, error)
 		err
 }
 
+var interExecChannel map[string]chan string
+
 // 交互式命令行服务
-// func InterExec() chan string {
-// 	cmd := exec.Command("", )
-// 	w, _ := cmd.StdinPipe()
-// 	o, _ := cmd.StdoutPipe()
-// 	channel := make(chan string)
-// 	go func() {
-// 		for {
-// 			select {
-// 			case cmd := <-channel:
-// 				_, _ = w.Write([]byte(cmd))
-// 				break
-// 			case timeout:
-// 				// destroy cmd
-// 				break
-// 			default:
-// 				break
-// 			}
-// 		}
-// 	}()
-// }
+func InterExec() chan string {
+	cmd := exec.Command("sh")
+	w, _ := cmd.StdinPipe()
+	o, _ := cmd.StdoutPipe()
+	channel := make(chan string)
+	go func() {
+		if cmd.Stdout != nil {
+			return
+		}
+		if cmd.Stderr != nil {
+			return
+		}
+		var b bytes.Buffer
+		cmd.Stdout = &b
+		cmd.Stderr = &b
+		cmd.Start()
+		t := time.Now()
+		for {
+			select {
+			case cmd := <-channel:
+				t = time.Now()
+				_, _ = w.Write([]byte(cmd))
+				res, _ := ioutil.ReadAll(o)
+				channel <- string(res)
+				break
+			default:
+				if time.Now().Sub(t) > time.Minute*30 {
+					println("channel timeout")
+					close(channel)
+					cmd.Process.Kill()
+					return
+				}
+				break
+			}
+		}
+	}()
+}
