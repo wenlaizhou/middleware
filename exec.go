@@ -79,4 +79,5 @@ func InterExec() chan string {
 			}
 		}
 	}()
+	return channel
 }
