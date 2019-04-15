@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-//COMMON
+// COMMON
 
 var ip []int
 

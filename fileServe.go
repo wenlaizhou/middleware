@@ -159,13 +159,13 @@ func FileProcessor(context Context) {
 		return
 	}
 	// Still a directory? (we didn't find an index.html file)
-	if d.IsDir() { //golang原处理逻辑为目录列表
-		//if checkIfModifiedSince(context, d.ModTime()) == condFalse {
-		//	writeNotModified(context)
-		//	return
-		//}
-		//context.SetHeader("Last-Modified", d.ModTime().UTC().Format(HttpTimeFormattor))
-		//dirList(w, r, f)
+	if d.IsDir() { // golang原处理逻辑为目录列表
+		// if checkIfModifiedSince(context, d.ModTime()) == condFalse {
+		// 	writeNotModified(context)
+		// 	return
+		// }
+		// context.SetHeader("Last-Modified", d.ModTime().UTC().Format(HttpTimeFormattor))
+		// dirList(w, r, f)
 
 		context.Error(StatusNotFound, StatusNotFoundView)
 		return
