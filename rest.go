@@ -1,103 +1,40 @@
 package middleware
 
-import "fmt"
-import "encoding/json"
-
-// add swagger support
-var apiList = make(map[string]ApiDesc)
-
-type ApiDesc struct {
-	Path   string
-	Params []ApiParam
-	Result ApiResult
-	Desc   string
-	Method string
+type ResourceHandler interface {
+	Get(Context) interface{}
+	Put(Context) interface{}
+	Post(Context) interface{}
+	Delete(Context) interface{}
 }
 
-type ApiParam struct {
-	Name string
-	Desc string
-	Type string
+func GenerateSwaggerJson() {
+
 }
 
-type ApiResult struct {
-	Type string
-	Desc string
-}
+// 注册rest服务接口
+func RegisterRest(path string, handler ResourceHandler) {
 
-func apiProcessor(context Context) {
-	_ = context.ApiResponse(0, "", apiList)
-	return
-}
+	RegisterHandler(path, func(context Context) {
 
-func init() {
-	RegisterHandler("api", apiProcessor)
-}
-
-// 参数列表,
-// 返回值说明,
-// 接口描述,
-// 异常说明
-func (this *Server) RegisterApi(
-	path string,
-	method string,
-	params []ApiParam,
-	result ApiResult,
-	desc string,
-	handler func(context Context) (code int, message string, data interface{})) {
-
-	if len(path) < 0 || handler == nil {
-		return
-	}
-
-	this.RegisterHandler(path, func(context Context) {
-		if context.GetMethod() != method {
-			context.Error(405, fmt.Sprintf(StatusErrorTemp, "Method Not Allowed"))
+		switch context.GetMethod() {
+		case GET: // 获取列表
+			_ = context.WriteJSON(handler.Get(context))
 			return
+			break
+		case PUT: // 创建资源
+			_ = context.WriteJSON(handler.Get(context))
+			return
+			break
+		case DELETE: // 删除资源
+			_ = context.WriteJSON(handler.Get(context))
+			return
+			break
+		case POST: // 修改资源
+			_ = context.WriteJSON(handler.Get(context))
+			return
+			break
 		}
-		context.ApiResponse(handler(context))
+		// unknown method
+		_ = context.Error(StatusBadRequest, "")
 	})
-
-	apiList[path] = ApiDesc{
-		Path:   path,
-		Method: method,
-		Desc:   desc,
-		Params: params,
-		Result: result,
-	}
-
-	return
 }
-
-func RegisterApi(path string,
-	method string,
-	params []ApiParam,
-	result ApiResult,
-	desc string,
-	handler func(context Context) (code int, message string, data interface{})) {
-	globalServer.RegisterApi(
-		path,
-		method,
-		params,
-		result,
-		desc,
-		handler)
-}
-
-func (this *Context) ApiResponse(code int, message string, data interface{}) error {
-	model := make(map[string]interface{})
-	model["code"] = code
-	model["message"] = message
-	model["data"] = data
-	res, err := json.Marshal(model)
-	if ProcessError(err) {
-		return err
-	}
-	err = this.OK(ApplicationJson, res)
-	return err
-}
-
-// 直接注册带界面api:
-// 1. 使用accept进行界面或json区分
-// 2. 调用权限区分
-// 3. swagger
