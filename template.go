@@ -2,6 +2,7 @@ package middleware
 
 import "errors"
 
+// 直接转换成接口
 func (this *Context) RenderTemplate(name string, model interface{}) error {
 	if this.tpl != nil {
 		return this.tpl.ExecuteTemplate(this.Response, name, model)
@@ -9,6 +10,7 @@ func (this *Context) RenderTemplate(name string, model interface{}) error {
 	return errors.New("template 不存在")
 }
 
+// 直接转换成接口
 func (this *Context) RenderTemplateKV(name string, kvs ...interface{}) error {
 	if this.tpl == nil {
 		return errors.New("template 不存在")
