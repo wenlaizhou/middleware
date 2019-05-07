@@ -45,7 +45,7 @@ func NewServer(host string, port int) Server {
 	srv := Server{
 		Host:        host,
 		Port:        port,
-		CrossDomain: false,
+		CrossDomain: true,
 		hasIndex:    false,
 		baseTpl:     template.New("middleware.Base"),
 	}
