@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"time"
@@ -27,18 +28,37 @@ func IsActive(protocol string, ip string, port int, timeoutSecond int) bool {
 	}
 }
 
+type NetDevice struct {
+	Name string
+	Ip   string
+	Mac  string
+}
+
 // 获取本机ip地址
-func GetIpAddr() string {
-	addrs, err := net.InterfaceAddrs()
+func GetIpByInterface(name string) (NetDevice, error) {
+	res := NetDevice{}
+	res.Name = name
+	ins, err := net.Interfaces()
 	if err != nil {
-		return "localhost"
+		return res, err
 	}
-	for _, addr := range addrs {
-		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
+	for _, iInterface := range ins {
+		if iInterface.Name != name {
+			continue
+		}
+		res.Mac = iInterface.HardwareAddr.String()
+		addrs, err := iInterface.Addrs()
+		if err != nil {
+			return res, err
+		}
+		for _, addr := range addrs {
+			if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				if ipnet.IP.To4() != nil {
+					res.Ip = ipnet.IP.String()
+					return res, nil
+				}
 			}
 		}
 	}
-	return "localhost"
+	return res, errors.New("no this device")
 }
