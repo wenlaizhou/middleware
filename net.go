@@ -26,3 +26,19 @@ func IsActive(protocol string, ip string, port int, timeoutSecond int) bool {
 		return false
 	}
 }
+
+// 获取本机ip地址
+func GetIpAddr() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "localhost"
+	}
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return "localhost"
+}
