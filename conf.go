@@ -124,3 +124,20 @@ func ConfStringUnsafe(conf Config, key string) string {
 	}
 	return fmt.Sprintf("%v", v)
 }
+
+// 获取配置中的bool
+//
+// 错误, 类型错误, 没有该值, 返回false
+func ConfBool(conf Config, key string) bool {
+	v, err := ConfValue(conf, key)
+	if err != nil {
+		return false
+	}
+	switch fmt.Sprintf("%v", v) {
+	case "1", "t", "T", "true", "TRUE", "True":
+		return true
+	case "0", "f", "F", "false", "FALSE", "False":
+		return false
+	}
+	return false
+}
