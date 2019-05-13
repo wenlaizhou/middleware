@@ -35,15 +35,21 @@ type NetDevice struct {
 }
 
 // 获取本机ip地址
-func GetIpByInterface(name string) (NetDevice, error) {
+func GetIpByInterface(interfaceNames ...string) (NetDevice, error) {
 	res := NetDevice{}
-	res.Name = name
 	ins, err := net.Interfaces()
 	if err != nil {
 		return res, err
 	}
 	for _, iInterface := range ins {
-		if iInterface.Name != name {
+		inInterfaces := false
+		for _, name := range interfaceNames {
+			if iInterface.Name == name {
+				inInterfaces = true
+				break
+			}
+		}
+		if !inInterfaces {
 			continue
 		}
 		res.Mac = iInterface.HardwareAddr.String()
