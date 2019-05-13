@@ -3,8 +3,10 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 )
 
 // Post: post data to url
@@ -20,7 +22,11 @@ func Post(url string, headers map[string]string, data []byte) (int, map[string][
 //
 // return : statusCode, header, body, error
 func PostJson(url string, headers map[string]string, data interface{}) (int, map[string][]string, []byte, error) {
+
 	if data != nil {
+		if reflect.TypeOf(data).Name() == reflect.TypeOf("").Name() {
+			return DoRequest(POST, url, headers, ApplicationJson, []byte(fmt.Sprintf("%s", data)))
+		}
 		dataJson, _ := json.Marshal(data)
 		return DoRequest(POST, url, headers, ApplicationJson, dataJson)
 	}
