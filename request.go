@@ -37,7 +37,6 @@ func PostJson(url string, headers map[string]string, data interface{}) (int, map
 //
 // return : statusCode, header, body, error
 func Get(url string, headers map[string]string) (int, map[string][]string, []byte, error) {
-
 	return DoRequest(GET, url, headers, "", nil)
 }
 
@@ -50,7 +49,7 @@ func DoRequest(method string, url string,
 
 	bodyReader := bytes.NewReader(body)
 
-	if body != nil || len(body) <= 0 {
+	if body == nil || len(body) <= 0 {
 		bodyReader = nil
 	}
 
