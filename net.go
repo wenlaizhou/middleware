@@ -52,6 +52,7 @@ func GetIpByInterface(interfaceNames ...string) (NetDevice, error) {
 		if !inInterfaces {
 			continue
 		}
+		res.Name = iInterface.Name
 		res.Mac = iInterface.HardwareAddr.String()
 		addrs, err := iInterface.Addrs()
 		if err != nil {
