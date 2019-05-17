@@ -141,3 +141,12 @@ func ConfBool(conf Config, key string) bool {
 	}
 	return false
 }
+
+// 获取配置文件内容并返回json
+func ConfPrint(conf Config) string {
+	configJson, err := json.Marshal(conf)
+	if err != nil {
+		return fmt.Sprintf("配置文件错误: %v", err.Error())
+	}
+	return string(configJson)
+}
