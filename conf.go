@@ -56,7 +56,7 @@ func LoadConfig(confPath string) Config {
 		return nil
 	}
 	err = json.Unmarshal(data, &res)
-	if err != nil {
+	if ProcessError(err) {
 		return nil
 	}
 	res[ConfDir] = filepath.Dir(confPath)
