@@ -2,8 +2,12 @@ package middleware
 
 import "errors"
 
-// 直接转换成接口
 func (this *Context) RenderTemplate(name string, model interface{}) error {
+	userAgent := this.GetHeader(UserAgent)
+	if len(userAgent) <= 0 {
+		// 	无User-Agent的判断为api调用
+		return this.ApiResponse(0, "", model)
+	}
 	if this.tpl != nil {
 		return this.tpl.ExecuteTemplate(this.Response, name, model)
 	}
@@ -12,14 +16,26 @@ func (this *Context) RenderTemplate(name string, model interface{}) error {
 
 // 直接转换成接口
 func (this *Context) RenderTemplateKV(name string, kvs ...interface{}) error {
+	userAgent := this.GetHeader(UserAgent)
+	model := make(map[string]interface{})
+	kvsLen := len(kvs)
+	for i := 0; i < kvsLen; i += 2 {
+		if v, ok := kvs[i].(string); ok {
+			var value interface{}
+			if kvsLen <= i+1 {
+				value = nil
+			} else {
+				value = kvs[i+1]
+			}
+			model[v] = value
+		}
+	}
+	if len(userAgent) <= 0 {
+		// 	无User-Agent的判断为api调用
+		return this.ApiResponse(0, "", model)
+	}
 	if this.tpl == nil {
 		return errors.New("template 不存在")
-	}
-	model := make(map[string]interface{})
-	for i := 0; i < len(kvs); i += 2 {
-		if v, ok := kvs[i].(string); ok {
-			model[v] = kvs[i+1]
-		}
 	}
 	return this.tpl.ExecuteTemplate(this.Response, name, model)
 }
