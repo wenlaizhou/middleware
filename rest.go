@@ -47,6 +47,11 @@ func (this *Context) ApiResponse(code int, message string, data interface{}) err
 	model := make(map[string]interface{})
 	model["code"] = code
 	model["message"] = message
+	if len(this.restProcessors) > 0 {
+		for _, p := range this.restProcessors {
+			data = p(data)
+		}
+	}
 	model["data"] = data
 	res, err := json.Marshal(model)
 	if ProcessError(err) {

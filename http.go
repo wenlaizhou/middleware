@@ -15,15 +15,16 @@ import (
 var mLogger = GetLogger("middleware")
 
 type Server struct {
-	Host        string
-	Port        int
-	baseTpl     *template.Template
-	pathNodes   map[string]pathProcessor
-	index       pathProcessor
-	hasIndex    bool
-	CrossDomain bool
-	status      int
-	filter      []filterProcessor
+	Host           string
+	Port           int
+	baseTpl        *template.Template
+	pathNodes      map[string]pathProcessor
+	index          pathProcessor
+	restProcessors []func(model interface{}) interface{}
+	hasIndex       bool
+	CrossDomain    bool
+	status         int
+	filter         []filterProcessor
 	sync.RWMutex
 }
 
@@ -77,10 +78,12 @@ func (this *Server) Start() {
 func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := newContext(w, r)
 	ctx.tpl = this.baseTpl
+	ctx.restProcessors = this.restProcessors
 	if this.CrossDomain {
 		ctx.SetHeader(AccessControlAllowOrigin, "*")
 		ctx.SetHeader(AccessControlAllowMethods, METHODS)
 		ctx.SetHeader(AccessControlAllowHeaders, "*")
+
 		if strings.ToUpper(ctx.GetMethod()) == OPTIONS {
 			_ = ctx.Code(202)
 			return
@@ -151,7 +154,7 @@ func (this *Server) RegisterTemplate(filePath string) {
 		mLogger.Error(err.Error())
 	}
 	this.Unlock()
-	mLogger.InfoLn("render template done!")
+	mLogger.InfoF("render template %v done!", filePath)
 }
 
 func RegisterTemplate(filePath string) {
@@ -207,9 +210,6 @@ func RegisterHandler(path string, handler func(Context)) {
 	globalServer.RegisterHandler(path, handler)
 }
 
-/*
-注册handler时, 有prefix扰乱
-*/
 func (this *Server) RegisterHandler(path string, handler func(Context)) {
 	this.Lock()
 	defer this.Unlock()
@@ -248,6 +248,13 @@ func (this *Server) RegisterHandler(path string, handler func(Context)) {
 			params:  params,
 		}
 	}
+}
+
+func (this *Server) RegisterRestProcessor(processor func(model interface{}) interface{}) {
+	this.Lock()
+	this.restProcessors = append(this.restProcessors, processor)
+	this.Unlock()
+	mLogger.InfoLn("新增restProcessor")
 }
 
 type triNode struct {

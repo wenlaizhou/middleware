@@ -12,12 +12,13 @@ import (
 
 // 上下文数据结构
 type Context struct {
-	Request    *http.Request
-	Response   http.ResponseWriter
-	body       []byte
-	tpl        *template.Template
-	pathParams map[string]string
-	writeable  bool
+	Request        *http.Request
+	Response       http.ResponseWriter
+	body           []byte
+	tpl            *template.Template
+	restProcessors []func(model interface{}) interface{}
+	pathParams     map[string]string
+	writeable      bool
 	sync.RWMutex
 }
 
