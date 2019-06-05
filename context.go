@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sync"
+	"time"
 )
 
 // 上下文数据结构
@@ -217,6 +218,38 @@ func (this *Context) ServeFile(filePath string) {
 	http.ServeFile(this.Response, this.Request, filePath)
 	this.writeable = false
 	return
+}
+
+// 设置最后修改时间
+func (this *Context) SetLastModified(modtime time.Time) {
+	w := this.Response
+	if !isZeroTime(modtime) {
+		w.Header().Set("Last-Modified", modtime.UTC().Format(TimeFormat))
+	}
+}
+
+// 写入未修改
+func (this *Context) WriteNotModified() error {
+	// RFC 7232 section 4.1:
+	// a sender SHOULD NOT generate representation metadata other than the
+	// above listed fields unless said metadata exists for the purpose of
+	// guiding cache updates (e.g., Last-Modified might be useful if the
+	// response does not have an ETag field).
+	this.Lock()
+	defer this.Unlock()
+	if !this.writeable {
+		return errors.New("禁止重复写入response")
+	}
+	this.writeable = false
+	w := this.Response
+	h := w.Header()
+	delete(h, "Content-Type")
+	delete(h, "Content-Length")
+	if h.Get("Etag") != "" {
+		delete(h, "Last-Modified")
+	}
+	w.WriteHeader(StatusNotModified)
+	return nil
 }
 
 // 下载二进制文件
