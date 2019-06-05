@@ -75,6 +75,13 @@ func (this *Context) GetQueryParam(key string) string {
 	return this.Request.URL.Query().Get(key)
 }
 
+// 获取去除querystring之后的请求路径
+//
+// 以 / 为开头
+func (this *Context) GetUri() string {
+	return this.Request.URL.Path
+}
+
 // 返回json类型数据
 func (this *Context) WriteJSON(data interface{}) error {
 	res, err := json.Marshal(data)
