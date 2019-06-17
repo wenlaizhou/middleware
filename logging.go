@@ -149,10 +149,9 @@ func GetLogger(name string) Logger {
 func init() {
 
 	// logger rotate
-	Schedule("logger-rotate", 10, func() {
+	Schedule("logger-rotate", 3600, func() {
 		loggerLocker.Lock()
 		for loggerName, loggerInstance := range loggerContainer {
-			// 	备份为: xxx.2019-06-20.log
 			loggerFilename := fmt.Sprintf("log/%s.log", loggerName)
 			backupName := fmt.Sprintf("log/%s.%s.log", loggerName, time.Now().Format("2006-1-2_15"))
 			err := loggerInstance.fs.Close()
