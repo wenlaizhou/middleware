@@ -57,6 +57,61 @@ type logger struct {
 	fs *os.File
 }
 
+// 获取日志服务
+func GetLogger(name string) Logger {
+	res, hasEle := loggerContainer[name]
+	if hasEle {
+		return &res
+	}
+	loggerLocker.Lock()
+	err := os.Mkdir("log", os.ModePerm)
+	if err != nil {
+		// filepath exist
+	}
+	fs, err := os.OpenFile(fmt.Sprintf("log/%s.log", name), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
+	res = logger{
+		Logger: log.New(fs, "", log.LstdFlags),
+		fs:     fs,
+	}
+	loggerContainer[name] = res
+	loggerLocker.Unlock()
+	return &res
+}
+
+// 注册日志滚动服务
+//
+// seconds: 设置日志滚动时间 单位: 秒
+func RegisterLogRotate(seconds int) {
+
+	// logger rotate
+	Schedule("logger-rotate", seconds, func() {
+		RotateLog()
+	})
+
+}
+
+// 日志滚动
+func RotateLog() {
+	loggerLocker.Lock()
+	for loggerName, loggerInstance := range loggerContainer {
+		loggerFilename := fmt.Sprintf("log/%s.log", loggerName)
+		backupName := fmt.Sprintf("log/%s.%s.log", loggerName, time.Now().Format("2006-1-2_15-04-05"))
+		err := loggerInstance.fs.Close()
+		if err != nil {
+			mLogger.ErrorF("%s, close, %s", loggerFilename, err.Error())
+		}
+		err = os.Rename(loggerFilename, backupName)
+		if err != nil {
+			mLogger.ErrorF("%s, 重名: %s, 错误, 日志滚动失败: %s", loggerFilename, backupName, err.Error())
+			continue
+		}
+		fs, err := os.OpenFile(loggerFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
+		loggerInstance.fs = fs
+		loggerInstance.Logger.SetOutput(fs)
+	}
+	loggerLocker.Unlock()
+}
+
 var loggerContainer = map[string]logger{}
 
 var loggerLocker = sync.Mutex{}
@@ -123,51 +178,4 @@ func (this *logger) WarnF(formatter string, records ...interface{}) {
 // 记录模板日志
 func (this *logger) WarnTemplate(tpl string, models ...interface{}) {
 	this.Printf(LogFormatter, "WARN", fmt.Sprintf(tpl, models...))
-}
-
-// 获取日志服务
-func GetLogger(name string) Logger {
-	res, hasEle := loggerContainer[name]
-	if hasEle {
-		return &res
-	}
-	loggerLocker.Lock()
-	err := os.Mkdir("log", os.ModePerm)
-	if err != nil {
-		// filepath exist
-	}
-	fs, err := os.OpenFile(fmt.Sprintf("log/%s.log", name), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
-	res = logger{
-		Logger: log.New(fs, "", log.LstdFlags),
-		fs:     fs,
-	}
-	loggerContainer[name] = res
-	loggerLocker.Unlock()
-	return &res
-}
-
-func init() {
-
-	// logger rotate
-	Schedule("logger-rotate", 3600*24, func() {
-		loggerLocker.Lock()
-		for loggerName, loggerInstance := range loggerContainer {
-			loggerFilename := fmt.Sprintf("log/%s.log", loggerName)
-			backupName := fmt.Sprintf("log/%s.%s.log", loggerName, time.Now().Format("2006-1-2"))
-			err := loggerInstance.fs.Close()
-			if err != nil {
-				mLogger.ErrorF("%s, close, %s", loggerFilename, err.Error())
-			}
-			err = os.Rename(loggerFilename, backupName)
-			if err != nil {
-				mLogger.ErrorF("%s, 重名: %s, 错误, 日志滚动失败: %s", loggerFilename, backupName, err.Error())
-				continue
-			}
-			fs, err := os.OpenFile(loggerFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
-			loggerInstance.fs = fs
-			loggerInstance.Logger.SetOutput(fs)
-		}
-		loggerLocker.Unlock()
-	})
-
 }
