@@ -166,10 +166,6 @@ func init() {
 			fs, err := os.OpenFile(loggerFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 			loggerInstance.fs = fs
 			loggerInstance.Logger.SetOutput(fs)
-			// loggerInstance.fs = fs = &logger{
-			// 	Logger: log.New(fs, "", log.LstdFlags),
-			// 	fs:     fs,
-			// }
 		}
 		loggerLocker.Unlock()
 	})
