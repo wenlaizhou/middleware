@@ -57,7 +57,7 @@ type logger struct {
 	fs *os.File
 }
 
-var loggerContainer = map[string]*logger{}
+var loggerContainer = map[string]logger{}
 
 var loggerLocker = sync.Mutex{}
 
@@ -129,7 +129,7 @@ func (this *logger) WarnTemplate(tpl string, models ...interface{}) {
 func GetLogger(name string) Logger {
 	res, hasEle := loggerContainer[name]
 	if hasEle {
-		return res
+		return &res
 	}
 	loggerLocker.Lock()
 	err := os.Mkdir("log", os.ModePerm)
@@ -137,13 +137,13 @@ func GetLogger(name string) Logger {
 		// filepath exist
 	}
 	fs, err := os.OpenFile(fmt.Sprintf("log/%s.log", name), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
-	res = &logger{
+	res = logger{
 		Logger: log.New(fs, "", log.LstdFlags),
 		fs:     fs,
 	}
 	loggerContainer[name] = res
 	loggerLocker.Unlock()
-	return res
+	return &res
 }
 
 func init() {
