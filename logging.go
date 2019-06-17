@@ -53,7 +53,7 @@ type Logger interface {
 }
 
 type logger struct {
-	log.Logger
+	*log.Logger
 	fs *os.File
 }
 
@@ -138,7 +138,7 @@ func GetLogger(name string) Logger {
 	}
 	fs, err := os.OpenFile(fmt.Sprintf("log/%s.log", name), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	res = logger{
-		Logger: *log.New(fs, "", log.LstdFlags),
+		Logger: log.New(fs, "", log.LstdFlags),
 		fs:     fs,
 	}
 	loggerContainer[name] = res
@@ -165,7 +165,7 @@ func init() {
 			}
 			fs, err := os.OpenFile(loggerFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 			loggerInstance = logger{
-				Logger: *log.New(fs, "", log.LstdFlags),
+				Logger: log.New(fs, "", log.LstdFlags),
 				fs:     fs,
 			}
 		}
