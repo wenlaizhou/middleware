@@ -156,11 +156,11 @@ func init() {
 			backupName := fmt.Sprintf("log/%s.%s.log", loggerName, time.Now().Format("2006-1-2_15"))
 			err := loggerInstance.fs.Close()
 			if err != nil {
-				DefaultLogger.ErrorF("%s, close, %s", loggerFilename, err.Error())
+				mLogger.ErrorF("%s, close, %s", loggerFilename, err.Error())
 			}
 			err = os.Rename(loggerFilename, backupName)
 			if err != nil {
-				DefaultLogger.ErrorF("%s, 重名: %s, 错误, 日志滚动失败: %s", loggerFilename, backupName, err.Error())
+				mLogger.ErrorF("%s, 重名: %s, 错误, 日志滚动失败: %s", loggerFilename, backupName, err.Error())
 				continue
 			}
 			fs, err := os.OpenFile(loggerFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
@@ -173,6 +173,3 @@ func init() {
 	})
 
 }
-
-// 默认日志对象
-var DefaultLogger = GetLogger("console")
