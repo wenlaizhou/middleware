@@ -149,7 +149,7 @@ func GetLogger(name string) Logger {
 func init() {
 
 	// logger rotate
-	Schedule("logger-rotate", 60, func() {
+	Schedule("logger-rotate", 3600, func() {
 		loggerLocker.Lock()
 		for loggerName, loggerInstance := range loggerContainer {
 			loggerFilename := fmt.Sprintf("log/%s.log", loggerName)
