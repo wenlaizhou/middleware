@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 )
 
 var LogFormatter = "%s %v"
@@ -53,6 +54,7 @@ type Logger interface {
 
 type logger struct {
 	log.Logger
+	fs *os.File
 }
 
 var loggerContainer = map[string]logger{}
@@ -130,17 +132,47 @@ func GetLogger(name string) Logger {
 		return &res
 	}
 	loggerLocker.Lock()
-	defer loggerLocker.Unlock()
 	err := os.Mkdir("log", os.ModePerm)
 	if err != nil {
 		// filepath exist
 	}
 	fs, err := os.OpenFile(fmt.Sprintf("log/%s.log", name), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	res = logger{
-		*log.New(fs, "", log.LstdFlags),
+		Logger: *log.New(fs, "", log.LstdFlags),
+		fs:     fs,
 	}
 	loggerContainer[name] = res
+	loggerLocker.Unlock()
 	return &res
+}
+
+func init() {
+
+	// logger rotate
+	Schedule("logger-rotate", 10, func() {
+		loggerLocker.Lock()
+		for loggerName, loggerInstance := range loggerContainer {
+			// 	备份为: xxx.2019-06-20.log
+			loggerFilename := fmt.Sprintf("log/%s.log", loggerName)
+			backupName := fmt.Sprintf("log/%s.%s.log", loggerName, time.Now().Format("2006-1-2_15"))
+			err := loggerInstance.fs.Close()
+			if err != nil {
+				DefaultLogger.ErrorF("%s, close, %s", loggerFilename, err.Error())
+			}
+			err = os.Rename(loggerFilename, backupName)
+			if err != nil {
+				DefaultLogger.ErrorF("%s, 重名: %s, 错误, 日志滚动失败: %s", loggerFilename, backupName, err.Error())
+				continue
+			}
+			fs, err := os.OpenFile(loggerFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
+			loggerInstance = logger{
+				Logger: *log.New(fs, "", log.LstdFlags),
+				fs:     fs,
+			}
+		}
+		loggerLocker.Unlock()
+	})
+
 }
 
 // 默认日志对象
