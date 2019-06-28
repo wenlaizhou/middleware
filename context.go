@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -68,7 +69,7 @@ func GetJsonParamStr(key string, jsonObj map[string]interface{}) string {
 	if !hasVal {
 		return ""
 	}
-	return fmt.Sprintf("%v", val)
+	return strings.TrimSpace(fmt.Sprintf("%v", val))
 }
 
 // 获取query参数
