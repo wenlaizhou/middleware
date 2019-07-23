@@ -33,19 +33,19 @@
 package middleware
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 const ConfDir = "CONF_DIR"
 
-type Config map[string]interface{}
+type Config map[string]string
 
-// 读取json类型配置文件
+// 读取properties类型配置文件
 func LoadConfig(confPath string) Config {
 	res := make(Config)
 	if !Exists(confPath) {
@@ -55,22 +55,50 @@ func LoadConfig(confPath string) Config {
 	if ProcessError(err) {
 		return nil
 	}
-	err = json.Unmarshal(data, &res)
-	if ProcessError(err) {
-		return nil
-	}
 	res[ConfDir] = filepath.Dir(confPath)
+	confStr := string(data)
+	lines := strings.Split(strings.TrimSpace(confStr), "\n")
+	if len(lines) <= 0 {
+		return res
+	}
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if len(line) <= 0 || strings.HasPrefix(line, "#") {
+			continue
+		}
+		kvs := strings.Split(line, "=")
+		if len(kvs) <= 1 {
+			continue
+		}
+		key := strings.TrimSpace(kvs[0])
+		value := strings.TrimSpace(kvs[1])
+		if len(key) <= 0 {
+			continue
+		}
+		if key == "include" {
+			if len(value) > 0 {
+				subConf := LoadConfig(value)
+				if len(subConf) > 0 {
+					for subKey, subValue := range subConf {
+						res[subKey] = res[subValue]
+					}
+				}
+			}
+			continue
+		}
+		res[key] = value
+	}
 	return res
 }
 
 // 获取配置中的value值
-func ConfValue(conf Config, key string) (interface{}, error) {
+func ConfValue(conf Config, key string) (string, error) {
 	if len(key) <= 0 {
-		return -1, errors.New("key 不为空")
+		return "", errors.New("key 不为空")
 	}
 	v, hasData := conf[key]
 	if !hasData {
-		return nil, errors.New("没有匹配的value")
+		return "", errors.New("没有匹配的value")
 	}
 	return v, nil
 }
@@ -85,23 +113,6 @@ func ConfInt(conf Config, key string) (int, error) {
 	return strconv.Atoi(vStr)
 }
 
-// 获取配置中的字符串类型值
-func ConfString(conf Config, key string) (string, error) {
-	v, err := ConfValue(conf, key)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%v", v), nil
-}
-
-// 获取配置中的value值
-//
-// 没有该值, 返回nil
-func ConfValueUnsafe(conf Config, key string) interface{} {
-	v, _ := ConfValue(conf, key)
-	return v
-}
-
 // 获取配置中的数值类型值
 //
 // 错误返回-1
@@ -112,17 +123,6 @@ func ConfIntUnsafe(conf Config, key string) int {
 	}
 	res, _ := strconv.Atoi(fmt.Sprintf("%v", v))
 	return res
-}
-
-// 获取配置中的字符串类型值
-//
-// 错误返回""
-func ConfStringUnsafe(conf Config, key string) string {
-	v, err := ConfValue(conf, key)
-	if err != nil {
-		return ""
-	}
-	return fmt.Sprintf("%v", v)
 }
 
 // 获取配置中的bool
@@ -144,9 +144,16 @@ func ConfBool(conf Config, key string) bool {
 
 // 获取配置文件内容并返回json
 func ConfPrint(conf Config) string {
-	configJson, err := json.Marshal(conf)
-	if err != nil {
-		return fmt.Sprintf("配置文件错误: %v", err.Error())
+	if len(conf) <= 0 {
+		return ""
 	}
-	return string(configJson)
+	res := ""
+	for k, v := range conf {
+		if len(res) > 0 {
+			res = fmt.Sprintf("%s\n%s = %s", res, k, v)
+		} else {
+			res = fmt.Sprintf("%s = %s", k, v)
+		}
+	}
+	return res
 }
