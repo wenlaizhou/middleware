@@ -41,14 +41,14 @@ func RenderTable(data string) []map[string]string {
 	if len(lines) <= 1 {
 		return nil
 	}
-	headers := strings.Fields(lines[0])
+	headers := strings.Fields(strings.TrimSpace(lines[0]))
 	if len(headers) <= 0 {
 		return nil
 	}
 	var res []map[string]string
 	for _, line := range lines[1:] {
 		row := make(map[string]string)
-		fields := strings.Fields(line)
+		fields := strings.Fields(strings.TrimSpace(line))
 		for i, header := range headers {
 			if len(fields)-1 <= i {
 				row[header] = fields[i]
