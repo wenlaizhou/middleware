@@ -77,6 +77,9 @@ func LoadConfig(confPath string) Config {
 		}
 		if key == "include" {
 			if len(value) > 0 {
+				if !strings.HasSuffix(value, ".properties") {
+					value = fmt.Sprintf("%v.properties", value)
+				}
 				subConf := LoadConfig(value)
 				if len(subConf) > 0 {
 					for subKey, subValue := range subConf {
