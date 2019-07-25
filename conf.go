@@ -94,6 +94,15 @@ func LoadConfig(confPath string) Config {
 	return res
 }
 
+// 获取配置值, 不存在该值, 则返回 ""
+func ConfUnsafe(conf Config, key string) string {
+	v, err := ConfValue(conf, key)
+	if err != nil {
+		return ""
+	}
+	return v
+}
+
 // 获取配置中的value值
 func ConfValue(conf Config, key string) (string, error) {
 	if len(key) <= 0 {
