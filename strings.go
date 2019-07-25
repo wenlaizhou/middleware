@@ -3,6 +3,7 @@ package middleware
 import (
 	"bytes"
 	"html/template"
+	"strings"
 )
 
 // 字符串模板渲染
@@ -26,4 +27,34 @@ func RenderTemplateKV(tpl string, kvs ...interface{}) (string, error) {
 		return tpl, err
 	}
 	return buff.String(), nil
+}
+
+// 类似table类型字符串
+//
+// 转换为mysql table类型数据
+func RenderTable(data string) []map[string]string {
+	data = strings.TrimSpace(data)
+	if len(data) <= 0 {
+		return nil
+	}
+	lines := strings.Split(data, "\n")
+	if len(lines) <= 1 {
+		return nil
+	}
+	headers := strings.Fields(lines[0])
+	if len(headers) <= 0 {
+		return nil
+	}
+	var res []map[string]string
+	for _, line := range lines[1:] {
+		row := make(map[string]string)
+		fields := strings.Fields(line)
+		for i, header := range headers {
+			if len(fields)-1 <= i {
+				row[header] = fields[i]
+			}
+		}
+		res = append(res, row)
+	}
+	return res
 }
