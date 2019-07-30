@@ -32,7 +32,7 @@ func RenderTemplateKV(tpl string, kvs ...interface{}) (string, error) {
 // 类似table类型字符串
 //
 // 转换为mysql table类型数据
-func RenderTable(data string) []map[string]string {
+func RenderTable(data string, width int) []map[string]string {
 	data = strings.TrimSpace(data)
 	if len(data) <= 0 {
 		return nil
@@ -44,6 +44,9 @@ func RenderTable(data string) []map[string]string {
 	headers := strings.Fields(strings.TrimSpace(lines[0]))
 	if len(headers) <= 0 {
 		return nil
+	}
+	if width > 0 {
+		headers = headers[:width]
 	}
 	var res []map[string]string
 	for _, line := range lines[1:] {
