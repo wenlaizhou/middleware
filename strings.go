@@ -50,7 +50,7 @@ func RenderTable(data string) []map[string]string {
 		row := make(map[string]string)
 		fields := strings.Fields(strings.TrimSpace(line))
 		for i, header := range headers {
-			if len(fields)-1 <= i {
+			if len(fields)-1 >= i {
 				row[header] = fields[i]
 			}
 		}
