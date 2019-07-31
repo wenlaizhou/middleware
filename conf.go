@@ -72,6 +72,9 @@ func LoadConfig(confPath string) Config {
 		}
 		key := strings.TrimSpace(kvs[0])
 		value := strings.TrimSpace(kvs[1])
+		if len(kvs) > 2 {
+			value = strings.Join(kvs[1:], "=")
+		}
 		if len(key) <= 0 {
 			continue
 		}
