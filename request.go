@@ -81,10 +81,6 @@ func DoRequest(timeoutSecond int, method string, url string,
 
 	bodyReader := bytes.NewReader(body)
 
-	if body == nil || len(body) <= 0 {
-		bodyReader = nil
-	}
-
 	req, err := http.NewRequest(method, url, bodyReader)
 	if ProcessError(err) {
 		return -1, nil, nil, err
