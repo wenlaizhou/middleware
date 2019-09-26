@@ -239,7 +239,7 @@ func (this *Server) RegisterHandler(path string, handler func(Context)) {
 			param[0], "(.*)", -1)
 	}
 
-	pathReg, err := regexp.Compile(path)
+	pathReg, err := regexp.Compile(fmt.Sprintf("^%s", path))
 	mLogger.InfoF("注册handler: %s", path)
 	if !ProcessError(err) {
 		this.pathNodes[path] = pathProcessor{
