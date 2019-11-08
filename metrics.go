@@ -8,7 +8,7 @@ import (
 // create_time{cluster="TC", name="idc02-sre-kubernetes-00", value="2019-03-26 10:30:25 &#43;0800 CST"} 0
 type MetricsData struct {
 	Key   string
-	Value int
+	Value string
 	Tags  map[string]string
 }
 
