@@ -3,7 +3,9 @@ package middleware
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -32,6 +34,14 @@ type NetDevice struct {
 	Name string
 	Ip   string
 	Mac  string
+}
+
+func GetHostname() string {
+	host, err := ioutil.ReadFile("/etc/hostname")
+	if err != nil {
+		mLogger.Error(err.Error())
+	}
+	return strings.TrimSpace(string(host))
 }
 
 // 获取本机ip地址
