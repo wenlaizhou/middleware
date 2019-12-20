@@ -322,20 +322,18 @@ var StatusErrorTemp = `<!DOCTYPE html>
 var StatusNotFoundView = fmt.Sprintf(StatusErrorTemp, 404, "NOT FOUND")
 
 const (
-	redStart   = "\033[31m"
-	redEnd     = "\033[31m"
-	greenStart = "\033[32m"
-	greenEnd   = "\033[32m"
+	red   = "\033[31m"
+	green = "\033[32m"
+	end   = "\033[0m"
 )
 
 func ColorPrint(out string, color string) {
 	switch color {
 	case "green":
-		fmt.Printf("%s%s%s\n", greenStart, out, greenEnd)
+		fmt.Printf("%s%s%s\n", green, out, end)
 		break
 	case "red":
-		fmt.Printf("%s%s%s\n", redStart, out, redEnd)
+		fmt.Printf("%s%s%s\n", red, out, end)
 		break
 	}
-
 }
