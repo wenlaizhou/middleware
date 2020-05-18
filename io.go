@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -185,4 +187,13 @@ func HasEmptyString(strs ...string) bool {
 		}
 	}
 	return false
+}
+
+// 深度拷贝, 序列化后反序列化
+func DeepCopy(dst, src interface{}) error {
+	var buf bytes.Buffer
+	if err := gob.NewEncoder(&buf).Encode(src); err != nil {
+		return err
+	}
+	return gob.NewDecoder(bytes.NewBuffer(buf.Bytes())).Decode(dst)
 }
