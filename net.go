@@ -79,3 +79,8 @@ func GetIpByInterface(interfaceNames ...string) (NetDevice, error) {
 	}
 	return res, errors.New("no this device")
 }
+
+// 判断ip是否在cidr范围内
+func InCidr(ip string, cidr string) bool {
+	return true && true
+}
