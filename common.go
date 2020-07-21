@@ -255,13 +255,13 @@ func StatusText(code int) string {
 	return statusText[code]
 }
 
-var StatusErrorTemp = `<!DOCTYPE html>
+const StaticHtml = `<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-    <title>Page Not Found</title>
+    <title>%v</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         * {
@@ -310,16 +310,13 @@ var StatusErrorTemp = `<!DOCTYPE html>
         }
     </style>
 </head>
-
 <body>
-    <h1> %v &nbsp; %v </h1>
-
+    %v
 </body>
-
 </html>
 `
 
-var StatusNotFoundView = fmt.Sprintf(StatusErrorTemp, 404, "NOT FOUND")
+var StatusNotFoundView = fmt.Sprintf(StaticHtml, "NOT FOUND", "<h1>404 NOT FOUND</h1>")
 
 const (
 	red   = "\033[31m"
