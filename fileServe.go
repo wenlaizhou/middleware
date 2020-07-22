@@ -45,7 +45,7 @@ func serveContent(context Context, name string, modtime time.Time, size int64, c
 			_, err := content.Seek(0, io.SeekStart) // rewind to output whole file
 			if err != nil {
 				context.Error(StatusInternalServerError,
-					fmt.Sprintf(StatusErrorTemp, StatusInternalServerError,
+					fmt.Sprintf(StaticHtml, StatusInternalServerError,
 						"seeker can't seek"))
 				return
 			}
@@ -65,7 +65,7 @@ func serveContent(context Context, name string, modtime time.Time, size int64, c
 				context.SetHeader("Content-Range", fmt.Sprintf("bytes */%d", size))
 			}
 			context.Error(StatusRequestedRangeNotSatisfiable,
-				fmt.Sprintf(StatusErrorTemp,
+				fmt.Sprintf(StaticHtml,
 					StatusRequestedRangeNotSatisfiable, err.Error()))
 			return
 		}
@@ -92,7 +92,7 @@ func serveContent(context Context, name string, modtime time.Time, size int64, c
 			ra := ranges[0]
 			if _, err := content.Seek(ra.start, io.SeekStart); err != nil {
 				context.Error(StatusRequestedRangeNotSatisfiable,
-					fmt.Sprintf(StatusErrorTemp,
+					fmt.Sprintf(StaticHtml,
 						StatusRequestedRangeNotSatisfiable, err.Error()))
 				return
 			}
