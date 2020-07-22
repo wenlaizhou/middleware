@@ -7,10 +7,6 @@ import "context"
 import "time"
 import "bytes"
 import "io"
-import "bufio"
-import "errors"
-import "sync"
-import "syscall"
 
 // 执行命令带超时时间
 //
@@ -38,6 +34,7 @@ func ExecCmdWithTimeout(timeout int, cmd string, args ...string) (string, error)
 	return strings.TrimSpace(fmt.Sprintf("%s\n%s", strings.TrimSpace(outStr), strings.TrimSpace(errStr))), err
 }
 
+/*
 var interExecChannel map[string]chan string
 
 // 交互式命令行服务
@@ -678,3 +675,4 @@ func (rw *OutputStream) SetLineBufferSize(n int) {
 	rw.bufSize = n
 	rw.buf = make([]byte, rw.bufSize)
 }
+*/
