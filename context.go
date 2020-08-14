@@ -19,18 +19,8 @@ type Context struct {
 	body           []byte
 	tpl            *template.Template
 	restProcessors []func(model interface{}) interface{}
-	pathParams     map[string]string
 	writeable      bool
 	sync.RWMutex
-}
-
-// 获取路径参数, /{参数名称}
-func (this *Context) GetPathParam(key string) string {
-	value, ok := this.pathParams[key]
-	if ok {
-		return value
-	}
-	return ""
 }
 
 // 获取请求体
@@ -186,10 +176,9 @@ func (this *Context) DelHeader(key string) {
 
 func newContext(w http.ResponseWriter, r *http.Request) Context {
 	return Context{
-		writeable:  true,
-		Response:   w,
-		Request:    r,
-		pathParams: make(map[string]string),
+		writeable: true,
+		Response:  w,
+		Request:   r,
 	}
 }
 

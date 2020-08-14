@@ -89,7 +89,6 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
 	for _, filterNode := range this.filter {
 		if filterNode.pathReg.MatchString(r.URL.Path) {
 			if !filterNode.handler(ctx) {
@@ -97,28 +96,16 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-
 	if this.hasIndex && r.URL.Path == "/" {
 		this.index.handler(ctx)
 		return
 	}
-
-	for _, pathNode := range this.pathNodes {
-		if pathNode.pathReg.MatchString(r.URL.Path) {
-			pathParams := pathNode.pathReg.FindAllStringSubmatch(r.URL.Path, 10) // 最多10个路径参数
-			if len(pathParams) > 0 && len(pathParams[0]) > 0 {
-				for i, pathParam := range pathParams[0][1:] {
-					if len(pathNode.params) < i+1 {
-						break
-					}
-					ctx.pathParams[pathNode.params[i]] = pathParam
-				}
-			}
-			pathNode.handler(ctx)
-			return
-		}
+	pathNode, hasData := this.pathNodes[r.URL.Path]
+	if !hasData {
+		_ = ctx.Error(StatusNotFound, StatusNotFoundView)
+		return
 	}
-	_ = ctx.Error(StatusNotFound, StatusNotFoundView)
+	pathNode.handler(ctx)
 	return
 }
 
