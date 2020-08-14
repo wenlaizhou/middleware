@@ -191,8 +191,6 @@ func includeTemplate(tpl *template.Template, suffix string, filePaths ...string)
 	return tpl.ParseFiles(fileList...)
 }
 
-var pathParamReg, _ = regexp.Compile("\\{(.*?)\\}")
-
 func RegisterHandler(path string, handler func(Context)) {
 	globalServer.RegisterHandler(path, handler)
 }
@@ -206,34 +204,9 @@ func (this *Server) RegisterHandler(path string, handler func(Context)) {
 	if handler == nil {
 		return
 	}
-	if strings.HasSuffix(path, "/") {
-		path = fmt.Sprintf("%s.*", path)
-	} else {
-		path = fmt.Sprintf("%s$", path)
-	}
-
-	if !strings.HasPrefix(path, "/") {
-		path = fmt.Sprintf("/%s", path)
-	}
-
-	paramMather := pathParamReg.FindAllStringSubmatch(path, -1)
-
-	var params []string
-
-	for _, param := range paramMather {
-		params = append(params, param[1])
-		path = strings.Replace(path,
-			param[0], "(.*)", -1)
-	}
-
-	pathReg, err := regexp.Compile(fmt.Sprintf("^%s", path))
 	mLogger.InfoF("注册handler: %s", path)
-	if !ProcessError(err) {
-		this.pathNodes[path] = pathProcessor{
-			pathReg: pathReg,
-			handler: handler,
-			params:  params,
-		}
+	this.pathNodes[path] = pathProcessor{
+		handler: handler,
 	}
 }
 
@@ -252,8 +225,6 @@ type triNode struct {
 }
 
 type pathProcessor struct {
-	pathReg *regexp.Regexp
-	params  []string
 	handler func(Context)
 }
 
