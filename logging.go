@@ -96,7 +96,25 @@ func RotateLog() {
 	for loggerName, loggerInstance := range loggerContainer {
 		loggerFilename := fmt.Sprintf("log/%s.log", loggerName)
 		backupName := fmt.Sprintf("log/%s.%s.log", loggerName, time.Now().Format("2006-1-2_15-04-05"))
-		err := loggerInstance.fs.Close()
+		if loggerInstance.fs == nil {
+			fs, err := os.OpenFile(loggerFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
+			if err != nil {
+				mLogger.ErrorF("%s, 该logger没有对应文件, 并无法创建该logger, 忽略该logger %s", loggerFilename, err.Error())
+				continue
+			}
+			loggerInstance.fs = fs
+			loggerInstance.Logger.SetOutput(fs)
+			continue
+		}
+		stat, err := loggerInstance.fs.Stat()
+		if err != nil {
+			mLogger.ErrorF("%s, 获取状态错误, 忽略该logger %s", loggerFilename, err.Error())
+			continue
+		}
+		if stat.Size() <= 0 {
+			continue
+		}
+		err = loggerInstance.fs.Close()
 		if err != nil {
 			mLogger.ErrorF("%s, close, %s", loggerFilename, err.Error())
 		}
