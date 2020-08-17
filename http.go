@@ -62,6 +62,11 @@ func (this *Server) GetStatus() int {
 }
 
 func (this *Server) Start() {
+	defer func() {
+		if err := recover(); err != nil {
+			mLogger.ErrorF("%v", err)
+		}
+	}()
 	this.Lock()
 	if this.status != 0 {
 		this.Unlock()
