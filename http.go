@@ -204,6 +204,9 @@ func (this *Server) RegisterHandler(path string, handler func(Context)) {
 	if handler == nil {
 		return
 	}
+	if !strings.HasPrefix("/", path) {
+		path = fmt.Sprintf("/%s", path)
+	}
 	mLogger.InfoF("注册handler: %s", path)
 	this.pathNodes[path] = pathProcessor{
 		handler: handler,
