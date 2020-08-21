@@ -63,6 +63,7 @@ func LoadConfig(confPath string) Config {
 	}
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
+		line = strings.ReplaceAll(line, "\\n", "\n")
 		if len(line) <= 0 || strings.HasPrefix(line, "#") {
 			continue
 		}
