@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-// create_time{cluster="TC", name="idc02-sre-kubernetes-00", value="2019-03-26 10:30:25 &#43;0800 CST"} 0
 type MetricsData struct {
 	Key   string
 	Value string
@@ -27,4 +26,16 @@ func FormatMetricsData(data MetricsData) string {
 		tagsStr = fmt.Sprintf("{%v}", strings.Join(tags, ","))
 	}
 	return fmt.Sprintf(metricsTpl, data.Key, tagsStr, data.Value)
+}
+
+func PrintMetricsData(data []MetricsData, context Context) {
+	context.OK(defaultContentType, []byte(GetMetricsData(data)))
+}
+
+func GetMetricsData(data []MetricsData) string {
+	var lines []string
+	for _, metric := range data {
+		lines = append(lines, FormatMetricsData(metric))
+	}
+	return strings.Join(lines, "\n")
 }
