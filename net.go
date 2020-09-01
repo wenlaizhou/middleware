@@ -20,10 +20,10 @@ func IsActive(protocol string, ip string, port int, timeoutSecond int) bool {
 	switch protocol {
 	case PROTOCOL_TCP, PROTOCOL_UDP:
 		conn, err := net.DialTimeout(protocol, fmt.Sprintf("%s:%v", ip, port), time.Duration(timeoutSecond)*time.Second)
+		defer conn.Close()
 		if err != nil {
 			return false
 		}
-		defer conn.Close()
 		return true
 	default:
 		return false
