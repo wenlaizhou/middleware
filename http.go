@@ -25,6 +25,9 @@ type Server struct {
 	CrossDomain    bool
 	status         int
 	filter         []filterProcessor
+	metrics        []MetricsData
+	staticMetrics  map[int]MetricsData
+	enableMetrics  bool
 	sync.RWMutex
 }
 
@@ -44,11 +47,19 @@ func GetGlobalServer() Server {
 
 func NewServer(host string, port int) Server {
 	srv := Server{
-		Host:        host,
-		Port:        port,
-		CrossDomain: true,
-		hasIndex:    false,
-		baseTpl:     template.New("middleware.Base"),
+		Host:          host,
+		Port:          port,
+		CrossDomain:   true,
+		hasIndex:      false,
+		baseTpl:       template.New("middleware.Base"),
+		enableMetrics: false,
+		staticMetrics: map[int]MetricsData{
+			200: {
+				Key:   "count",
+				Value: 0,
+				Tags:  nil,
+			},
+		},
 	}
 
 	srv.pathNodes = make(map[string]pathProcessor)
@@ -200,6 +211,16 @@ func RegisterHandler(path string, handler func(Context)) {
 	globalServer.RegisterHandler(path, handler)
 }
 
+func (this *Server) EnableMetrics() {
+	this.RegisterHandler("/metrics", func(context Context) {
+		context.OK(Plain, []byte(GetMetricsData(append(this.metrics, this.staticMetrics))))
+	})
+}
+
+func EnableMetrics() {
+	globalServer.EnableMetrics()
+}
+
 func (this *Server) RegisterHandler(path string, handler func(Context)) {
 	this.Lock()
 	defer this.Unlock()
@@ -237,6 +258,7 @@ type pathProcessor struct {
 }
 
 func StaticProcessor(ctx Context) {
+	ctx.code = 200
 	http.ServeFile(ctx.Response, ctx.Request, ctx.Request.URL.Path[1:])
 }
 

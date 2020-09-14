@@ -9,8 +9,12 @@ func (this *Context) RenderTemplate(name string, model interface{}) error {
 		return this.ApiResponse(0, "", model)
 	}
 	if this.tpl != nil {
-		return this.tpl.ExecuteTemplate(this.Response, name, model)
+		this.code = 200
+		err := this.tpl.ExecuteTemplate(this.Response, name, model)
+		this.code = 500
+		return err
 	}
+	this.code = 500
 	return errors.New("template 不存在")
 }
 
@@ -37,5 +41,6 @@ func (this *Context) RenderTemplateKV(name string, kvs ...interface{}) error {
 	if this.tpl == nil {
 		return errors.New("template 不存在")
 	}
+	this.code = 200
 	return this.tpl.ExecuteTemplate(this.Response, name, model)
 }

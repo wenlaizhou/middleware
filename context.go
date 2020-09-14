@@ -20,6 +20,7 @@ type Context struct {
 	tpl            *template.Template
 	restProcessors []func(model interface{}) interface{}
 	writeable      bool
+	code           int
 	sync.RWMutex
 }
 
@@ -116,6 +117,7 @@ func (this *Context) Redirect(path string) error {
 		return errors.New("禁止重复写入response")
 	}
 	this.writeable = false
+	this.code = http.StatusFound
 	http.Redirect(this.Response, this.Request, path, http.StatusFound)
 	return nil
 }
@@ -132,6 +134,7 @@ func (this *Context) OK(contentType string, content []byte) error {
 		this.SetHeader(ContentType, contentType)
 	}
 	this.SetHeader("server", "framework")
+	this.code = 200
 	_, err := this.Response.Write(content)
 	return err
 }
@@ -145,6 +148,7 @@ func (this *Context) Code(static int) error {
 	}
 	this.writeable = false
 	this.SetHeader("server", "framework")
+	this.code = static
 	this.Response.WriteHeader(static)
 	return nil
 }
@@ -159,6 +163,7 @@ func (this *Context) Error(static int, htmlStr string) error {
 	this.writeable = false
 	this.SetHeader("server", "framework")
 	this.SetHeader(ContentType, Html)
+	this.code = static
 	this.Response.WriteHeader(static)
 	_, _ = this.Response.Write([]byte(htmlStr))
 	return nil
@@ -245,6 +250,7 @@ func (this *Context) WriteNotModified() error {
 // 下载二进制文件
 func (this *Context) DownloadContent(fileName string, data []byte) {
 	this.SetHeader("Content-disposition", fmt.Sprintf("attachment;filename=%s", fileName))
+	this.code = 200
 	_, _ = this.Response.Write(data)
 	return
 }

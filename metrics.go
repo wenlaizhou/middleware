@@ -7,7 +7,7 @@ import (
 
 type MetricsData struct {
 	Key   string
-	Value string
+	Value int
 	Tags  map[string]string
 }
 
