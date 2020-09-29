@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 )
 
 var mLogger = GetLogger("middleware")
@@ -25,8 +27,10 @@ type Server struct {
 	CrossDomain    bool
 	status         int
 	filter         []filterProcessor
-	metrics        []MetricsData
-	staticMetrics  map[int]MetricsData
+	successAccess  int64
+	successExpire  int64
+	totalAccess    int64
+	totalExpire    int64
 	enableMetrics  bool
 	sync.RWMutex
 }
@@ -53,13 +57,10 @@ func NewServer(host string, port int) Server {
 		hasIndex:      false,
 		baseTpl:       template.New("middleware.Base"),
 		enableMetrics: false,
-		staticMetrics: map[int]MetricsData{
-			200: {
-				Key:   "count",
-				Value: 0,
-				Tags:  nil,
-			},
-		},
+		successAccess: 0,
+		successExpire: 0,
+		totalAccess:   0,
+		totalExpire:   0,
 	}
 
 	srv.pathNodes = make(map[string]pathProcessor)
@@ -105,23 +106,33 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	atomic.AddInt64(&this.totalAccess, 1)
+	start := time.Now().UnixNano()
 	for _, filterNode := range this.filter {
 		if filterNode.pathReg.MatchString(r.URL.Path) {
 			if !filterNode.handler(ctx) {
+				atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)*1000*1000)
 				return
 			}
 		}
 	}
 	if this.hasIndex && r.URL.Path == "/" {
 		this.index.handler(ctx)
+		atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)*1000*1000)
 		return
 	}
 	pathNode, hasData := this.pathNodes[r.URL.Path]
 	if !hasData {
 		_ = ctx.Error(StatusNotFound, StatusNotFoundView)
+		atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)*1000*1000)
 		return
 	}
 	pathNode.handler(ctx)
+	if ctx.code == 200 {
+		atomic.AddInt64(&this.successAccess, 1)
+		atomic.AddInt64(&this.successExpire, (time.Now().UnixNano()-start)*1000*1000)
+	}
+	atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)*1000*1000)
 	return
 }
 
@@ -213,7 +224,18 @@ func RegisterHandler(path string, handler func(Context)) {
 
 func (this *Server) EnableMetrics() {
 	this.RegisterHandler("/metrics", func(context Context) {
-		context.OK(Plain, []byte(GetMetricsData(append(this.metrics, this.staticMetrics))))
+		context.OK(Plain, []byte(GetMetricsData([]MetricsData{
+			{
+				Key:   "",
+				Value: int64(this.totalAccess),
+				Tags: map[string]string{
+					"": "",
+				},
+			},
+			{},
+			{},
+			{},
+		})))
 	})
 }
 
