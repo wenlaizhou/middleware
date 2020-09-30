@@ -4,7 +4,7 @@ import "strings"
 
 type TrieNode struct {
 	Path    string
-	Handler func(Context)
+	Handler func(Context) //root handler 为默认处理器
 	Next    map[string]TrieNode
 }
 
