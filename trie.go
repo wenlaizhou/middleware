@@ -13,10 +13,10 @@ func AddTriePath(path string, handler func(Context), nodes map[string]TrieNode) 
 		return
 	}
 	if strings.HasSuffix(path, "/") {
-
+		path = path[0 : len(path)-2]
 	}
 	if strings.HasPrefix(path, "/") {
-
+		path = path[1:]
 	}
 	if !strings.Contains(path, "/") {
 		originNode, has := nodes[path]
