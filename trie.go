@@ -87,11 +87,34 @@ func createTrie(paths []string, handler func(Context)) *TrieNode {
 	return &result
 }
 
-func processPath() {
-
-}
-
 func pick(nodes map[string]TrieNode, path string) func(Context) {
+	query := nodes
+	if strings.HasSuffix(path, "/") {
+		path = path[0 : len(path)-2]
+	}
+	if strings.HasPrefix(path, "/") {
+		path = path[1:]
+	}
+	var pre TrieNode
+	paths := strings.Split(path, "/")
+	for i := 0; i < len(paths); i++ {
+		p := paths[i]
+		if i == len(paths)-1 {
+			node, has := query[p]
+			if has {
+				return node.Handler
+			} else {
+				return pre.Handler
+			}
+		}
+		node, has := query[p]
+		if has {
+			pre = node
+			query = node.Children
+			continue
+		}
+		return pre.Handler
+	}
 	return nil
 }
 
