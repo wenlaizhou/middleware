@@ -124,6 +124,17 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	pathNode, hasData := this.pathNodes[r.URL.Path]
 	if !hasData {
+		for _, sp := range this.starPathNodes {
+			if sp.pathReg.MatchString(r.URL.Path) {
+				sp.handler(ctx)
+				if ctx.code == 200 {
+					atomic.AddInt64(&this.successAccess, 1)
+					atomic.AddInt64(&this.successExpire, (time.Now().UnixNano()-start)*1000*1000)
+				}
+				atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)*1000*1000)
+				return
+			}
+		}
 		_ = ctx.Error(StatusNotFound, StatusNotFoundView)
 		atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)*1000*1000)
 		return
