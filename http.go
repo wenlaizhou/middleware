@@ -21,6 +21,7 @@ type Server struct {
 	Port           int
 	baseTpl        *template.Template
 	pathNodes      map[string]pathProcessor
+	starPathNodes  []starProcessor
 	index          pathProcessor
 	restProcessors []func(model interface{}) interface{}
 	hasIndex       bool
@@ -256,6 +257,13 @@ func (this *Server) RegisterHandler(path string, handler func(Context)) {
 		path = fmt.Sprintf("/%s", path)
 	}
 	mLogger.InfoF("注册handler: %s", path)
+	if strings.HasSuffix(path, "*") {
+		this.starPathNodes = append(this.starPathNodes, starProcessor{
+			pathReg: regexp.MustCompile(strings.Replace(path, "*", ".*", -1)),
+			handler: handler,
+		})
+		return
+	}
 	this.pathNodes[path] = pathProcessor{
 		handler: handler,
 	}
@@ -276,6 +284,11 @@ type triNode struct {
 }
 
 type pathProcessor struct {
+	handler func(Context)
+}
+
+type starProcessor struct {
+	pathReg *regexp.Regexp
 	handler func(Context)
 }
 
