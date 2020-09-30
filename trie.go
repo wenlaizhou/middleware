@@ -33,7 +33,7 @@ func AddTriePath(path string, handler func(Context), nodes map[string]TrieNode) 
 		return
 	}
 	paths := strings.Split(path, "/")
-	tmpNodes := nodes
+	var tmpNodes = nodes
 	for i := 0; i < len(paths); i++ {
 		p := paths[i]
 		originNode, has := tmpNodes[p]
@@ -62,10 +62,10 @@ func createTrie(paths []string, handler func(Context)) TrieNode {
 	}
 	result := TrieNode{
 		Key:      paths[0],
-		Handler:  handler,
+		Handler:  nil,
 		Children: nil,
 	}
-	tmp := result
+	var tmp = result
 	for i := 1; i < len(paths); i++ {
 		if i == len(paths)-1 {
 			tmp.Children = map[string]TrieNode{
