@@ -33,6 +33,7 @@ type Server struct {
 	totalAccess    int64
 	totalExpire    int64
 	enableMetrics  bool
+	root           TrieNode
 	sync.RWMutex
 }
 
@@ -62,6 +63,11 @@ func NewServer(host string, port int) Server {
 		successExpire: 0,
 		totalAccess:   0,
 		totalExpire:   0,
+		root: TrieNode{
+			Path:    "",
+			Handler: nil,
+			Next:    map[string]TrieNode{},
+		},
 	}
 
 	srv.pathNodes = make(map[string]pathProcessor)
