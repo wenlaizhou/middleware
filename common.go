@@ -334,7 +334,3 @@ func ColorPrint(out string, color string) {
 		break
 	}
 }
-
-func HasKey(mapData map[string]interface{}, key string) bool {
-	return false
-}
