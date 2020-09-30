@@ -33,31 +33,34 @@ func AddTriePath(path string, handler func(Context), nodes map[string]TrieNode) 
 		return
 	}
 	paths := strings.Split(path, "/")
-	var tmpNodes = nodes
+	var tmpNodes = &nodes
 	for i := 0; i < len(paths); i++ {
 		p := paths[i]
-		originNode, has := tmpNodes[p]
+		originNode, has := (*tmpNodes)[p]
 		if !has {
-			tmpNodes[p] = createTrie(paths[i:], handler)
+			var x = createTrie(paths[i:], handler)
+			tmpNodes = &x
 			return
 		}
 		if originNode.Children == nil {
 			originNode.Children = map[string]TrieNode{}
 		}
-		tmpNodes = originNode.Children
+		tmpNodes = &originNode.Children
 		continue
 	}
 }
 
-func createTrie(paths []string, handler func(Context)) TrieNode {
+func createTrie(paths []string, handler func(Context)) map[string]TrieNode {
 	if len(paths) <= 0 {
-		return TrieNode{}
+		return nil
 	}
 	if len(paths) == 1 {
-		return TrieNode{
-			Key:      paths[0],
-			Handler:  handler,
-			Children: nil,
+		return map[string]TrieNode{
+			paths[0]: {
+				Key:      paths[0],
+				Handler:  handler,
+				Children: nil,
+			},
 		}
 	}
 	result := TrieNode{
@@ -65,7 +68,7 @@ func createTrie(paths []string, handler func(Context)) TrieNode {
 		Handler:  nil,
 		Children: nil,
 	}
-	var tmp = result
+	var tmp = &result
 	for i := 1; i < len(paths); i++ {
 		if i == len(paths)-1 {
 			tmp.Children = map[string]TrieNode{
@@ -81,9 +84,12 @@ func createTrie(paths []string, handler func(Context)) TrieNode {
 				},
 			}
 		}
-		tmp = tmp.Children[paths[i]]
+		var x = tmp.Children[paths[i]]
+		tmp = &x
 	}
-	return result
+	return map[string]TrieNode{
+		paths[0]: result,
+	}
 }
 
 func processPath() {
