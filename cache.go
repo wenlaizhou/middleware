@@ -28,7 +28,7 @@ func NewCache(expire time.Duration) Cache {
 }
 
 // 插入数据
-func InsertData(cache *Cache, key string, data interface{}) {
+func (cache *Cache) InsertData(key string, data interface{}) {
 	t := time.Now().Add(cache.Expire)
 	cache.Lock.Lock()
 	defer cache.Lock.Unlock()
@@ -39,7 +39,7 @@ func InsertData(cache *Cache, key string, data interface{}) {
 }
 
 // 获取缓存数据
-func GetData(cache *Cache, key string) interface{} {
+func (cache *Cache) GetData(key string) interface{} {
 	value, hasData := cache.Data[key]
 	if !hasData {
 		return nil
@@ -54,7 +54,7 @@ func GetData(cache *Cache, key string) interface{} {
 }
 
 // 清除过期数据
-func CacheClean(cache *Cache) {
+func (cache *Cache) CacheClean() {
 	cache.Lock.Lock()
 	for k, v := range cache.Data {
 		if time.Now().After(v.Time.Add(cache.Expire)) {
