@@ -32,6 +32,9 @@ func addNext(paths []string, handler func(Context), node TrieNode) {
 		return
 	}
 	path := paths[0]
+	if node.Next == nil {
+		node.Next = map[string]TrieNode{}
+	}
 	org, has := node.Next[path]
 	if len(paths) == 1 {
 		// 开始做事
