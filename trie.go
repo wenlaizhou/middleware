@@ -8,7 +8,15 @@ type TrieNode struct {
 	Next    map[string]TrieNode
 }
 
-func AddPath(path string, handler func(Context), root TrieNode) {
+func NewTrieNode(defaultHandler func(Context)) TrieNode {
+	return TrieNode{
+		Path:    "/",
+		Handler: defaultHandler,
+		Next:    map[string]TrieNode{},
+	}
+}
+
+func (this TrieNode) AddPath(path string, handler func(Context)) {
 	if strings.HasSuffix(path, "/") {
 		path = path[0 : len(path)-2]
 	}
@@ -16,7 +24,7 @@ func AddPath(path string, handler func(Context), root TrieNode) {
 		path = path[1:]
 	}
 	paths := strings.Split(path, "/")
-	addNext(paths, handler, root)
+	addNext(paths, handler, this)
 }
 
 func addNext(paths []string, handler func(Context), node TrieNode) {
@@ -48,7 +56,7 @@ func addNext(paths []string, handler func(Context), node TrieNode) {
 	}
 }
 
-func FindPath(path string, root TrieNode) func(Context) {
+func (this TrieNode) FindPath(path string) func(Context) {
 	if strings.HasSuffix(path, "/") {
 		path = path[0 : len(path)-2]
 	}
@@ -56,7 +64,7 @@ func FindPath(path string, root TrieNode) func(Context) {
 		path = path[1:]
 	}
 	paths := strings.Split(path, "/")
-	return findNext(paths, root)
+	return findNext(paths, this)
 }
 
 func findNext(paths []string, root TrieNode) func(Context) {

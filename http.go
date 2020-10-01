@@ -64,7 +64,7 @@ func NewServer(host string, port int) Server {
 		totalAccess:   0,
 		totalExpire:   0,
 		root: TrieNode{
-			Path:    "",
+			Path:    "/",
 			Handler: nil,
 			Next:    map[string]TrieNode{},
 		},
@@ -103,6 +103,7 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := newContext(w, r)
 	ctx.tpl = this.baseTpl
 	ctx.restProcessors = this.restProcessors
+	ctx.code = 200 //是否合适
 	if this.CrossDomain {
 		ctx.SetHeader(AccessControlAllowOrigin, "*")
 		ctx.SetHeader(AccessControlAllowMethods, METHODS)
@@ -124,28 +125,17 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if this.hasIndex && r.URL.Path == "/" {
-		this.index.handler(ctx)
+		this.root.Handler(ctx)
 		atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)*1000*1000)
 		return
 	}
-	pathNode, hasData := this.pathNodes[r.URL.Path]
-	if !hasData {
-		for _, sp := range this.starPathNodes {
-			if sp.pathReg.MatchString(r.URL.Path) {
-				sp.handler(ctx)
-				if ctx.code == 200 {
-					atomic.AddInt64(&this.successAccess, 1)
-					atomic.AddInt64(&this.successExpire, (time.Now().UnixNano()-start)*1000*1000)
-				}
-				atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)*1000*1000)
-				return
-			}
-		}
+	handler := this.root.FindPath(r.URL.Path)
+	if handler == nil {
 		_ = ctx.Error(StatusNotFound, StatusNotFoundView)
 		atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)*1000*1000)
 		return
 	}
-	pathNode.handler(ctx)
+	handler(ctx)
 	if ctx.code == 200 {
 		atomic.AddInt64(&this.successAccess, 1)
 		atomic.AddInt64(&this.successExpire, (time.Now().UnixNano()-start)*1000*1000)
@@ -270,20 +260,8 @@ func (this *Server) RegisterHandler(path string, handler func(Context)) {
 	if handler == nil {
 		return
 	}
-	if !strings.HasPrefix("/", path) {
-		path = fmt.Sprintf("/%s", path)
-	}
 	mLogger.InfoF("注册handler: %s", path)
-	if strings.HasSuffix(path, "*") {
-		this.starPathNodes = append(this.starPathNodes, starProcessor{
-			pathReg: regexp.MustCompile(strings.Replace(path, "*", ".*", -1)),
-			handler: handler,
-		})
-		return
-	}
-	this.pathNodes[path] = pathProcessor{
-		handler: handler,
-	}
+	this.root.AddPath(path, handler)
 }
 
 func (this *Server) RegisterRestProcessor(processor func(model interface{}) interface{}) {
@@ -291,13 +269,6 @@ func (this *Server) RegisterRestProcessor(processor func(model interface{}) inte
 	this.restProcessors = append(this.restProcessors, processor)
 	this.Unlock()
 	mLogger.InfoLn("新增restProcessor")
-}
-
-type triNode struct {
-	path    string
-	pathReg regexp.Regexp
-	childs  []triNode
-	data    *interface{}
 }
 
 type pathProcessor struct {
