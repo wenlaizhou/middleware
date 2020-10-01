@@ -155,9 +155,7 @@ func (this *Server) RegisterIndex(handler func(Context)) {
 	this.Lock()
 	defer this.Unlock()
 	this.hasIndex = true
-	this.index = pathProcessor{
-		handler: handler,
-	}
+	this.root.Handler = handler
 }
 
 func RegisterIndex(handler func(Context)) {
