@@ -58,7 +58,7 @@ func addNext(paths []string, handler func(Context), node TrieNode) {
 
 func (this TrieNode) FindPath(path string) func(Context) {
 	if strings.HasSuffix(path, "/") {
-		path = path[0 : len(path)-2]
+		path = path[0 : len(path)-1]
 	}
 	if strings.HasPrefix(path, "/") {
 		path = path[1:]
@@ -72,10 +72,13 @@ func findNext(paths []string, root TrieNode) func(Context) {
 		return nil
 	}
 	path := paths[0]
+	org, has := root.Next[path]
 	if len(paths) == 1 {
+		if has {
+			return org.Handler
+		}
 		return root.Handler
 	}
-	org, has := root.Next[path]
 	if !has {
 		return root.Handler
 	}
