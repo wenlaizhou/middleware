@@ -18,7 +18,7 @@ func NewTrieNode(defaultHandler func(Context)) TrieNode {
 
 func (this TrieNode) AddPath(path string, handler func(Context)) {
 	if strings.HasSuffix(path, "/") {
-		path = path[0 : len(path)-2]
+		path = path[0 : len(path)-1]
 	}
 	if strings.HasPrefix(path, "/") {
 		path = path[1:]
