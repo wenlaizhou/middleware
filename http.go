@@ -178,6 +178,7 @@ func RegisterTemplate(filePath string) {
 	globalServer.RegisterTemplate(filePath)
 }
 
+// warning: 请在设置模板目录前使用
 func (this *Server) TemplateFunc(name string, function interface{}) {
 	this.Lock()
 	defer this.Unlock()
@@ -185,6 +186,7 @@ func (this *Server) TemplateFunc(name string, function interface{}) {
 		name: function})
 }
 
+// warning: 请在设置模板目录前使用
 func TemplateFunc(name string, function interface{}) {
 	globalServer.TemplateFunc(name, function)
 }
