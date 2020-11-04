@@ -231,15 +231,21 @@ func (this *Server) EnableMetrics() {
 	this.RegisterHandler("/metrics", func(context Context) {
 		context.OK(Plain, []byte(GetMetricsData([]MetricsData{
 			{
-				Key:   "",
+				Key:   "request_count",
 				Value: int64(this.totalAccess),
-				Tags: map[string]string{
-					"": "",
-				},
 			},
-			{},
-			{},
-			{},
+			{
+				Key:   "request_time",
+				Value: int64(this.totalExpire),
+			},
+			{
+				Key:   "success_count",
+				Value: int64(this.successAccess),
+			},
+			{
+				Key:   "success_time",
+				Value: int64(this.successExpire),
+			},
 		})))
 	})
 }
