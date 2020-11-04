@@ -2,6 +2,7 @@ package middleware
 
 import "errors"
 
+//todo i18n 国际化支持
 func (this *Context) RenderTemplate(name string, model interface{}) error {
 	userAgent := this.GetHeader(UserAgent)
 	if len(userAgent) <= 0 {
