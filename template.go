@@ -1,19 +1,44 @@
 package middleware
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
-//todo i18n 国际化支持
+//根据请求判断接口
 func (this *Context) RenderTemplate(name string, model interface{}) error {
-	userAgent := this.GetHeader(UserAgent)
-	if len(userAgent) <= 0 {
-		// 	无User-Agent的判断为api调用
+	userAccept := this.GetHeader("Accept")
+	if len(userAccept) <= 0 || !strings.Contains(userAccept, "text/html") {
 		return this.ApiResponse(0, "", model)
 	}
 	if this.tpl != nil {
 		this.code = 200
-		err := this.tpl.ExecuteTemplate(this.Response, name, model)
-		this.code = 500
-		return err
+		if this.EnableI18n {
+			locale := this.GetCookie("locale")
+			if len(locale) <= 0 {
+				locale = "cn"
+			}
+			var message map[string]string
+			if locale == "cn" {
+				message = this.Message.Cn
+			} else {
+				message = this.Message.En
+			}
+			err := this.tpl.ExecuteTemplate(this.Response, name, map[string]interface{}{
+				"data":    model,
+				"message": message,
+			})
+			if err != nil {
+				this.code = 500
+			}
+			return err
+		} else {
+			err := this.tpl.ExecuteTemplate(this.Response, name, model)
+			if err != nil {
+				this.code = 500
+			}
+			return err
+		}
 	}
 	this.code = 500
 	return errors.New("template 不存在")
@@ -21,7 +46,6 @@ func (this *Context) RenderTemplate(name string, model interface{}) error {
 
 // 直接转换成接口
 func (this *Context) RenderTemplateKV(name string, kvs ...interface{}) error {
-	userAgent := this.GetHeader(UserAgent)
 	model := make(map[string]interface{})
 	kvsLen := len(kvs)
 	for i := 0; i < kvsLen; i += 2 {
@@ -35,13 +59,26 @@ func (this *Context) RenderTemplateKV(name string, kvs ...interface{}) error {
 			model[v] = value
 		}
 	}
-	if len(userAgent) <= 0 {
-		// 	无User-Agent的判断为api调用
+	userAccept := this.GetHeader("Accept")
+	if len(userAccept) <= 0 || !strings.Contains(userAccept, "text/html") {
 		return this.ApiResponse(0, "", model)
 	}
 	if this.tpl == nil {
 		return errors.New("template 不存在")
 	}
 	this.code = 200
+	if this.EnableI18n {
+		locale := this.GetCookie("locale")
+		if len(locale) <= 0 {
+			locale = "cn"
+		}
+		var message map[string]string
+		if locale == "cn" {
+			message = this.Message.Cn
+		} else {
+			message = this.Message.En
+		}
+		model["message"] = message
+	}
 	return this.tpl.ExecuteTemplate(this.Response, name, model)
 }

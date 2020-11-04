@@ -32,8 +32,9 @@ type Server struct {
 	successExpire  int64
 	totalAccess    int64
 	totalExpire    int64
-	enableMetrics  bool
 	root           TrieNode
+	i18n           I18n
+	enableI18n     bool
 	sync.RWMutex
 }
 
@@ -57,8 +58,8 @@ func NewServer(host string, port int) Server {
 		Port:          port,
 		CrossDomain:   true,
 		hasIndex:      false,
+		enableI18n:    false,
 		baseTpl:       template.New("middleware.Base"),
-		enableMetrics: false,
 		successAccess: 0,
 		successExpire: 0,
 		totalAccess:   0,
@@ -104,6 +105,10 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx.tpl = this.baseTpl
 	ctx.restProcessors = this.restProcessors
 	ctx.code = 200 //是否合适
+	if this.enableI18n {
+		ctx.EnableI18n = true
+		ctx.Message = this.i18n
+	}
 	if this.CrossDomain {
 		ctx.SetHeader(AccessControlAllowOrigin, "*")
 		ctx.SetHeader(AccessControlAllowMethods, METHODS)
@@ -250,8 +255,25 @@ func (this *Server) EnableMetrics() {
 	})
 }
 
+func (this *Server) SetI18n(name string) {
+	if len(name) <= 0 {
+		name = "message"
+	}
+	cn := LoadConfig(fmt.Sprintf("%s_cn.properties", name))
+	en := LoadConfig(fmt.Sprintf("%s_en.properties", name))
+	this.i18n = I18n{
+		Cn: cn,
+		En: en,
+	}
+	this.enableI18n = true
+}
+
 func EnableMetrics() {
 	globalServer.EnableMetrics()
+}
+
+func SetI18n(name string) {
+	globalServer.SetI18n(name)
 }
 
 func (this *Server) RegisterHandler(path string, handler func(Context)) {

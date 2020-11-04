@@ -21,7 +21,14 @@ type Context struct {
 	restProcessors []func(model interface{}) interface{}
 	writeable      bool
 	code           int
+	Message        I18n
+	EnableI18n     bool
 	sync.RWMutex
+}
+
+type I18n struct {
+	Cn map[string]string
+	En map[string]string
 }
 
 // 获取请求体
@@ -181,9 +188,10 @@ func (this *Context) DelHeader(key string) {
 
 func newContext(w http.ResponseWriter, r *http.Request) Context {
 	return Context{
-		writeable: true,
-		Response:  w,
-		Request:   r,
+		EnableI18n: false,
+		writeable:  true,
+		Response:   w,
+		Request:    r,
 	}
 }
 
