@@ -20,11 +20,18 @@ type Cache struct {
 
 // 创建新缓存
 func NewCache(expire time.Duration) Cache {
-	return Cache{
+	res := Cache{
 		Expire: expire,
 		Data:   make(map[string]CacheData),
 		Lock:   sync.RWMutex{},
 	}
+	go func(cache Cache) {
+		for {
+			time.Sleep(cache.Expire)
+			cache.CacheClean()
+		}
+	}(res)
+	return res
 }
 
 // 插入数据
@@ -51,6 +58,15 @@ func (cache *Cache) GetData(key string) interface{} {
 		return nil
 	}
 	return value.Data
+}
+
+// 获取全部缓存数据
+func (cache *Cache) GetAllKeys() []string {
+	var res []string
+	for k, _ := range cache.Data {
+		res = append(res, k)
+	}
+	return res
 }
 
 // 清除过期数据
