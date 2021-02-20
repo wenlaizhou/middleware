@@ -2,7 +2,9 @@ package middleware
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
+	"reflect"
 	"strings"
 )
 
@@ -60,4 +62,14 @@ func RenderTable(data string, width int) []map[string]string {
 		res = append(res, row)
 	}
 	return res
+}
+
+//判断数据是否为空
+func IsEmpty(param interface{}) bool {
+	switch reflect.TypeOf(param) {
+	case reflect.TypeOf(""):
+		return param == nil || fmt.Sprintf("%s", param) == ""
+	default:
+		return param == nil
+	}
 }
