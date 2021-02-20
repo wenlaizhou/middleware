@@ -51,12 +51,6 @@ func (cache *Cache) GetData(key string) interface{} {
 	if !hasData {
 		return nil
 	}
-	if time.Now().After(value.Time.Add(cache.Expire)) {
-		cache.Lock.Lock()
-		delete(cache.Data, key)
-		cache.Lock.Unlock()
-		return nil
-	}
 	return value.Data
 }
 
