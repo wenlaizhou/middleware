@@ -2,6 +2,36 @@ package middleware
 
 import "strings"
 
+/*
+type Trie struct {
+	path string
+	handler func(Context)
+	children map[string]Trie
+}
+
+data map[string]Trie
+
+func Constructor() Trie {
+
+}
+
+func (this *Trie) Insert(word string)  {
+
+}
+
+func (this *Trie) Search(word string) bool {
+	paths = string.split(word, "/")
+	for index, p := range paths {
+		Search(wordSub)
+		//children 是否还存在, 是否匹配对应路径, 以上都是否, 则直接返回handler
+	}
+}
+
+func (this *Trie) StartsWith(prefix string) bool {
+
+}
+*/
+
 type TrieNode struct {
 	Path    string
 	Handler func(Context) //root handler 为默认处理器
