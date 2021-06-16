@@ -104,7 +104,7 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := newContext(w, r)
 	ctx.tpl = this.baseTpl
 	ctx.restProcessors = this.restProcessors
-	ctx.code = 200 //是否合适
+	ctx.code = 200 // 是否合适
 	if this.enableI18n {
 		ctx.EnableI18n = true
 		ctx.Message = this.i18n
