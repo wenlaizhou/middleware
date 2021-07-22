@@ -23,12 +23,21 @@ type Context struct {
 	code           int
 	Message        I18n
 	EnableI18n     bool
+	pathParams     map[string]string
 	sync.RWMutex
 }
 
 type I18n struct {
 	Cn map[string]string
 	En map[string]string
+}
+
+func (this *Context) GetPathParam(key string) string {
+	value, ok := this.pathParams[key]
+	if ok {
+		return value
+	}
+	return ""
 }
 
 // 获取请求体
@@ -192,6 +201,7 @@ func newContext(w http.ResponseWriter, r *http.Request) Context {
 		writeable:  true,
 		Response:   w,
 		Request:    r,
+		pathParams: map[string]string{},
 	}
 }
 

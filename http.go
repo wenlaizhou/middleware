@@ -21,7 +21,6 @@ type Server struct {
 	Port           int
 	baseTpl        *template.Template
 	pathNodes      map[string]pathProcessor
-	starPathNodes  []starProcessor
 	index          pathProcessor
 	restProcessors []func(model interface{}) interface{}
 	hasIndex       bool
@@ -32,7 +31,6 @@ type Server struct {
 	successExpire  int64
 	totalAccess    int64
 	totalExpire    int64
-	root           TrieNode
 	i18n           I18n
 	enableI18n     bool
 	sync.RWMutex
@@ -64,11 +62,6 @@ func NewServer(host string, port int) Server {
 		successExpire: 0,
 		totalAccess:   0,
 		totalExpire:   0,
-		root: TrieNode{
-			Path:    "/",
-			Handler: nil,
-			Next:    map[string]TrieNode{},
-		},
 	}
 
 	srv.pathNodes = make(map[string]pathProcessor)
@@ -130,11 +123,26 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if this.hasIndex && r.URL.Path == "/" {
-		this.root.Handler(ctx)
+		this.index.handler(ctx)
 		atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)/(1000000))
 		return
 	}
-	handler := this.root.FindPath(r.URL.Path)
+	var handler func(Context)
+	for _, pathNode := range this.pathNodes {
+		if pathNode.pathReg.MatchString(r.URL.Path) {
+			pathParams := pathNode.pathReg.FindAllStringSubmatch(r.URL.Path, 10) // 最多10个路径参数
+			if len(pathParams) > 0 && len(pathParams[0]) > 0 {
+				for i, pathParam := range pathParams[0][1:] {
+					if len(pathNode.params) < i+1 {
+						break
+					}
+					ctx.pathParams[pathNode.params[i]] = pathParam
+				}
+			}
+			handler = pathNode.handler
+			break
+		}
+	}
 	if handler == nil {
 		_ = ctx.Error(StatusNotFound, StatusNotFoundView)
 		atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)/(1000000))
@@ -157,7 +165,9 @@ func (this *Server) RegisterIndex(handler func(Context)) {
 	this.Lock()
 	defer this.Unlock()
 	this.hasIndex = true
-	this.root.Handler = handler
+	this.index = pathProcessor{
+		handler: handler,
+	}
 }
 
 func RegisterIndex(handler func(Context)) {
@@ -276,6 +286,8 @@ func SetI18n(name string) {
 	globalServer.SetI18n(name)
 }
 
+var pathParamReg, _ = regexp.Compile("\\{(.*?)\\}")
+
 func (this *Server) RegisterHandler(path string, handler func(Context)) {
 	this.Lock()
 	defer this.Unlock()
@@ -285,8 +297,35 @@ func (this *Server) RegisterHandler(path string, handler func(Context)) {
 	if handler == nil {
 		return
 	}
+	if strings.HasSuffix(path, "/") {
+		path = fmt.Sprintf("%s.*", path)
+	} else {
+		path = fmt.Sprintf("%s$", path)
+	}
+
+	if !strings.HasPrefix(path, "/") {
+		path = fmt.Sprintf("/%s", path)
+	}
+
+	paramMather := pathParamReg.FindAllStringSubmatch(path, -1)
+
+	var params []string
+
+	for _, param := range paramMather {
+		params = append(params, param[1])
+		path = strings.Replace(path,
+			param[0], "(.*)", -1)
+	}
+
+	pathReg, err := regexp.Compile(path)
 	mLogger.InfoF("注册handler: %s", path)
-	this.root.AddPath(path, handler)
+	if !ProcessError(err) {
+		this.pathNodes[path] = pathProcessor{
+			pathReg: pathReg,
+			handler: handler,
+			params:  params,
+		}
+	}
 }
 
 func (this *Server) RegisterRestProcessor(processor func(model interface{}) interface{}) {
@@ -297,6 +336,8 @@ func (this *Server) RegisterRestProcessor(processor func(model interface{}) inte
 }
 
 type pathProcessor struct {
+	pathReg *regexp.Regexp
+	params  []string
 	handler func(Context)
 }
 
