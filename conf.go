@@ -174,3 +174,24 @@ func ConfPrint(conf Config) string {
 	}
 	return res
 }
+
+func ConfIntUnsafeDefault(conf Config, key string, defaultVal int) int {
+	v, err := ConfValue(conf, key)
+	if err != nil {
+		return -1
+	}
+	res, err := strconv.Atoi(fmt.Sprintf("%v", v))
+	if err != nil {
+		return defaultVal
+	}
+	return res
+}
+
+// 获取配置值, 不存在该值, 则返回 ""
+func ConfUnsafeDefault(conf Config, key string, defaultVal string) string {
+	v, err := ConfValue(conf, key)
+	if err != nil {
+		return defaultVal
+	}
+	return v
+}
