@@ -12,7 +12,7 @@ import (
 
 type tokenCache struct {
 	Token   string `json:"token"`
-	Expires int    `json:"expires"`
+	Expires int64  `json:"expires"`
 }
 
 // 获取权限云token, 可缓存
@@ -28,7 +28,7 @@ func GetToken(service string, appId string, appSecret string) (string, error) {
 	if err != nil {
 		return cacheToken(service, appId, appSecret)
 	}
-	if cacheData.Expires < time.Now().Second() {
+	if cacheData.Expires < time.Now().Unix() {
 		// 	cache已过期
 		return cacheToken(service, appId, appSecret)
 	}
@@ -46,7 +46,7 @@ func cacheToken(service string, appId string, appSecret string) (string, error) 
 	tokenData, _ := json.Marshal(
 		tokenCache{
 			Token:   token,
-			Expires: int(time.Now().Unix()) + 600,
+			Expires: time.Now().Unix() + 600,
 		},
 	)
 	ioutil.WriteFile(cacheFilename, tokenData, fs.ModePerm)
