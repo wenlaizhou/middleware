@@ -4,24 +4,53 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
+	"io/ioutil"
+	"os"
+	"time"
 )
 
-// 获取权限云token, 可缓存
-func GetToken(service string, appId string, appSecret string, cache *Cache) (string, error) {
-	if cache != nil {
-		res := cache.GetData(fmt.Sprintf("%v%v", appId, appSecret))
-		if res != nil {
-			return fmt.Sprintf("%v", res), nil
-		}
+type tokenCache struct {
+	Token   string `json:"token"`
+	Expires int    `json:"expires"`
+}
 
-		token, _ := RequestToken(service, appId, appSecret)
-		if IsEmpty(token) {
-			return "", errors.New("token获取错误")
-		}
-		cache.InsertData(fmt.Sprintf("%v%v", appId, appSecret), token)
-		return token, nil
+// 获取权限云token, 可缓存
+func GetToken(service string, appId string, appSecret string) (string, error) {
+	mLogger.InfoLn(fmt.Sprintf("获取token请求: %v, %v, %v", service, appId, appSecret))
+	cacheFilename := fmt.Sprintf("token_%v_%v", appId, appSecret)
+	tokenFile, err := ioutil.ReadFile(cacheFilename)
+	if err != nil {
+		return cacheToken(service, appId, appSecret)
 	}
-	return RequestToken(service, appId, appSecret)
+	cacheData := tokenCache{}
+	err = json.Unmarshal(tokenFile, &cacheData)
+	if err != nil {
+		return cacheToken(service, appId, appSecret)
+	}
+	if cacheData.Expires < time.Now().Second() {
+		// 	cache已过期
+		return cacheToken(service, appId, appSecret)
+	}
+	return cacheData.Token, nil
+	// return RequestToken(service, appId, appSecret)
+}
+
+func cacheToken(service string, appId string, appSecret string) (string, error) {
+	cacheFilename := fmt.Sprintf("token_%v_%v", appId, appSecret)
+	os.Remove(cacheFilename)
+	token, err := RequestToken(service, appId, appSecret)
+	if err != nil {
+		return "", err
+	}
+	tokenData, _ := json.Marshal(
+		tokenCache{
+			Token:   token,
+			Expires: time.Now().Second() + 600,
+		},
+	)
+	ioutil.WriteFile(cacheFilename, tokenData, fs.ModePerm)
+	return token, nil
 }
 
 // 获取权限云token, 直接发起请求
