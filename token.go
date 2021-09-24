@@ -46,7 +46,7 @@ func cacheToken(service string, appId string, appSecret string) (string, error) 
 	tokenData, _ := json.Marshal(
 		tokenCache{
 			Token:   token,
-			Expires: time.Now().Second() + 600,
+			Expires: int(time.Now().Unix()) + 600,
 		},
 	)
 	ioutil.WriteFile(cacheFilename, tokenData, fs.ModePerm)
