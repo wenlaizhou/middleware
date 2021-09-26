@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func PooledConnection() {
+func PooledConnection() *sql.DB {
 	// Opening a driver typically will not attempt to connect to the database.
 	db, err := sql.Open("driver-name", "database=test1")
 	if err != nil {
@@ -17,4 +17,5 @@ func PooledConnection() {
 	db.SetConnMaxLifetime(0)
 	db.SetMaxIdleConns(50)
 	db.SetMaxOpenConns(50)
+	return db
 }
