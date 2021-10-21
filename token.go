@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
 	"io/ioutil"
 	"os"
 	"time"
@@ -49,7 +48,7 @@ func cacheToken(service string, appId string, appSecret string) (string, error) 
 			Expires: time.Now().Unix() + 600,
 		},
 	)
-	ioutil.WriteFile(cacheFilename, tokenData, fs.ModePerm)
+	ioutil.WriteFile(cacheFilename, tokenData, os.ModePerm)
 	return token, nil
 }
 
