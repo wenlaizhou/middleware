@@ -173,12 +173,27 @@ func (this *Server) RegisterIndex(handler func(Context)) {
 	}
 }
 
+func (this *Server) RegisterFrontendDist(distPath string) {
+	exp := regexp.MustCompile("\\.html$|\\.js$|\\.css$|\\.svg$|\\.icon$|\\.ico$|\\.png$|\\.jpg$|\\.jpeg$|\\.gif$")
+	this.RegisterFilter("/.*", func(context Context) bool {
+		if exp.MatchString(context.Request.URL.Path) {
+			http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/%s", distPath, context.Request.URL.Path[1:]))
+			return false
+		}
+		return true
+	})
+}
+
 func RegisterIndex(handler func(Context)) {
 	globalServer.RegisterIndex(handler)
 }
 
 func RegisterStatic(path string) {
 	globalServer.Static(path)
+}
+
+func RegisterFrontendDist(distPath string) {
+	globalServer.RegisterFrontendDist(distPath)
 }
 
 func (this *Server) RegisterTemplate(filePath string) {
