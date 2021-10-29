@@ -326,7 +326,7 @@ const DefaultIndex = `
     <meta name="description" content="">
     <meta name="author" content="wenlai.zhou">
     <meta name="generator" content="Hugo 0.88.1">
-    <title>AI轻平台</title>
+    <title>Middleware</title>
 
     <link href="/static/css/bootstrap.v5.min.css" rel="stylesheet">
 
@@ -426,7 +426,7 @@ const DefaultIndex = `
         <p class="lead">极简golang框架</p>
         <p class="lead">可集群高可用部署, 兼容云上及私有化</p>
         <p class="lead">
-            <a href="%s" class="btn btn-lg btn-secondary fw-bold border-white bg-white">进入系统</a>
+            <a href="/swagger-ui" class="btn btn-lg btn-secondary fw-bold border-white bg-white">进入系统</a>
         </p>
     </main>
 
