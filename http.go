@@ -157,6 +157,18 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (this *Server) RegisterDefaultIndex() {
+	this.RegisterIndex(func(context Context) {
+		context.OK(Html, []byte(DefaultIndex))
+	})
+	this.RegisterHandler("/static/css/bootstrap.v5.min.css", func(context Context) {
+		context.OK(Css, []byte(BootstrapCss))
+	})
+	this.RegisterHandler("/static/images/default_background.jpg", func(context Context) {
+		context.OK(Jpeg, defaultBackground)
+	})
+}
+
 func (this *Server) Static(path string) {
 	if !strings.HasSuffix(path, "/") {
 		path = fmt.Sprintf("%s/", path)
@@ -182,6 +194,10 @@ func (this *Server) RegisterFrontendDist(distPath string) {
 		}
 		return true
 	})
+}
+
+func RegisterDefaultIndex() {
+	globalServer.RegisterDefaultIndex()
 }
 
 func RegisterIndex(handler func(Context)) {
