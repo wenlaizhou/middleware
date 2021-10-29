@@ -327,9 +327,7 @@ const DefaultIndex = `
     <meta name="author" content="wenlai.zhou">
     <meta name="generator" content="Hugo 0.88.1">
     <title>Middleware</title>
-
     <link href="/static/css/bootstrap.v5.min.css" rel="stylesheet">
-
     <style>
         .bd-placeholder-img {
             font-size: 1.125rem;
@@ -338,48 +336,27 @@ const DefaultIndex = `
             -moz-user-select: none;
             user-select: none;
         }
-
         @media (min-width: 768px) {
             .bd-placeholder-img-lg {
                 font-size: 3.5rem;
             }
         }
-
-        /*
-         * Globals
-         */
-
-
-        /* Custom default button */
         .btn-secondary,
         .btn-secondary:hover,
         .btn-secondary:focus {
             color: #333;
             text-shadow: none;
         }
-
-
-        /*
-         * Base structure
-         */
-
         body {
             text-shadow: 0 .05rem .1rem rgba(0, 0, 0, .5);
             box-shadow: inset 0 0 5rem rgba(0, 0, 0, .5);
             background-image: url("/static/images/default_background.jpg");
             background-repeat: no-repeat;
-            background-size: 100% 100%;
+            background-size: 100%% 100%%;
         }
-
         .cover-container {
             max-width: 42em;
         }
-
-
-        /*
-         * Header
-         */
-
         .nav-masthead .nav-link {
             padding: .25rem 0;
             font-weight: 700;
@@ -387,31 +364,23 @@ const DefaultIndex = `
             background-color: transparent;
             border-bottom: .25rem solid transparent;
         }
-
         .nav-masthead .nav-link:hover,
         .nav-masthead .nav-link:focus {
             border-bottom-color: rgba(255, 255, 255, .25);
         }
-
         .nav-masthead .nav-link + .nav-link {
             margin-left: 1rem;
         }
-
         .nav-masthead .active {
             color: #fff;
             border-bottom-color: #fff;
         }
-
     </style>
-
-
 </head>
 <body class="d-flex h-100 text-center text-white bg-dark">
-
 <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
     <header class="mb-auto">
         <div>
-            <h3 class="float-md-start mb-0">Middleware By Wenlai</h3>
             <nav class="nav nav-masthead justify-content-center float-md-end">
                 <a class="nav-link active" aria-current="page" href="/">首页</a>
                 <a class="nav-link" href="https://github.com/wenlaizhou/middleware" target="_blank">项目地址</a>
@@ -419,26 +388,21 @@ const DefaultIndex = `
             </nav>
         </div>
     </header>
-
     <main class="px-3">
-        <h1>MIDDLEWARE</h1>
+        <h1>Middleware</h1>
         <p class="lead"></p>
-        <p class="lead">极简golang框架</p>
-        <p class="lead">可集群高可用部署, 兼容云上及私有化</p>
+        <p class="lead">Golang Framework</p>
+        <p class="lead">Golang框架, 可集群高可用部署, 兼容云上及私有化</p>
         <p class="lead">
-            <a href="/swagger-ui" class="btn btn-lg btn-secondary fw-bold border-white bg-white">进入系统</a>
+            <a href="%s" class="btn btn-lg btn-secondary fw-bold border-white bg-white">进入系统</a>
         </p>
     </main>
-
     <footer class="mt-auto text-white-50">
         <p>Powered By <a href="#" class="text-white">CommonService</a>, From <a href="https://github.com/wenlaizhou" target="_blank" class="text-white">Wenlai</a>.</p>
     </footer>
 </div>
-
-
 </body>
 </html>
-
 `
 
 const BootstrapCss = `

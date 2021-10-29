@@ -157,9 +157,9 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (this *Server) RegisterDefaultIndex() {
+func (this *Server) RegisterDefaultIndex(link string) {
 	this.RegisterIndex(func(context Context) {
-		context.OK(Html, []byte(DefaultIndex))
+		context.OK(Html, []byte(fmt.Sprintf(DefaultIndex, link)))
 	})
 	this.RegisterHandler("/static/css/bootstrap.v5.min.css", func(context Context) {
 		context.OK(Css, []byte(BootstrapCss))
@@ -196,8 +196,8 @@ func (this *Server) RegisterFrontendDist(distPath string) {
 	})
 }
 
-func RegisterDefaultIndex() {
-	globalServer.RegisterDefaultIndex()
+func RegisterDefaultIndex(link string) {
+	globalServer.RegisterDefaultIndex(link)
 }
 
 func RegisterIndex(handler func(Context)) {
