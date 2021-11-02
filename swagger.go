@@ -22,11 +22,12 @@ type Swagger struct {
 }
 
 type SwaggerPath struct {
-	Tags        []string `json:"tags"`
-	Path        string   `json:"path"`
-	Description string   `json:"description"`
-	Method      string   `json:"method"`
-	Summary     string   `json:"summary"`
+	Tags        []string           `json:"tags"`
+	Path        string             `json:"path"`
+	Description string             `json:"description"`
+	Method      string             `json:"method"`
+	Summary     string             `json:"summary"`
+	Parameters  []SwaggerParameter `json:"parameters"`
 }
 
 //      parameters:
