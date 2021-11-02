@@ -6,14 +6,50 @@ import (
 )
 
 type Swagger struct {
-	Title       string `json:"title"`
-	Host        string `json:"host"`
-	Version     string `json:"version"`
+	Swagger string `json:"swagger"`
+	Info    struct {
+		Title       string `json:"title"`
+		Version     string `json:"version"`
+		Description string `json:"description"`
+	} `json:"info"`
+	Tags []struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	} `json:"tags"`
+	Host  string `json:"host"`
+	Paths map[string]struct {
+	} `json:"paths"`
+}
+
+type SwaggerPath struct {
+	Tags        []string `json:"tags"`
+	Path        string   `json:"path"`
+	Description string   `json:"description"`
+	Method      string   `json:"method"`
+	Summary     string   `json:"summary"`
+}
+
+//      parameters:
+//      - in: "body"
+//        name: "body"
+//        description: "Pet object that needs to be added to the store"
+//        required: true
+//        schema:
+//          $ref: "#/definitions/Pet"
+
+type SwaggerParameter struct {
+	In          string `json:"in"` //query body path
+	Name        string `json:"name"`
 	Description string `json:"description"`
+	Type        string `json:"type"` //array, string, integer
+	Required    bool   `json:"required"`
 }
 
 func SwaggerGenerate(swagger Swagger) string {
-	res, _ := yml.Marshal(swagger)
+	model := map[string]interface{}{}
+	model["swagger"] = "2.0"
+	model["info"] = swagger
+	res, _ := yml.Marshal(model)
 	return string(res)
 }
 
