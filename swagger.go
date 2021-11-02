@@ -1,5 +1,7 @@
 package middleware
 
+import "fmt"
+
 const swaggerHtml = `
 
 <!-- HTML for static distribution bundle build -->
@@ -40,7 +42,7 @@ const swaggerHtml = `
     window.onload = function() {
       // Begin Swagger UI call region
       const ui = SwaggerUIBundle({
-        url: "https://petstore.swagger.io/v2/swagger.json",
+        url: "%s",
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [
@@ -73,7 +75,7 @@ func RegisterSwagger(path string) {
 	})
 
 	RegisterHandler("/swagger-ui", func(context Context) {
-		context.OK(Html, []byte(swaggerHtml))
+		context.OK(Html, []byte(fmt.Sprintf(swaggerHtml, path)))
 	})
 
 	example := `
