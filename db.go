@@ -17,6 +17,8 @@ type Database struct {
 // 可进行设置
 var DefaultConnectionLifeSeconds = time.Duration(60*10) * time.Second
 
+// 创建数据库连接池
+// addr: 数据库链接地址, ip:port
 func DbPool(addr string, user string, password string, dbName string, maxConnections int, timeoutSecond int) (Database, error) {
 
 	cfg := mysql.Config{
