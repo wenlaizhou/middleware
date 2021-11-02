@@ -1,6 +1,21 @@
 package middleware
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/wenlaizhou/yml"
+)
+
+type Swagger struct {
+	Title       string `json:"title"`
+	Host        string `json:"host"`
+	Version     string `json:"version"`
+	Description string `json:"description"`
+}
+
+func SwaggerGenerate(swagger Swagger) string {
+	res, _ := yml.Marshal(swagger)
+	return string(res)
+}
 
 const swaggerHtml = `
 <!-- HTML for static distribution bundle build -->

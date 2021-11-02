@@ -48,7 +48,5 @@ func init() {
 // 15数字时间戳
 // 9随机数
 func Guid() string {
-	timeStamp := time.Now().Unix()
-	return fmt.Sprintf("%s%015X%09X", ipStr,
-		timeStamp, random.Uint64()&0xfffffffff)
+	return fmt.Sprintf("%s%015X%09X", ipStr, TimeEpoch(), random.Uint64()&0xfffffffff)
 }

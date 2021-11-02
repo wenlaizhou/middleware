@@ -9,7 +9,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 // SelfPath gets compiled executable file absolute Path
@@ -70,7 +69,7 @@ func EnsureDirRW(dataDir string) error {
 		return err
 	}
 
-	checkFile := fmt.Sprintf("%s/rw.%d", dataDir, time.Now().UnixNano())
+	checkFile := fmt.Sprintf("%s/rw.%d", dataDir, TimeEpoch())
 	fd, err := Create(checkFile)
 	if err != nil {
 		if os.IsPermission(err) {

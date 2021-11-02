@@ -11,7 +11,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 var mLogger = GetLogger("middleware")
@@ -113,18 +112,18 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	atomic.AddInt64(&this.totalAccess, 1)
-	start := time.Now().UnixNano()
+	start := TimeEpoch()
 	for _, filterNode := range this.filter {
 		if filterNode.pathReg.MatchString(r.URL.Path) {
 			if !filterNode.handler(ctx) {
-				atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)/1000000)
+				atomic.AddInt64(&this.totalExpire, TimeEpoch()-start)
 				return
 			}
 		}
 	}
 	if this.hasIndex && r.URL.Path == "/" {
 		this.index.handler(ctx)
-		atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)/(1000000))
+		atomic.AddInt64(&this.totalExpire, TimeEpoch()-start)
 		return
 	}
 	var handler func(Context)
@@ -145,15 +144,15 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if handler == nil {
 		_ = ctx.Error(StatusNotFound, StatusNotFoundView)
-		atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)/(1000000))
+		atomic.AddInt64(&this.totalExpire, TimeEpoch()-start)
 		return
 	}
 	handler(ctx)
 	if ctx.code == 200 {
 		atomic.AddInt64(&this.successAccess, 1)
-		atomic.AddInt64(&this.successExpire, (time.Now().UnixNano()-start)/(1000000))
+		atomic.AddInt64(&this.successExpire, TimeEpoch()-start)
 	}
-	atomic.AddInt64(&this.totalExpire, (time.Now().UnixNano()-start)/(1000000))
+	atomic.AddInt64(&this.totalExpire, TimeEpoch()-start)
 	return
 }
 
