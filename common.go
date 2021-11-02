@@ -95,6 +95,7 @@ const (
 
 const (
 	ApplicationJson   = "application/json; charset=utf-8"
+	Json              = "application/json; charset=utf-8"
 	Css               = "text/css; charset=utf-8"
 	Plain             = "text/plain; charset=utf-8"
 	Html              = "text/html; charset=utf-8"
