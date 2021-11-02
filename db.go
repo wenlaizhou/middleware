@@ -1,17 +1,24 @@
 package middleware
 
 import (
+	"context"
 	"database/sql"
 	"github.com/go-sql-driver/mysql"
 	"time"
 )
 
 type Database struct {
-	conn *sql.DB
-	cfg  mysql.Config
+	conn           *sql.DB
+	cfg            mysql.Config
+	timeoutSeconds time.Duration
 }
 
+// 数据库连接池 最长默认存活时间
+// 可进行设置
+var DefaultConnectionLifeSeconds = time.Duration(60*10) * time.Second
+
 func DbPool(addr string, user string, password string, dbName string, maxConnections int, timeoutSecond int) (Database, error) {
+
 	cfg := mysql.Config{
 		User:                 user,
 		Passwd:               password,
@@ -25,13 +32,17 @@ func DbPool(addr string, user string, password string, dbName string, maxConnect
 	if err != nil {
 		return Database{}, err
 	}
-	db.SetConnMaxLifetime(time.Duration(timeoutSecond) * time.Second)
+	db.SetConnMaxLifetime(DefaultConnectionLifeSeconds)
+	db.SetConnMaxIdleTime(DefaultConnectionLifeSeconds)
 	db.SetMaxIdleConns(maxConnections)
-	db.SetMaxIdleConns(maxConnections)
+	db.SetMaxOpenConns(maxConnections)
+
 	// Confirm a successful connection.
-	if err := db.Ping(); err != nil {
+	timeoutContext, _ := context.WithTimeout(context.Background(), time.Duration(timeoutSecond)*time.Second)
+	if err := db.PingContext(timeoutContext); err != nil {
 		return Database{}, err
 	}
+
 	return Database{
 		conn: db,
 		cfg:  cfg,
