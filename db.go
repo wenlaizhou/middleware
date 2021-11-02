@@ -46,15 +46,17 @@ func DbPool(addr string, user string, password string, dbName string, maxConnect
 	}
 
 	return Database{
-		conn: db,
-		cfg:  cfg,
+		conn:           db,
+		cfg:            cfg,
+		timeoutSeconds: time.Duration(timeoutSecond) * time.Second,
 	}, nil
 }
 
 // ? 代表参数
 func (thisSelf Database) Query(sql string, params ...interface{}) ([]map[string]string, error) {
 	result := []map[string]string{}
-	rows, err := thisSelf.conn.Query(sql, params...)
+	timeoutContext, _ := context.WithTimeout(context.Background(), thisSelf.timeoutSeconds)
+	rows, err := thisSelf.conn.QueryContext(timeoutContext, sql, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +83,8 @@ func (thisSelf Database) Query(sql string, params ...interface{}) ([]map[string]
 
 // ? 代表参数
 func (thisSelf Database) Exec(sql string, params ...interface{}) (int64, int64, error) {
-	rows, err := thisSelf.conn.Exec(sql, params...)
+	timeoutContext, _ := context.WithTimeout(context.Background(), thisSelf.timeoutSeconds)
+	rows, err := thisSelf.conn.ExecContext(timeoutContext, sql, params...)
 	if err != nil {
 		return -1, -1, err
 	}
