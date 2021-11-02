@@ -3,7 +3,6 @@ package middleware
 import "fmt"
 
 const swaggerHtml = `
-
 <!-- HTML for static distribution bundle build -->
 <!DOCTYPE html>
 <html lang="en">
@@ -36,7 +35,6 @@ const swaggerHtml = `
 
   <body>
     <div id="swagger-ui"></div>
-
     <script src="/static/swagger-ui-bundle.js" charset="UTF-8"> </script>
     <script>
     window.onload = function() {
@@ -55,7 +53,6 @@ const swaggerHtml = `
         layout: "StandaloneLayout"
       });
       // End Swagger UI call region
-
       window.ui = ui;
     };
   </script>
