@@ -72,7 +72,7 @@ func RegisterSwagger(path string) {
 		context.OK(Css, []byte(SwaggerCss))
 	})
 
-	RegisterHandler(path, func(context Context) {
+	RegisterHandler("/swagger-ui", func(context Context) {
 		context.OK(Html, []byte(swaggerHtml))
 	})
 
@@ -587,7 +587,7 @@ func RegisterSwagger(path string) {
 }
 `
 
-	globalServer.RegisterHandler(path, func(context Context) {
+	RegisterHandler(path, func(context Context) {
 		context.OK(ApplicationJson, []byte(example))
 	})
 
