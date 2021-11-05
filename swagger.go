@@ -31,11 +31,11 @@ type SwaggerData struct {
 	Apis        []SwaggerPath
 }
 
-func (thisSelf SwaggerData) AddPath(path SwaggerPath) {
+func (thisSelf *SwaggerData) AddPath(path SwaggerPath) {
 	thisSelf.Apis = append(thisSelf.Apis, path)
 }
 
-func (thisSelf SwaggerPath) AddParameter(param SwaggerParameter) {
+func (thisSelf *SwaggerPath) AddParameter(param SwaggerParameter) {
 	thisSelf.Parameters = append(thisSelf.Parameters, param)
 }
 
