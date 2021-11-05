@@ -2,10 +2,43 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/wenlaizhou/yml"
+	"strings"
 )
 
-/*
+type SwaggerPath struct {
+	Path        string
+	Method      string
+	Description string
+	Parameters  []SwaggerParameter
+}
 
+type SwaggerParameter struct {
+	Name        string
+	Description string
+	Example     string
+	Default     string
+	Type        string
+	Required    bool
+}
+
+type SwaggerData struct {
+	Title       string
+	Version     string
+	Description string
+	Host        string
+	Apis        []SwaggerPath
+}
+
+func (thisSelf SwaggerData) AddPath(path SwaggerPath) {
+	thisSelf.Apis = append(thisSelf.Apis, path)
+}
+
+func (thisSelf SwaggerPath) AddParameter(param SwaggerParameter) {
+	thisSelf.Parameters = append(thisSelf.Parameters, param)
+}
+
+/*
 swagger: '2.0'
 host: 'localhost'
 info:
@@ -37,27 +70,39 @@ paths:
           schema:
             type: string
 */
-
-type SwaggerPath struct {
-	Method      string
-	Description string
-	Parameters  []SwaggerParameter
-}
-
-type SwaggerParameter struct {
-	Name        string
-	Description string
-	Example     string
-	Default     string
-	Type        string
-	Required    bool
-}
-
-type SwaggerData struct {
-	Title       string
-	Version     string
-	Description string
-	Apis        []SwaggerPath
+func GenerateSwagger(model SwaggerData) string {
+	swaggerJson := map[string]interface{}{}
+	swaggerJson["swagger"] = "2.0"
+	swaggerJson["host"] = model.Host
+	swaggerJson["info"] = map[string]string{
+		"title":       model.Title,
+		"version":     model.Version,
+		"description": model.Description,
+	}
+	paths := map[string]interface{}{}
+	for _, api := range model.Apis {
+		var parameters []map[string]interface{}
+		if api.Parameters != nil && len(api.Parameters) > 0 {
+			for _, p := range api.Parameters {
+				parameters = append(parameters, map[string]interface{}{
+					"name":        p.Name,
+					"description": p.Description,
+					"required":    p.Required,
+					"type":        p.Type,
+					"example":     p.Example,
+				})
+			}
+		}
+		paths[api.Path] = map[string]interface{}{
+			strings.ToLower(api.Method): map[string]interface{}{
+				"summary":    api.Description,
+				"parameters": parameters,
+			},
+		}
+	}
+	swaggerJson["paths"] = paths
+	result, _ := yml.Marshal(swaggerJson)
+	return string(result)
 }
 
 const swaggerHtml = `
