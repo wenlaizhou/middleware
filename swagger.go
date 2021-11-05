@@ -8,6 +8,7 @@ import (
 
 type SwaggerPath struct {
 	Path                     string
+	Group                    string
 	Method                   string
 	Description              string
 	Parameters               []SwaggerParameter
@@ -121,6 +122,10 @@ func GenerateSwagger(model SwaggerData) string {
 			}
 			apiResponse["properties"] = properties
 		}
+		tags := []string{}
+		if len(api.Group) > 0 {
+			tags = append(tags, api.Group)
+		}
 		paths[api.Path] = map[string]interface{}{
 			strings.ToLower(api.Method): map[string]interface{}{
 				"summary":    api.Description,
@@ -130,6 +135,7 @@ func GenerateSwagger(model SwaggerData) string {
 					"text/plain",
 					"application/xml",
 				},
+				"tags": tags,
 				"responses": map[string]interface{}{
 					"default": map[string]interface{}{
 						"schema": apiResponse,
@@ -203,7 +209,7 @@ const swaggerHtml = `
 `
 
 // path参数需指定http://host:port
-func RegisterSwagger(path string) {
+func RegisterSwagger(data SwaggerData) {
 
 	RegisterHandler("/static/swagger-ui-bundle.js", func(context Context) {
 		context.OK(Js, []byte(SwaggerJs))
@@ -214,7 +220,11 @@ func RegisterSwagger(path string) {
 	})
 
 	RegisterHandler("/swagger-ui", func(context Context) {
-		context.OK(Html, []byte(fmt.Sprintf(swaggerHtml, path)))
+		context.OK(Html, []byte(fmt.Sprintf(swaggerHtml, "/swagger-ui.json")))
+	})
+
+	RegisterHandler("/swagger-ui.json", func(context Context) {
+		context.OK(Json, []byte(GenerateSwagger(data)))
 	})
 
 }
