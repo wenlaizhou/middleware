@@ -6,30 +6,21 @@ func TestSwaggerGenerate(t *testing.T) {
 
 	swaggerData := SwaggerData{
 		Title:       "Middleware",
-		Version:     "",
-		Description: "",
-		Host:        "",
+		Version:     "1.0.0",
+		Description: "First Api",
+		Host:        "ai.mycyclone.com",
 	}
 	path := SwaggerPath{
-		Path:        "",
-		Method:      "",
-		Description: "",
-		Parameters:  nil,
+		Path:        "/hello",
+		Method:      "get",
+		Description: "index",
 	}
 	path.AddParameter(SwaggerParameter{
-		Name:        "",
-		Description: "",
-		Example:     "",
-		Default:     "",
-		Type:        "",
-		Required:    false,
-	})
-	path.AddParameter(SwaggerParameter{
-		Name:        "",
-		Description: "",
-		Example:     "",
-		Default:     "",
-		Type:        "",
+		Name:        "id",
+		Description: "id for hello",
+		Example:     "1",
+		Default:     "0",
+		Type:        "query",
 		Required:    false,
 	})
 	swaggerData.AddPath(path)

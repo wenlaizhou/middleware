@@ -89,7 +89,7 @@ func GenerateSwagger(model SwaggerData) string {
 					"name":        p.Name,
 					"description": p.Description,
 					"required":    p.Required,
-					"type":        p.Type,
+					"type":        strings.ToLower(p.Type),
 					"example":     p.Example,
 				})
 			}
