@@ -39,16 +39,19 @@ type SwaggerData struct {
 	Apis        []SwaggerPath
 }
 
-func (thisSelf *SwaggerData) AddPath(path SwaggerPath) {
+func (thisSelf *SwaggerData) AddPath(path SwaggerPath) *SwaggerData {
 	thisSelf.Apis = append(thisSelf.Apis, path)
+	return thisSelf
 }
 
-func (thisSelf *SwaggerPath) AddParameter(param SwaggerParameter) {
+func (thisSelf *SwaggerPath) AddParameter(param SwaggerParameter) *SwaggerPath {
 	thisSelf.Parameters = append(thisSelf.Parameters, param)
+	return thisSelf
 }
 
-func (thisSelf *SwaggerPath) AddResponseProperty(param SwaggerResponseProperty) {
+func (thisSelf *SwaggerPath) AddResponseProperty(param SwaggerResponseProperty) *SwaggerPath {
 	thisSelf.ResponseObjectProperties = append(thisSelf.ResponseObjectProperties, param)
+	return thisSelf
 }
 
 /*
