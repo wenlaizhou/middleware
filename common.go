@@ -383,8 +383,8 @@ const DefaultIndex = `
     <header class="mb-auto">
         <div>
             <nav class="nav nav-masthead justify-content-center float-md-end">
-                <a class="nav-link active" aria-current="page" href="/">首页</a>
-                <a class="nav-link" href="https://github.com/wenlaizhou/middleware" target="_blank">项目地址</a>
+                <a class="nav-link active" aria-current="page" href="/">Index</a>
+                <a class="nav-link" href="/swagger-ui" target="_blank">Swagger</a>
                 <a class="nav-link" href="https://pypi.org/project/cyclonefw" target="_blank">CycloneFW</a>
             </nav>
         </div>
@@ -392,14 +392,15 @@ const DefaultIndex = `
     <main class="px-3">
         <h1>Middleware</h1>
         <p class="lead"></p>
-        <p class="lead">Golang Framework</p>
-        <p class="lead">Golang框架, 可集群高可用部署, 兼容云上及私有化</p>
+        <p class="lead">Middleware</p>
+        <p class="lead">Golang Framework, Cloud Native, 兼容云上及私有化</p>
         <p class="lead">
             <a href="%s" class="btn btn-lg btn-secondary fw-bold border-white bg-white">进入系统</a>
         </p>
     </main>
     <footer class="mt-auto text-white-50">
         <p>Powered By <a href="#" class="text-white">CommonService</a>, From <a href="https://github.com/wenlaizhou" target="_blank" class="text-white">Wenlai</a>.</p>
+		<p><a href="https://github.com/wenlaizhou/middleware" target="_blank" class="text-white">github</a></p>
     </footer>
 </div>
 </body>
