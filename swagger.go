@@ -18,8 +18,9 @@ type SwaggerParameter struct {
 	Description string
 	Example     string
 	Default     string
-	Type        string
-	Required    bool
+	// formData, path, header, body, query
+	Type     string
+	Required bool
 }
 
 type SwaggerData struct {
