@@ -1,16 +1,23 @@
 package middleware
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/wenlaizhou/yml"
 	"strings"
 )
 
 type SwaggerPath struct {
-	Path        string
-	Method      string
+	Path                     string
+	Method                   string
+	Description              string
+	Parameters               []SwaggerParameter
+	ResponseObjectProperties []SwaggerResponseProperty
+}
+
+type SwaggerResponseProperty struct {
+	Name        string
+	Type        string
 	Description string
-	Parameters  []SwaggerParameter
 }
 
 type SwaggerParameter struct {
@@ -37,6 +44,10 @@ func (thisSelf *SwaggerData) AddPath(path SwaggerPath) {
 
 func (thisSelf *SwaggerPath) AddParameter(param SwaggerParameter) {
 	thisSelf.Parameters = append(thisSelf.Parameters, param)
+}
+
+func (thisSelf *SwaggerPath) AddResponseProperty(param SwaggerResponseProperty) {
+	thisSelf.ResponseObjectProperties = append(thisSelf.ResponseObjectProperties, param)
 }
 
 /*
@@ -71,6 +82,7 @@ paths:
           schema:
             type: string
 */
+
 func GenerateSwagger(model SwaggerData) string {
 	swaggerJson := map[string]interface{}{}
 	swaggerJson["swagger"] = "2.0"
@@ -89,20 +101,46 @@ func GenerateSwagger(model SwaggerData) string {
 					"name":        p.Name,
 					"description": p.Description,
 					"required":    p.Required,
-					"type":        strings.ToLower(p.Type),
+					"default":     p.Default,
+					"in":          strings.ToLower(p.Type),
 					"example":     p.Example,
 				})
 			}
+		}
+		apiResponse := map[string]interface{}{
+			"type": "string",
+		}
+		if api.ResponseObjectProperties != nil && len(api.ResponseObjectProperties) > 0 {
+			apiResponse["type"] = "object"
+			properties := map[string]interface{}{}
+			for _, resp := range api.ResponseObjectProperties {
+				properties[resp.Name] = map[string]string{
+					"type":        resp.Type,
+					"description": resp.Description,
+				}
+			}
+			apiResponse["properties"] = properties
 		}
 		paths[api.Path] = map[string]interface{}{
 			strings.ToLower(api.Method): map[string]interface{}{
 				"summary":    api.Description,
 				"parameters": parameters,
+				"produces": []string{
+					"application/json",
+					"text/plain",
+					"application/xml",
+				},
+				"responses": map[string]interface{}{
+					"default": map[string]interface{}{
+						"schema": apiResponse,
+					},
+				},
 			},
 		}
 	}
 	swaggerJson["paths"] = paths
-	result, _ := yml.Marshal(swaggerJson)
+	result, _ := json.Marshal(swaggerJson)
+	//result, _ := yml.Marshal(swaggerJson)
 	return string(result)
 }
 
