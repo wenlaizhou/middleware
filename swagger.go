@@ -2,56 +2,62 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/wenlaizhou/yml"
 )
 
-type Swagger struct {
-	Swagger string `json:"swagger"`
-	Info    struct {
-		Title       string `json:"title"`
-		Version     string `json:"version"`
-		Description string `json:"description"`
-	} `json:"info"`
-	Tags []struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
-	} `json:"tags"`
-	Host  string `json:"host"`
-	Paths map[string]struct {
-	} `json:"paths"`
-}
+/*
+
+swagger: '2.0'
+host: 'localhost'
+info:
+  title: Middleware
+  version: 0.0.1
+  description: "This is a sample server Petstore server.  You can find out more about     Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).      For this sample, you can use the api key `special-key` to test the authorization     filters."
+tags:
+  - name: h1
+    description: hello h1
+paths:
+  '/hello':
+    post:
+      tags:
+        - "h1"
+      summary: Greet our subject with hello!
+      parameters:
+        - name: subject
+          description: The subject to be greeted.
+          required: false
+          type: string
+          in: body #formData, path, header, body, query
+          example: {
+              "hello" : "world"
+            }
+          default: 123
+      responses:
+        default:
+          description: Some description
+          schema:
+            type: string
+*/
 
 type SwaggerPath struct {
-	Tags        []string           `json:"tags"`
-	Path        string             `json:"path"`
-	Description string             `json:"description"`
-	Method      string             `json:"method"`
-	Summary     string             `json:"summary"`
-	Parameters  []SwaggerParameter `json:"parameters"`
+	Method      string
+	Description string
+	Parameters  []SwaggerParameter
 }
-
-//      parameters:
-//      - in: "body"
-//        name: "body"
-//        description: "Pet object that needs to be added to the store"
-//        required: true
-//        schema:
-//          $ref: "#/definitions/Pet"
 
 type SwaggerParameter struct {
-	In          string `json:"in"` //query body path
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Type        string `json:"type"` //array, string, integer
-	Required    bool   `json:"required"`
+	Name        string
+	Description string
+	Example     string
+	Default     string
+	Type        string
+	Required    bool
 }
 
-func SwaggerGenerate(swagger Swagger) string {
-	model := map[string]interface{}{}
-	model["swagger"] = "2.0"
-	model["info"] = swagger
-	res, _ := yml.Marshal(model)
-	return string(res)
+type SwaggerData struct {
+	Title       string
+	Version     string
+	Description string
+	Apis        []SwaggerPath
 }
 
 const swaggerHtml = `
