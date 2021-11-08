@@ -16,7 +16,8 @@ type SwaggerPath struct {
 }
 
 type SwaggerResponseProperty struct {
-	Name        string
+	Name string
+	// string int ...
 	Type        string
 	Description string
 }
@@ -48,15 +49,17 @@ func SwaggerBuildModel(title string, desc string, version string, host string) S
 	}
 }
 
-func (thisSelf *SwaggerData) AddPath(path SwaggerPath, params []SwaggerParameter, response *SwaggerResponseProperty) SwaggerData {
+func (thisSelf *SwaggerData) AddPath(path SwaggerPath, params []SwaggerParameter, response []SwaggerResponseProperty) SwaggerData {
 	pathData := path
 	if params != nil && len(params) > 0 {
 		for _, param := range params {
 			pathData.AddParameter(param)
 		}
 	}
-	if response != nil {
-		pathData.SetResponseProperty(*response)
+	if response != nil && len(response) > 0 {
+		for _, resp := range response {
+			pathData.AddResponseProperty(resp)
+		}
 	}
 	thisSelf.Apis = append(thisSelf.Apis, pathData)
 	return *thisSelf
@@ -76,7 +79,7 @@ func (thisSelf *SwaggerPath) AddParameter(param SwaggerParameter) *SwaggerPath {
 	return thisSelf
 }
 
-func (thisSelf *SwaggerPath) SetResponseProperty(param SwaggerResponseProperty) *SwaggerPath {
+func (thisSelf *SwaggerPath) AddResponseProperty(param SwaggerResponseProperty) *SwaggerPath {
 	thisSelf.ResponseObjectProperties = append(thisSelf.ResponseObjectProperties, param)
 	return thisSelf
 }
