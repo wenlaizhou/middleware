@@ -32,6 +32,7 @@ type Server struct {
 	totalExpire    int64
 	i18n           I18n
 	enableI18n     bool
+	swagger        *SwaggerData
 	sync.RWMutex
 }
 
@@ -61,6 +62,12 @@ func NewServer(host string, port int) Server {
 		successExpire: 0,
 		totalAccess:   0,
 		totalExpire:   0,
+		swagger: &SwaggerData{
+			Title:       "",
+			Version:     "",
+			Description: "",
+			Host:        "",
+		},
 	}
 
 	srv.pathNodes = make(map[string]pathProcessor)
@@ -160,10 +167,10 @@ func (this *Server) RegisterDefaultIndex(link string) {
 	this.RegisterIndex(func(context Context) {
 		context.OK(Html, []byte(fmt.Sprintf(DefaultIndex, link)))
 	})
-	this.RegisterHandler("/static/css/bootstrap.v5.min.css", func(context Context) {
+	this.RegisterHandler("/static/default/css/bootstrap.v5.min.css", func(context Context) {
 		context.OK(Css, []byte(BootstrapCss))
 	})
-	this.RegisterHandler("/static/images/default_background.jpg", func(context Context) {
+	this.RegisterHandler("/static/default/images/default_background.jpg", func(context Context) {
 		context.OK(Jpeg, defaultBackground)
 	})
 }
