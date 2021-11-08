@@ -385,7 +385,7 @@ const DefaultIndex = `
             <nav class="nav nav-masthead justify-content-center float-md-end">
                 <a class="nav-link active" aria-current="page" href="/">Index</a>
                 <a class="nav-link" href="/swagger-ui" target="_blank">Swagger</a>
-                <a class="nav-link" href="http://cyclonefw.mycyclone.com" target="_blank">CycloneFW</a>
+                <a class="nav-link" href="http://cyclonefw.cyclone-robotics.com" target="_blank">CycloneFW</a>
             </nav>
         </div>
     </header>
