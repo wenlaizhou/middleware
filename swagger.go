@@ -40,12 +40,12 @@ type SwaggerData struct {
 	Apis        []SwaggerPath
 }
 
-func SwaggerBuildModel(title string, desc string, version string, host string) SwaggerData {
+func SwaggerBuildModel(title string, desc string, version string) SwaggerData {
 	return SwaggerData{
 		Title:       title,
 		Version:     version,
 		Description: desc,
-		Host:        host,
+		Host:        "",
 	}
 }
 
@@ -128,7 +128,7 @@ func GenerateSwagger(model SwaggerData) string {
 	}
 	paths := map[string]interface{}{}
 	for _, api := range model.Apis {
-		var parameters []map[string]interface{}
+		var parameters []map[string]interface{} = make([]map[string]interface{}, 0)
 		if api.Parameters != nil && len(api.Parameters) > 0 {
 			for _, p := range api.Parameters {
 				parameters = append(parameters, map[string]interface{}{
