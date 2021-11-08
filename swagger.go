@@ -41,10 +41,10 @@ type SwaggerData struct {
 
 func SwaggerBuildModel(title string, desc string, version string, host string) SwaggerData {
 	return SwaggerData{
-		Title:       "",
-		Version:     "",
-		Description: "",
-		Host:        "",
+		Title:       title,
+		Version:     version,
+		Description: desc,
+		Host:        host,
 	}
 }
 
