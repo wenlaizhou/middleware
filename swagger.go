@@ -39,6 +39,15 @@ type SwaggerData struct {
 	Apis        []SwaggerPath
 }
 
+func SwaggerBuildModel(title string, desc string, version string, host string) SwaggerData {
+	return SwaggerData{
+		Title:       "",
+		Version:     "",
+		Description: "",
+		Host:        "",
+	}
+}
+
 func (thisSelf *SwaggerData) AddPath(path SwaggerPath, params []SwaggerParameter, response *SwaggerResponseProperty) SwaggerData {
 	pathData := path
 	if params != nil && len(params) > 0 {
@@ -53,7 +62,7 @@ func (thisSelf *SwaggerData) AddPath(path SwaggerPath, params []SwaggerParameter
 	return *thisSelf
 }
 
-func GenerateSwaggerPath(path string, group string, method string, description string) SwaggerPath {
+func SwaggerBuildPath(path string, group string, method string, description string) SwaggerPath {
 	return SwaggerPath{
 		Path:        path,
 		Group:       group,
