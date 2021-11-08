@@ -39,7 +39,7 @@ type SwaggerData struct {
 	Apis        []SwaggerPath
 }
 
-func (thisSelf *SwaggerData) AddPath(path SwaggerPath, params []SwaggerParameter, response *SwaggerResponseProperty) *SwaggerData {
+func (thisSelf *SwaggerData) AddPath(path SwaggerPath, params []SwaggerParameter, response *SwaggerResponseProperty) SwaggerData {
 	pathData := path
 	if params != nil && len(params) > 0 {
 		for _, param := range params {
@@ -50,7 +50,7 @@ func (thisSelf *SwaggerData) AddPath(path SwaggerPath, params []SwaggerParameter
 		pathData.SetResponseProperty(*response)
 	}
 	thisSelf.Apis = append(thisSelf.Apis, pathData)
-	return thisSelf
+	return *thisSelf
 }
 
 func (thisSelf *SwaggerPath) AddParameter(param SwaggerParameter) *SwaggerPath {
