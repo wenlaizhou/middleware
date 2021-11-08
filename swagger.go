@@ -25,10 +25,10 @@ type SwaggerResponseProperty struct {
 type SwaggerParameter struct {
 	Name        string
 	Description string
-	Example     string
-	Default     string
+	Example     interface{}
+	Default     interface{}
 	// formData, path, header, body, query
-	Type     string
+	In       string
 	Required bool
 }
 
@@ -136,7 +136,7 @@ func GenerateSwagger(model SwaggerData) string {
 					"description": p.Description,
 					"required":    p.Required,
 					"default":     p.Default,
-					"in":          strings.ToLower(p.Type),
+					"in":          strings.ToLower(p.In),
 					"example":     p.Example,
 				})
 			}
