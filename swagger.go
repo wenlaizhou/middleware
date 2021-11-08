@@ -53,6 +53,15 @@ func (thisSelf *SwaggerData) AddPath(path SwaggerPath, params []SwaggerParameter
 	return *thisSelf
 }
 
+func GenerateSwaggerPath(path string, group string, method string, description string) SwaggerPath {
+	return SwaggerPath{
+		Path:        path,
+		Group:       group,
+		Method:      method,
+		Description: description,
+	}
+}
+
 func (thisSelf *SwaggerPath) AddParameter(param SwaggerParameter) *SwaggerPath {
 	thisSelf.Parameters = append(thisSelf.Parameters, param)
 	return thisSelf
