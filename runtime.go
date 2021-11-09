@@ -31,6 +31,10 @@ type MemoryInfo struct {
 
 	// 当前进程cgo calls 数量
 	NumCgoCalls int64
+
+	NumGC uint32
+
+	LastGC uint64
 }
 
 func MemoryUsage() MemoryInfo {
@@ -42,6 +46,8 @@ func MemoryUsage() MemoryInfo {
 	res.HeapAlloc = memStats.HeapAlloc
 	res.NumObjects = memStats.HeapObjects
 	res.NumFreeObjects = memStats.Frees
+	res.NumGC = memStats.NumGC
+	res.LastGC = memStats.LastGC
 	res.CpuCount = runtime.NumCPU()
 	res.NumGoroutines = runtime.NumGoroutine()
 	res.NumCgoCalls = runtime.NumCgoCall()
