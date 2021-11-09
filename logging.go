@@ -68,7 +68,7 @@ func GetLogger(name string) Logger {
 	if err != nil {
 		// filepath exist
 	}
-	fs, err := os.OpenFile(fmt.Sprintf("log/%s.log", name), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
+	fs, err := os.OpenFile(fmt.Sprintf("logs/%s.log", name), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	res = logger{
 		Logger: log.New(fs, "", log.LstdFlags),
 		fs:     fs,
@@ -94,8 +94,8 @@ func RegisterLogRotate(seconds int) {
 func RotateLog() {
 	loggerLocker.Lock()
 	for loggerName, loggerInstance := range loggerContainer {
-		loggerFilename := fmt.Sprintf("log/%s.log", loggerName)
-		backupName := fmt.Sprintf("log/%s.%s.log", loggerName, time.Now().Format("2006-1-2_15-04-05"))
+		loggerFilename := fmt.Sprintf("logs/%s.log", loggerName)
+		backupName := fmt.Sprintf("logs/%s.%s.log", loggerName, time.Now().Format("2006-1-2_15-04-05"))
 		if loggerInstance.fs == nil {
 			fs, err := os.OpenFile(loggerFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 			if err != nil {

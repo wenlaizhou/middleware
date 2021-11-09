@@ -3,6 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 )
 
@@ -260,4 +261,69 @@ func RegisterSwagger(data SwaggerData) {
 		context.OK(Json, []byte(GenerateSwagger(data)))
 	})
 
+}
+
+// 根据Swagger配置文件, 生成swagger文档
+func (this *Server) EnableSwaggerWithConf(swaggerConf string) {
+	if !Exists(swaggerConf) {
+		mLogger.ErrorF("swagger 配置文件不存在在: %v", swaggerConf)
+		return
+	}
+	fileData, err := ioutil.ReadFile(swaggerConf)
+	if err != nil {
+		mLogger.ErrorF("swagger 配置文件读取错误: %v, %v", swaggerConf, err.Error())
+		return
+	}
+
+	conf := SwaggerData{}
+
+	err = json.Unmarshal(fileData, &conf)
+	if err != nil {
+		mLogger.ErrorF("swagger 配置文件读取错误, 错误的结构: %v, %v", string(fileData), err.Error())
+		return
+	}
+
+	this.RegisterHandler("/static/swagger-ui-bundle.js", func(context Context) {
+		context.OK(Js, []byte(SwaggerJs))
+	})
+
+	this.RegisterHandler("/static/swagger-ui.css", func(context Context) {
+		context.OK(Css, []byte(SwaggerCss))
+	})
+
+	this.RegisterHandler("/swagger-ui", func(context Context) {
+		context.OK(Html, []byte(fmt.Sprintf(swaggerHtml, "/swagger-ui.json")))
+	})
+
+	this.RegisterHandler("/swagger-ui.json", func(context Context) {
+		context.OK(Json, []byte(GenerateSwagger(*this.swagger)))
+	})
+}
+
+// 启动swagger服务
+func (this *Server) EnableSwagger(swaggerData SwaggerData) {
+
+	this.RegisterHandler("/static/swagger-ui-bundle.js", func(context Context) {
+		context.OK(Js, []byte(SwaggerJs))
+	})
+
+	this.RegisterHandler("/static/swagger-ui.css", func(context Context) {
+		context.OK(Css, []byte(SwaggerCss))
+	})
+
+	this.RegisterHandler("/swagger-ui", func(context Context) {
+		context.OK(Html, []byte(fmt.Sprintf(swaggerHtml, "/swagger-ui.json")))
+	})
+
+	this.RegisterHandler("/swagger-ui.json", func(context Context) {
+		context.OK(Json, []byte(GenerateSwagger(swaggerData)))
+	})
+}
+
+func EnableSwagger(data SwaggerData) {
+	globalServer.EnableSwagger(data)
+}
+
+func EnableSwaggerWithConf(swaggerConf string) {
+	globalServer.EnableSwaggerWithConf(swaggerConf)
 }

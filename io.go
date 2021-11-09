@@ -11,13 +11,13 @@ import (
 	"strings"
 )
 
-// SelfPath gets compiled executable file absolute Path
+// 获取执行文件所在绝对路径
 func SelfPath() string {
 	selfPath, _ := filepath.Abs(os.Args[0])
 	return selfPath
 }
 
-// get absolute filepath, based on built executable file
+// 传入相对路径, 获取绝对路径, 如传入绝对路径则直接返回
 func RealPath(fp string) (string, error) {
 	if path.IsAbs(fp) {
 		return fp, nil
@@ -26,14 +26,9 @@ func RealPath(fp string) (string, error) {
 	return path.Join(wd, fp), err
 }
 
-// SelfDir gets compiled executable file directory
+// 获取执行文件所在目录
 func SelfDir() string {
 	return filepath.Dir(SelfPath())
-}
-
-// get filepath base name
-func Basename(fp string) string {
-	return path.Base(fp)
 }
 
 func BaseWithoutExt(fp string) string {

@@ -12,6 +12,7 @@ var globalSessionLock sync.RWMutex
 
 var globalSessionExpireSeconds = 6000.00
 
+// 基于内存session
 type Session struct {
 	sync.RWMutex
 	id            string

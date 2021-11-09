@@ -1,10 +1,8 @@
 package middleware
 
 import (
-	"encoding/json"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -17,6 +15,7 @@ import (
 
 var mLogger = GetLogger("middleware")
 
+// Server对象
 type Server struct {
 	Host           string
 	Port           int
@@ -38,8 +37,10 @@ type Server struct {
 	sync.RWMutex
 }
 
+// 默认全局单一http服务
 var globalServer = NewServer("", 0)
 
+// 启动服务
 func StartServer(host string, port int) {
 	globalServer.Lock()
 	globalServer.Host = host
@@ -48,10 +49,12 @@ func StartServer(host string, port int) {
 	globalServer.Start()
 }
 
+// 获取全局唯一Server
 func GetGlobalServer() Server {
 	return globalServer
 }
 
+// 创建服务
 func NewServer(host string, port int) Server {
 	srv := Server{
 		Host:          host,
@@ -74,69 +77,6 @@ func NewServer(host string, port int) Server {
 
 	srv.pathNodes = make(map[string]pathProcessor)
 	return srv
-}
-
-func (this *Server) EnableSwaggerWithConf(swaggerConf string) {
-	if !Exists(swaggerConf) {
-		mLogger.ErrorF("swagger 配置文件不存在在: %v", swaggerConf)
-		return
-	}
-	fileData, err := ioutil.ReadFile(swaggerConf)
-	if err != nil {
-		mLogger.ErrorF("swagger 配置文件读取错误: %v, %v", swaggerConf, err.Error())
-		return
-	}
-
-	conf := SwaggerData{}
-
-	err = json.Unmarshal(fileData, &conf)
-	if err != nil {
-		mLogger.ErrorF("swagger 配置文件读取错误, 错误的结构: %v, %v", string(fileData), err.Error())
-		return
-	}
-
-	this.RegisterHandler("/static/swagger-ui-bundle.js", func(context Context) {
-		context.OK(Js, []byte(SwaggerJs))
-	})
-
-	this.RegisterHandler("/static/swagger-ui.css", func(context Context) {
-		context.OK(Css, []byte(SwaggerCss))
-	})
-
-	this.RegisterHandler("/swagger-ui", func(context Context) {
-		context.OK(Html, []byte(fmt.Sprintf(swaggerHtml, "/swagger-ui.json")))
-	})
-
-	this.RegisterHandler("/swagger-ui.json", func(context Context) {
-		context.OK(Json, []byte(GenerateSwagger(*this.swagger)))
-	})
-}
-
-func (this *Server) EnableSwagger(swaggerData SwaggerData) {
-
-	this.RegisterHandler("/static/swagger-ui-bundle.js", func(context Context) {
-		context.OK(Js, []byte(SwaggerJs))
-	})
-
-	this.RegisterHandler("/static/swagger-ui.css", func(context Context) {
-		context.OK(Css, []byte(SwaggerCss))
-	})
-
-	this.RegisterHandler("/swagger-ui", func(context Context) {
-		context.OK(Html, []byte(fmt.Sprintf(swaggerHtml, "/swagger-ui.json")))
-	})
-
-	this.RegisterHandler("/swagger-ui.json", func(context Context) {
-		context.OK(Json, []byte(GenerateSwagger(swaggerData)))
-	})
-}
-
-func EnableSwagger(data SwaggerData) {
-	globalServer.EnableSwagger(data)
-}
-
-func EnableSwaggerWithConf(swaggerConf string) {
-	globalServer.EnableSwaggerWithConf(swaggerConf)
 }
 
 func (this *Server) GetStatus() int {
@@ -164,6 +104,7 @@ func (this *Server) Start() {
 	log.Fatal(http.ListenAndServe(hostStr, nil))
 }
 
+// 核心处理逻辑
 func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := newContext(w, r)
 	ctx.tpl = this.baseTpl
@@ -240,6 +181,7 @@ func (this *Server) RegisterDefaultIndex(link string) {
 	})
 }
 
+//设置静态文件目录
 func (this *Server) Static(path string) {
 	if !strings.HasSuffix(path, "/") {
 		path = fmt.Sprintf("%s/", path)
@@ -247,6 +189,7 @@ func (this *Server) Static(path string) {
 	this.RegisterHandler(path, StaticProcessor)
 }
 
+// 注册首页
 func (this *Server) RegisterIndex(handler func(Context)) {
 	this.Lock()
 	defer this.Unlock()
@@ -256,6 +199,7 @@ func (this *Server) RegisterIndex(handler func(Context)) {
 	}
 }
 
+// 结合 react 前端, 注册前端dist目录
 func (this *Server) RegisterFrontendDist(distPath string) {
 	exp := regexp.MustCompile("\\.html$|\\.js$|\\.css$|\\.svg$|\\.icon$|\\.ico$|\\.png$|\\.jpg$|\\.jpeg$|\\.gif$")
 	this.RegisterFilter("/.*", func(context Context) bool {
@@ -283,6 +227,7 @@ func RegisterFrontendDist(distPath string) {
 	globalServer.RegisterFrontendDist(distPath)
 }
 
+// 注册模板服务
 func (this *Server) RegisterTemplate(filePath string) {
 	this.Lock()
 	var err error
@@ -294,10 +239,12 @@ func (this *Server) RegisterTemplate(filePath string) {
 	mLogger.InfoF("render template %v done!", filePath)
 }
 
+// 注册模板服务
 func RegisterTemplate(filePath string) {
 	globalServer.RegisterTemplate(filePath)
 }
 
+// 注册模板函数
 // warning: 请在设置模板目录前使用
 func (this *Server) TemplateFunc(name string, function interface{}) {
 	this.Lock()
@@ -306,6 +253,7 @@ func (this *Server) TemplateFunc(name string, function interface{}) {
 		name: function})
 }
 
+// 注册模板函数
 // warning: 请在设置模板目录前使用
 func TemplateFunc(name string, function interface{}) {
 	globalServer.TemplateFunc(name, function)
@@ -343,6 +291,7 @@ func includeTemplate(tpl *template.Template, suffix string, filePaths ...string)
 	return tpl.ParseFiles(fileList...)
 }
 
+// 注册http请求处理器
 func RegisterHandler(path string, handler func(Context)) {
 	globalServer.RegisterHandler(path, handler)
 }
@@ -393,6 +342,7 @@ func SetI18n(name string) {
 
 var pathParamReg, _ = regexp.Compile("\\{(.*?)\\}")
 
+// 注册服务
 func (this *Server) RegisterHandler(path string, handler func(Context)) {
 	this.Lock()
 	defer this.Unlock()

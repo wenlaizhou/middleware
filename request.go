@@ -10,36 +10,41 @@ import (
 	"time"
 )
 
-var defaultTimeout = 30
+// http请求默认超时时间30s, 可在自己代码中进行全局修改
+var RequestDefaultTimeout = 30
 
+// post 带超时时间
 // return : statusCode, header, body, error
 func PostWithTimeout(timeoutSecond int, url string, contentType string, data []byte) (int, map[string][]string, []byte, error) {
 	return PostFull(timeoutSecond, url, nil, contentType, data)
 }
 
+// post json 带超时时间
 // return : statusCode, header, body, error
 func PostJsonWithTimeout(timeoutSecond int, url string, data interface{}) (int, map[string][]string, []byte, error) {
 	return PostJsonFull(timeoutSecond, url, nil, data)
 }
 
+// get 带超时时间
 // return : statusCode, header, body, error
 func GetWithTimeout(timeoutSecond int, url string) (int, map[string][]string, []byte, error) {
 	return GetFull(timeoutSecond, url, nil)
 }
 
+// post
 // return : statusCode, header, body, error
 func Post(url string, contentType string, data []byte) (int, map[string][]string, []byte, error) {
-	return PostFull(defaultTimeout, url, nil, contentType, data)
+	return PostFull(RequestDefaultTimeout, url, nil, contentType, data)
 }
 
 // return : statusCode, header, body, error
 func PostJson(url string, data interface{}) (int, map[string][]string, []byte, error) {
-	return PostJsonFull(defaultTimeout, url, nil, data)
+	return PostJsonFull(RequestDefaultTimeout, url, nil, data)
 }
 
 // return : statusCode, header, body, error
 func Get(url string) (int, map[string][]string, []byte, error) {
-	return GetFull(defaultTimeout, url, nil)
+	return GetFull(RequestDefaultTimeout, url, nil)
 }
 
 // Post: post data to url
