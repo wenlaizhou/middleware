@@ -173,10 +173,10 @@ func (this *Server) RegisterDefaultIndex(link string) {
 	this.RegisterIndex(func(context Context) {
 		context.OK(Html, []byte(fmt.Sprintf(DefaultIndex, link)))
 	})
-	this.RegisterHandler("/static/default/css/bootstrap.v5.min.css", func(context Context) {
+	this.RegisterHandler("/static/default/css/bootstrap.v5.min", func(context Context) {
 		context.OK(Css, []byte(BootstrapCss))
 	})
-	this.RegisterHandler("/static/default/images/default_background.jpg", func(context Context) {
+	this.RegisterHandler("/static/default/images/default_background", func(context Context) {
 		context.OK(Jpeg, defaultBackground)
 	})
 }

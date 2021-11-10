@@ -191,7 +191,7 @@ const swaggerHtml = `
   <head>
     <meta charset="UTF-8">
     <title>Swagger UI</title>
-    <link rel="stylesheet" type="text/css" href="/static/swagger-ui.css" />
+    <link rel="stylesheet" type="text/css" href="/static/swagger-ui" />
     <style>
       html
       {
@@ -217,7 +217,7 @@ const swaggerHtml = `
 
   <body>
     <div id="swagger-ui"></div>
-    <script src="/static/swagger-ui-bundle.js" charset="UTF-8"> </script>
+    <script src="/static/swagger-ui-bundle" charset="UTF-8"> </script>
     <script>
     window.onload = function() {
       // Begin Swagger UI call region
@@ -303,11 +303,11 @@ func (this *Server) EnableSwaggerWithConf(swaggerConf string) {
 // 启动swagger服务
 func (this *Server) EnableSwagger(swaggerData SwaggerData) {
 
-	this.RegisterHandler("/static/swagger-ui-bundle.js", func(context Context) {
+	this.RegisterHandler("/static/swagger-ui-bundle", func(context Context) {
 		context.OK(Js, []byte(SwaggerJs))
 	})
 
-	this.RegisterHandler("/static/swagger-ui.css", func(context Context) {
+	this.RegisterHandler("/static/swagger-ui", func(context Context) {
 		context.OK(Css, []byte(SwaggerCss))
 	})
 

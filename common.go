@@ -328,7 +328,7 @@ const DefaultIndex = `
     <meta name="author" content="wenlai.zhou">
     <meta name="generator" content="Hugo 0.88.1">
     <title>Middleware</title>
-    <link href="/static/default/css/bootstrap.v5.min.css" rel="stylesheet">
+    <link href="/static/default/css/bootstrap.v5.min" rel="stylesheet">
     <style>
         .bd-placeholder-img {
             font-size: 1.125rem;
@@ -351,7 +351,7 @@ const DefaultIndex = `
         body {
             text-shadow: 0 .05rem .1rem rgba(0, 0, 0, .5);
             box-shadow: inset 0 0 5rem rgba(0, 0, 0, .5);
-            background-image: url("/static/default/images/default_background.jpg");
+            background-image: url("/static/default/images/default_background");
             background-repeat: no-repeat;
             background-size: 100%% 100%%;
         }
