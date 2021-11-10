@@ -54,10 +54,31 @@ func MemoryUsage() MemoryInfo {
 	return res
 }
 
+type Checker struct {
+	Name        string
+	Times       int
+	TotalMillis int
+}
+
+var checkers = map[string]Checker{}
+
 func Printf(formatter string, items ...interface{}) {
 	fmt.Printf(formatter+"\n", items...)
 }
 
 func StackTrace() string {
 	return string(debug.Stack())
+}
+
+func CheckStart(name string) {
+
+	check, has := checkers[name]
+	if has {
+		check.Times += 1
+	}
+
+}
+
+func CheckEnd(name string) {
+	checkers[name] = Checker{}
 }
