@@ -209,6 +209,9 @@ func (this *Server) RegisterFrontendDist(distPath string) {
 		}
 		return true
 	})
+	this.RegisterIndex(func(context Context) {
+		http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/index.html", distPath))
+	})
 }
 
 func RegisterDefaultIndex(link string) {
