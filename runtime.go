@@ -54,13 +54,18 @@ func MemoryUsage() MemoryInfo {
 	return res
 }
 
-type Checker struct {
+type CheckerResult struct {
 	Name        string
 	Times       int
-	TotalMillis int
+	TotalMillis int64
 }
 
-var checkers = map[string]Checker{}
+type Checker struct {
+	Start int64
+	Name  string
+}
+
+var checkers = map[string]CheckerResult{}
 
 func Printf(formatter string, items ...interface{}) {
 	fmt.Printf(formatter+"\n", items...)
@@ -70,19 +75,33 @@ func StackTrace() string {
 	return string(debug.Stack())
 }
 
-func NewChecker(name string) Checker {
-
-	check, has := checkers[name]
+func (thisSelf Checker) End() {
+	end := TimeEpoch() - thisSelf.Start
+	res, has := checkers[thisSelf.Name]
 	if has {
-		check.Times += 1
-	}
-	return Checker{
-		Name:        "",
-		Times:       0,
-		TotalMillis: 0,
+		res.Times += 1
+		res.TotalMillis += end
+		checkers[thisSelf.Name] = res
+	} else {
+		checkers[thisSelf.Name] = CheckerResult{
+			Name:        thisSelf.Name,
+			Times:       1,
+			TotalMillis: end,
+		}
 	}
 }
 
-func EndChecker(checker Checker) {
+func CheckersInfo() []CheckerResult {
+	res := []CheckerResult{}
+	for _, checker := range checkers {
+		res = append(res, checker)
+	}
+	return res
+}
 
+func GetChecker(name string) Checker {
+	return Checker{
+		Start: TimeEpoch(),
+		Name:  name,
+	}
 }
