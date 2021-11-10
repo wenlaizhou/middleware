@@ -70,15 +70,19 @@ func StackTrace() string {
 	return string(debug.Stack())
 }
 
-func CheckStart(name string) {
+func NewChecker(name string) Checker {
 
 	check, has := checkers[name]
 	if has {
 		check.Times += 1
 	}
-
+	return Checker{
+		Name:        "",
+		Times:       0,
+		TotalMillis: 0,
+	}
 }
 
-func CheckEnd(name string) {
-	checkers[name] = Checker{}
+func EndChecker(checker Checker) {
+
 }
