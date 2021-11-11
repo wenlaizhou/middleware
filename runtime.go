@@ -9,32 +9,32 @@ import (
 type MemoryInfo struct {
 
 	// 堆对象申请的总内存空间, 申请就会增长, 该值为累计值[bytes]
-	TotalHeapAlloc uint64
+	TotalHeapAlloc uint64 `json:"totalHeapAlloc"`
 
 	// 堆对象申请的总内存空间[bytes]
-	HeapAlloc uint64
+	HeapAlloc uint64 `json:"heapAlloc"`
 
 	// 堆对象申请的总内存空间[bytes]
-	Sys uint64
+	Sys uint64 `json:"sys"`
 
 	// 堆对象数量
-	NumObjects uint64
+	NumObjects uint64 `json:"numObjects"`
 
 	// 释放的对对象数量
-	NumFreeObjects uint64
+	NumFreeObjects uint64 `json:"numFreeObjects"`
 
 	// cpu数量
-	CpuCount int
+	CpuCount int `json:"cpuCount"`
 
 	// 当前 goroutine 数量
-	NumGoroutines int
+	NumGoroutines int `json:"numGoroutines"`
 
 	// 当前进程cgo calls 数量
-	NumCgoCalls int64
+	NumCgoCalls int64 `json:"numCgoCalls"`
 
-	NumGC uint32
+	NumGC uint32 `json:"numGc"`
 
-	LastGC uint64
+	LastGC uint64 `json:"lastGc"`
 }
 
 func MemoryUsage() MemoryInfo {
