@@ -39,12 +39,11 @@ func (thisSelf *task) run() string {
 		thisSelf.Runner()
 		done <- true
 	}()
-	timer := time.NewTimer(time.Duration(thisSelf.TimeoutSeconds) * time.Second)
 	select {
 	case <-done:
 		thisSelf.Status = "done"
 		break
-	case <-timer.C:
+	case <-time.After(time.Duration(thisSelf.TimeoutSeconds) * time.Second):
 		thisSelf.Status = "timeout"
 		break
 	}
