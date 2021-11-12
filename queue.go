@@ -17,6 +17,17 @@ type task struct {
 	TimeoutSeconds int    `json:"timeoutSeconds"`
 }
 
+func createTask(name string, timeoutSeconds int, runner func()) task {
+	return task{
+		Name:           name,
+		StartEpoch:     0,
+		EndEpoch:       0,
+		Runner:         runner,
+		Status:         "new",
+		TimeoutSeconds: timeoutSeconds,
+	}
+}
+
 type TaskQueue struct {
 	Queue      *list.List
 	queueLock  sync.RWMutex
@@ -29,6 +40,7 @@ type TaskQueue struct {
 	Todo       int
 	Running    *task
 	status     string
+	signal     chan string
 }
 
 type TaskQueueHistory struct {
@@ -39,7 +51,7 @@ type TaskQueueHistory struct {
 	EndEpoch   int64
 }
 
-type TaskInfo struct {
+type TaskQueueInfo struct {
 	Length     int
 	Done       []string
 	Errors     []string
@@ -47,17 +59,6 @@ type TaskInfo struct {
 	EndEpoch   int64
 	Running    string
 	Times      int
-}
-
-func createTask(name string, timeoutSeconds int, runner func()) task {
-	return task{
-		Name:           name,
-		StartEpoch:     0,
-		EndEpoch:       0,
-		Runner:         runner,
-		Status:         "new",
-		TimeoutSeconds: timeoutSeconds,
-	}
 }
 
 func (thisSelf *task) run() string {
@@ -101,6 +102,7 @@ func CreateTaskQueue() TaskQueue {
 		Running:    nil,
 		status:     "new",
 		History:    []TaskQueueHistory{},
+		signal:     make(chan string),
 	}
 }
 
@@ -126,12 +128,64 @@ func (thisSelf *TaskQueue) Start() (error, chan string) {
 	go func() {
 		for e := thisSelf.Queue.Front(); e != nil; e = e.Next() {
 			thisSelf.runner(e.Value.(task))
+		receive:
+			select {
+			case sig := <-thisSelf.signal:
+				switch sig {
+				case "pause":
+				pause:
+					select {
+					case sig := <-thisSelf.signal:
+						switch sig {
+						case "continue":
+							goto continueTask
+							break
+						default:
+							goto pause
+						}
+					}
+					break
+				case "continue":
+					goto continueTask
+					break
+				case "stop":
+					panic(errors.New("force stop"))
+					break
+				default:
+					goto receive
+					break
+				}
+			}
+		continueTask:
+			thisSelf.signal <- "continue"
 		}
 		thisSelf.EndEpoch = TimeEpoch()
 		done <- "done"
 		thisSelf.status = "new"
 	}()
 	return nil, done
+}
+
+func (thisSelf *TaskQueue) Pause() {
+
+}
+
+func (thisSelf *TaskQueue) Stop() {
+
+}
+
+func (thisSelf *TaskQueue) Status() TaskQueueInfo {
+
+	return TaskQueueInfo{
+		Length:     thisSelf.Queue.Len(),
+		Done:       thisSelf.Done,
+		Errors:     thisSelf.Errors,
+		StartEpoch: thisSelf.StartEpoch,
+		EndEpoch:   thisSelf.EndEpoch,
+		Running:    thisSelf.Running.Name,
+		Times:      thisSelf.Times,
+	}
+
 }
 
 func (thisSelf *TaskQueue) runner(t task) {
@@ -154,18 +208,4 @@ func (thisSelf *TaskQueue) runner(t task) {
 	history.EndEpoch = TimeEpoch()
 	history.Result = t.Status
 	thisSelf.History = append(thisSelf.History, history)
-}
-
-func (thisSelf *TaskQueue) Status() TaskInfo {
-
-	return TaskInfo{
-		Length:     thisSelf.Queue.Len(),
-		Done:       thisSelf.Done,
-		Errors:     thisSelf.Errors,
-		StartEpoch: thisSelf.StartEpoch,
-		EndEpoch:   thisSelf.EndEpoch,
-		Running:    thisSelf.Running.Name,
-		Times:      thisSelf.Times,
-	}
-
 }
