@@ -174,14 +174,17 @@ func (thisSelf *TaskQueue) Stop() {
 }
 
 func (thisSelf *TaskQueue) Status() TaskQueueInfo {
-
+	running := ""
+	if thisSelf.Running != nil {
+		running = thisSelf.Running.Name
+	}
 	return TaskQueueInfo{
 		Length:     thisSelf.Queue.Len(),
 		Done:       thisSelf.Done,
 		Errors:     thisSelf.Errors,
 		StartEpoch: thisSelf.StartEpoch,
 		EndEpoch:   thisSelf.EndEpoch,
-		Running:    thisSelf.Running.Name,
+		Running:    running,
 		Times:      thisSelf.Times,
 	}
 
