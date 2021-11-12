@@ -128,7 +128,6 @@ func (thisSelf *TaskQueue) Start() (error, chan string) {
 	go func() {
 		for e := thisSelf.Queue.Front(); e != nil; e = e.Next() {
 			thisSelf.runner(e.Value.(task))
-		receive:
 			select {
 			case sig := <-thisSelf.signal:
 				switch sig {
@@ -138,26 +137,22 @@ func (thisSelf *TaskQueue) Start() (error, chan string) {
 					case sig := <-thisSelf.signal:
 						switch sig {
 						case "continue":
-							goto continueTask
 							break
 						default:
 							goto pause
 						}
+						break
 					}
-					break
 				case "continue":
-					goto continueTask
 					break
 				case "stop":
 					panic(errors.New("force stop"))
-					break
 				default:
-					goto receive
 					break
 				}
+			default:
+				break
 			}
-		continueTask:
-			thisSelf.signal <- "continue"
 		}
 		thisSelf.EndEpoch = TimeEpoch()
 		done <- "done"
