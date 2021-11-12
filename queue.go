@@ -28,6 +28,7 @@ func createTask(name string, timeoutSeconds int, runner func()) task {
 }
 
 type TaskQueue struct {
+	Name               string
 	Queue              []task
 	queueLock          sync.RWMutex
 	Done               []string
@@ -61,6 +62,7 @@ type TaskQueueInfo struct {
 	Running    string     `json:"running"`
 	Times      int        `json:"times"`
 	Status     string     `json:"status"`
+	Name       string     `json:"name"`
 }
 
 type TaskInfo struct {
@@ -97,8 +99,9 @@ func (t *task) run() string {
 }
 
 // 创建任务队列框架(异步, 可监测, 完整运行记录)
-func CreateTaskQueue() TaskQueue {
+func CreateTaskQueue(name string) TaskQueue {
 	return TaskQueue{
+		Name:               name,
 		Queue:              []task{},
 		Done:               []string{},
 		Errors:             []string{},
@@ -206,6 +209,7 @@ func (q *TaskQueue) Status() TaskQueueInfo {
 		})
 	}
 	return TaskQueueInfo{
+		Name:       q.Name,
 		Length:     len(q.Queue),
 		Tasks:      tasks,
 		Done:       q.Done,
