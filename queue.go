@@ -18,15 +18,17 @@ type task struct {
 }
 
 type TaskQueue struct {
-	Queue     *list.List
-	queueLock sync.RWMutex
-	Done      []string
-	Errors    []string
-	History   []TaskQueueHistory
-	Times     int
-	Todo      int
-	Running   *task
-	status    string
+	Queue      *list.List
+	queueLock  sync.RWMutex
+	Done       []string
+	Errors     []string
+	History    []TaskQueueHistory
+	Times      int
+	StartEpoch int64
+	EndEpoch   int64
+	Todo       int
+	Running    *task
+	status     string
 }
 
 type TaskQueueHistory struct {
@@ -35,6 +37,16 @@ type TaskQueueHistory struct {
 	Result     string
 	StartEpoch int64
 	EndEpoch   int64
+}
+
+type TaskInfo struct {
+	Length     int
+	Done       []string
+	Errors     []string
+	StartEpoch int64
+	EndEpoch   int64
+	Running    string
+	Times      int
 }
 
 func createTask(name string, timeoutSeconds int, runner func()) task {
@@ -79,14 +91,16 @@ func (thisSelf *task) run() string {
 // 创建任务队列框架(异步, 可监测, 完整运行记录)
 func CreateTaskQueue() TaskQueue {
 	return TaskQueue{
-		Queue:   list.New(),
-		Done:    []string{},
-		Errors:  []string{},
-		Todo:    0,
-		Times:   0,
-		Running: nil,
-		status:  "new",
-		History: []TaskQueueHistory{},
+		Queue:      list.New(),
+		Done:       []string{},
+		Errors:     []string{},
+		Todo:       0,
+		Times:      0,
+		StartEpoch: 0,
+		EndEpoch:   0,
+		Running:    nil,
+		status:     "new",
+		History:    []TaskQueueHistory{},
 	}
 }
 
@@ -97,22 +111,27 @@ func (thisSelf *TaskQueue) AddTask(name string, timeoutSeconds int, runner func(
 }
 
 // 执行一次任务队列, 异步
-func (thisSelf *TaskQueue) Start() error {
+func (thisSelf *TaskQueue) Start() (error, chan string) {
 	if thisSelf.status != "new" {
-		return errors.New("队列正在运行中")
+		return errors.New("队列正在运行中"), nil
 	}
+	done := make(chan string)
 	thisSelf.status = "running"
 	thisSelf.Done = []string{}
 	thisSelf.Errors = []string{}
 	thisSelf.Todo = thisSelf.Queue.Len()
 	thisSelf.Times += 1
+	thisSelf.StartEpoch = TimeEpoch()
+	thisSelf.EndEpoch = 0
 	go func() {
 		for e := thisSelf.Queue.Front(); e != nil; e = e.Next() {
 			thisSelf.runner(e.Value.(task))
 		}
+		thisSelf.EndEpoch = TimeEpoch()
+		done <- "done"
 		thisSelf.status = "new"
 	}()
-	return nil
+	return nil, done
 }
 
 func (thisSelf *TaskQueue) runner(t task) {
@@ -137,6 +156,16 @@ func (thisSelf *TaskQueue) runner(t task) {
 	thisSelf.History = append(thisSelf.History, history)
 }
 
-func (thisSelf *TaskQueue) Status() {
+func (thisSelf *TaskQueue) Status() TaskInfo {
+
+	return TaskInfo{
+		Length:     thisSelf.Queue.Len(),
+		Done:       thisSelf.Done,
+		Errors:     thisSelf.Errors,
+		StartEpoch: thisSelf.StartEpoch,
+		EndEpoch:   thisSelf.EndEpoch,
+		Running:    thisSelf.Running.Name,
+		Times:      thisSelf.Times,
+	}
 
 }
