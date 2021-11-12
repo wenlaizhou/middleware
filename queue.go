@@ -3,6 +3,7 @@ package middleware
 import (
 	"container/list"
 	"sync"
+	"time"
 )
 
 type task struct {
@@ -10,35 +11,44 @@ type task struct {
 	StartEpoch int64  `json:"startEpoch"`
 	EndEpoch   int64  `json:"endEpoch"`
 	Runner     func()
-	// new running done error
-	Status string `json:"status"`
-	signal chan bool
+	// new running done error timeout
+	Status         string `json:"status"`
+	TimeoutSeconds int    `json:"timeoutSeconds"`
 }
 
-func createTask(name string, runner func()) task {
+func createTask(name string, timeoutSeconds int, runner func()) task {
 	return task{
-		Name:       name,
-		StartEpoch: 0,
-		EndEpoch:   0,
-		Runner:     runner,
-		Status:     "new",
-		signal:     make(chan bool),
+		Name:           name,
+		StartEpoch:     0,
+		EndEpoch:       0,
+		Runner:         runner,
+		Status:         "new",
+		TimeoutSeconds: timeoutSeconds,
 	}
 }
 
-func (thisSelf *task) run() {
+func (thisSelf *task) run() string {
+	thisSelf.Status = "running"
+	done := make(chan bool)
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				thisSelf.signal <- false
 				thisSelf.Status = "error"
 			}
 		}()
 		thisSelf.Runner()
-		thisSelf.Status = "done"
-		thisSelf.signal <- true
+		done <- true
 	}()
-	thisSelf.Status = "running"
+	timer := time.NewTimer(time.Duration(thisSelf.TimeoutSeconds) * time.Second)
+	select {
+	case <-done:
+		thisSelf.Status = "done"
+		break
+	case <-timer.C:
+		thisSelf.Status = "timeout"
+		break
+	}
+	return thisSelf.Status
 }
 
 type TaskQueue struct {
@@ -46,9 +56,19 @@ type TaskQueue struct {
 	queueLock sync.RWMutex
 	Done      []string
 	Errors    []string
+	History   []TaskQueueHistory
+	Times     int
 	Todo      int
 	Running   *task
 	status    string
+}
+
+type TaskQueueHistory struct {
+	SerialId   int
+	Name       string
+	Result     string
+	StartEpoch int64
+	EndEpoch   int64
 }
 
 func CreateTaskQueue() TaskQueue {
@@ -57,21 +77,24 @@ func CreateTaskQueue() TaskQueue {
 		Done:    []string{},
 		Errors:  []string{},
 		Todo:    0,
+		Times:   0,
 		Running: nil,
 		status:  "new",
+		History: []TaskQueueHistory{},
 	}
 }
 
-func (thisSelf *TaskQueue) AddTask(name string, runner func()) {
+func (thisSelf *TaskQueue) AddTask(name string, timeoutSeconds int, runner func()) {
 	thisSelf.queueLock.Lock()
 	defer thisSelf.queueLock.Unlock()
-	thisSelf.Queue.PushBack(createTask(name, runner))
+	thisSelf.Queue.PushBack(createTask(name, timeoutSeconds, runner))
 }
 
 func (thisSelf *TaskQueue) Start() {
 	thisSelf.Done = []string{}
 	thisSelf.Errors = []string{}
 	thisSelf.Todo = thisSelf.Queue.Len()
+	thisSelf.Times += 1
 	go func() {
 		for e := thisSelf.Queue.Front(); e != nil; e = e.Next() {
 			thisSelf.runner(e.Value.(task))
@@ -80,16 +103,16 @@ func (thisSelf *TaskQueue) Start() {
 }
 
 func (thisSelf *TaskQueue) runner(t task) {
-	t.run()
 	thisSelf.Running = &t
 	thisSelf.Todo -= 1
-	select {
-	case res := <-t.signal:
-		if !res {
-			thisSelf.Errors = append(thisSelf.Errors, t.Name)
-		}
-		thisSelf.Done = append(thisSelf.Done, t.Name)
+	switch t.run() {
+	case "error":
+		thisSelf.Errors = append(thisSelf.Errors, t.Name)
+		break
+	default:
+		break
 	}
+	thisSelf.Done = append(thisSelf.Done, t.Name)
 }
 
 func (thisSelf *TaskQueue) Status() {
