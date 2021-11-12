@@ -33,7 +33,7 @@ type TaskQueue struct {
 	queueLock          sync.RWMutex
 	Done               []string
 	Errors             []string
-	TaskQueueHistories []TaskQueueHistory
+	TaskQueueHistories map[int64][]TaskQueueHistory
 	Times              int
 	StartEpoch         int64
 	EndEpoch           int64
@@ -102,7 +102,7 @@ func CreateTaskQueue() TaskQueue {
 		EndEpoch:           0,
 		Running:            nil,
 		status:             "new",
-		TaskQueueHistories: []TaskQueueHistory{},
+		TaskQueueHistories: map[int64][]TaskQueueHistory{},
 		signal:             make(chan string),
 	}
 }
@@ -126,6 +126,7 @@ func (thisSelf *TaskQueue) Start() (error, chan string) {
 	thisSelf.Times += 1
 	thisSelf.StartEpoch = TimeEpoch()
 	thisSelf.EndEpoch = 0
+	thisSelf.TaskQueueHistories[thisSelf.StartEpoch] = []TaskQueueHistory{}
 	go func() {
 		for e := thisSelf.Queue.Front(); e != nil; e = e.Next() {
 			thisSelf.runner(e.Value.(task))
@@ -192,7 +193,7 @@ func (thisSelf *TaskQueue) Status() TaskQueueInfo {
 
 }
 
-func (thisSelf *TaskQueue) History() []TaskQueueHistory {
+func (thisSelf *TaskQueue) History() map[int64][]TaskQueueHistory {
 	return thisSelf.TaskQueueHistories
 }
 
@@ -215,5 +216,6 @@ func (thisSelf *TaskQueue) runner(t task) {
 	thisSelf.Done = append(thisSelf.Done, t.Name)
 	history.EndEpoch = TimeEpoch()
 	history.Result = t.Status
-	thisSelf.TaskQueueHistories = append(thisSelf.TaskQueueHistories, history)
+	thisSelf.TaskQueueHistories[thisSelf.StartEpoch] =
+		append(thisSelf.TaskQueueHistories[thisSelf.StartEpoch], history)
 }
