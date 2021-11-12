@@ -103,7 +103,7 @@ func CreateTaskQueue() TaskQueue {
 		Running:            nil,
 		status:             "new",
 		TaskQueueHistories: map[int64][]TaskQueueHistory{},
-		signal:             make(chan string, 1),
+		signal:             make(chan string),
 	}
 }
 
@@ -118,7 +118,7 @@ func (q *TaskQueue) Start() (error, chan string) {
 	if q.status != "new" && q.status != "done" {
 		return errors.New("队列正在运行中"), nil
 	}
-	done := make(chan string)
+	done := make(chan string, 1)
 	q.status = "running"
 	q.Done = []string{}
 	q.Errors = []string{}
