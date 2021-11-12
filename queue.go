@@ -29,18 +29,18 @@ func createTask(name string, timeoutSeconds int, runner func()) task {
 }
 
 type TaskQueue struct {
-	Queue      *list.List
-	queueLock  sync.RWMutex
-	Done       []string
-	Errors     []string
-	History    []TaskQueueHistory
-	Times      int
-	StartEpoch int64
-	EndEpoch   int64
-	Todo       int
-	Running    *task
-	status     string
-	signal     chan string
+	Queue              *list.List
+	queueLock          sync.RWMutex
+	Done               []string
+	Errors             []string
+	TaskQueueHistories []TaskQueueHistory
+	Times              int
+	StartEpoch         int64
+	EndEpoch           int64
+	Todo               int
+	Running            *task
+	status             string
+	signal             chan string
 }
 
 type TaskQueueHistory struct {
@@ -59,6 +59,7 @@ type TaskQueueInfo struct {
 	EndEpoch   int64
 	Running    string
 	Times      int
+	Status     string
 }
 
 func (thisSelf *task) run() string {
@@ -92,17 +93,17 @@ func (thisSelf *task) run() string {
 // 创建任务队列框架(异步, 可监测, 完整运行记录)
 func CreateTaskQueue() TaskQueue {
 	return TaskQueue{
-		Queue:      list.New(),
-		Done:       []string{},
-		Errors:     []string{},
-		Todo:       0,
-		Times:      0,
-		StartEpoch: 0,
-		EndEpoch:   0,
-		Running:    nil,
-		status:     "new",
-		History:    []TaskQueueHistory{},
-		signal:     make(chan string),
+		Queue:              list.New(),
+		Done:               []string{},
+		Errors:             []string{},
+		Todo:               0,
+		Times:              0,
+		StartEpoch:         0,
+		EndEpoch:           0,
+		Running:            nil,
+		status:             "new",
+		TaskQueueHistories: []TaskQueueHistory{},
+		signal:             make(chan string),
 	}
 }
 
@@ -186,8 +187,13 @@ func (thisSelf *TaskQueue) Status() TaskQueueInfo {
 		EndEpoch:   thisSelf.EndEpoch,
 		Running:    running,
 		Times:      thisSelf.Times,
+		Status:     thisSelf.status,
 	}
 
+}
+
+func (thisSelf *TaskQueue) History() []TaskQueueHistory {
+	return thisSelf.TaskQueueHistories
 }
 
 func (thisSelf *TaskQueue) runner(t task) {
@@ -209,5 +215,5 @@ func (thisSelf *TaskQueue) runner(t task) {
 	thisSelf.Done = append(thisSelf.Done, t.Name)
 	history.EndEpoch = TimeEpoch()
 	history.Result = t.Status
-	thisSelf.History = append(thisSelf.History, history)
+	thisSelf.TaskQueueHistories = append(thisSelf.TaskQueueHistories, history)
 }
