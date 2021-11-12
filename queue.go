@@ -167,11 +167,15 @@ func (thisSelf *TaskQueue) Start() (error, chan string) {
 }
 
 func (thisSelf *TaskQueue) Pause() {
+	thisSelf.signal <- "pause"
+}
 
+func (thisSelf *TaskQueue) Continue() {
+	thisSelf.signal <- "continue"
 }
 
 func (thisSelf *TaskQueue) Stop() {
-
+	thisSelf.signal <- "stop"
 }
 
 func (thisSelf *TaskQueue) Status() TaskQueueInfo {
