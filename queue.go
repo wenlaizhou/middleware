@@ -134,11 +134,13 @@ func (q *TaskQueue) Start() (error, chan string) {
 			case sig := <-q.signal:
 				switch sig {
 				case "pause":
+					q.status = "pause"
 				pause:
 					select {
 					case sig := <-q.signal:
 						switch sig {
 						case "continue":
+							q.status = "running"
 							break
 						default:
 							goto pause
