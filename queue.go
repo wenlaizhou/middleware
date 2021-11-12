@@ -115,7 +115,7 @@ func (thisSelf *TaskQueue) AddTask(name string, timeoutSeconds int, runner func(
 
 // 执行一次任务队列, 异步
 func (thisSelf *TaskQueue) Start() (error, chan string) {
-	if thisSelf.status != "new" {
+	if thisSelf.status != "new" && thisSelf.status != "done" {
 		return errors.New("队列正在运行中"), nil
 	}
 	done := make(chan string)
@@ -148,6 +148,7 @@ func (thisSelf *TaskQueue) Start() (error, chan string) {
 				case "continue":
 					break
 				case "stop":
+					thisSelf.status = "done"
 					panic(errors.New("force stop"))
 				default:
 					break
@@ -158,7 +159,7 @@ func (thisSelf *TaskQueue) Start() (error, chan string) {
 		}
 		thisSelf.EndEpoch = TimeEpoch()
 		done <- "done"
-		thisSelf.status = "new"
+		thisSelf.status = "done"
 	}()
 	return nil, done
 }
