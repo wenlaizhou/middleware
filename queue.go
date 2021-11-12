@@ -168,10 +168,16 @@ func (q *TaskQueue) Start() (error, chan string) {
 }
 
 func (q *TaskQueue) Pause() {
+	if q.status != "running" {
+		return
+	}
 	q.signal <- "pause"
 }
 
 func (q *TaskQueue) Continue() {
+	if q.status != "pause" {
+		return
+	}
 	q.signal <- "continue"
 }
 
