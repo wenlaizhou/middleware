@@ -161,6 +161,7 @@ func (q *TaskQueue) Start() (error, chan string) {
 		}
 		q.EndEpoch = TimeEpoch()
 		done <- "done"
+		q.Running = nil
 		q.status = "done"
 	}()
 	return nil, done
