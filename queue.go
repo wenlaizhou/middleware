@@ -75,6 +75,7 @@ func (thisSelf *task) run() string {
 	return thisSelf.Status
 }
 
+// 创建任务队列框架(异步, 可监测, 完整运行记录)
 func CreateTaskQueue() TaskQueue {
 	return TaskQueue{
 		Queue:   list.New(),
@@ -94,6 +95,7 @@ func (thisSelf *TaskQueue) AddTask(name string, timeoutSeconds int, runner func(
 	thisSelf.Queue.PushBack(createTask(name, timeoutSeconds, runner))
 }
 
+// 执行一次任务队列, 异步
 func (thisSelf *TaskQueue) Start() {
 	thisSelf.Done = []string{}
 	thisSelf.Errors = []string{}
