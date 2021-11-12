@@ -45,6 +45,7 @@ type TaskQueue struct {
 
 type TaskQueueHistory struct {
 	SerialId   int
+	Span       int
 	Name       string
 	Result     string
 	StartEpoch int64
@@ -128,8 +129,10 @@ func (q *TaskQueue) Start() (error, chan string) {
 	q.EndEpoch = 0
 	q.TaskQueueHistories[q.StartEpoch] = []TaskQueueHistory{}
 	go func() {
+		spanId := 0
 		for e := q.Queue.Front(); e != nil; e = e.Next() {
-			q.runner(e.Value.(task))
+			q.runner(e.Value.(task), spanId)
+			spanId++
 			select {
 			case sig := <-q.signal:
 				switch sig {
@@ -207,13 +210,13 @@ func (q *TaskQueue) History() map[int64][]TaskQueueHistory {
 	return q.TaskQueueHistories
 }
 
-func (q *TaskQueue) runner(t task) {
+func (q *TaskQueue) runner(t task, span int) {
 	q.Running = &t
 	q.Todo -= 1
 	history := TaskQueueHistory{
-		SerialId: q.Times,
-		Name:     t.Name,
-
+		SerialId:   q.Times,
+		Name:       t.Name,
+		Span:       span,
 		StartEpoch: TimeEpoch(),
 	}
 	switch t.run() {
