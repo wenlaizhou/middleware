@@ -16,40 +16,6 @@ type task struct {
 	TimeoutSeconds int    `json:"timeoutSeconds"`
 }
 
-func createTask(name string, timeoutSeconds int, runner func()) task {
-	return task{
-		Name:           name,
-		StartEpoch:     0,
-		EndEpoch:       0,
-		Runner:         runner,
-		Status:         "new",
-		TimeoutSeconds: timeoutSeconds,
-	}
-}
-
-func (thisSelf *task) run() string {
-	thisSelf.Status = "running"
-	done := make(chan bool)
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				thisSelf.Status = "error"
-			}
-		}()
-		thisSelf.Runner()
-		done <- true
-	}()
-	select {
-	case <-done:
-		thisSelf.Status = "done"
-		break
-	case <-time.After(time.Duration(thisSelf.TimeoutSeconds) * time.Second):
-		thisSelf.Status = "timeout"
-		break
-	}
-	return thisSelf.Status
-}
-
 type TaskQueue struct {
 	Queue     *list.List
 	queueLock sync.RWMutex
@@ -68,6 +34,45 @@ type TaskQueueHistory struct {
 	Result     string
 	StartEpoch int64
 	EndEpoch   int64
+}
+
+func createTask(name string, timeoutSeconds int, runner func()) task {
+	return task{
+		Name:           name,
+		StartEpoch:     0,
+		EndEpoch:       0,
+		Runner:         runner,
+		Status:         "new",
+		TimeoutSeconds: timeoutSeconds,
+	}
+}
+
+func (thisSelf *task) run() string {
+	thisSelf.Status = "running"
+	done := make(chan bool)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				thisSelf.Status = "error"
+				done <- false
+			}
+		}()
+		thisSelf.Runner()
+		done <- true
+	}()
+	select {
+	case res := <-done:
+		if res {
+			thisSelf.Status = "done"
+		} else {
+			thisSelf.Status = "error"
+		}
+		break
+	case <-time.After(time.Duration(thisSelf.TimeoutSeconds) * time.Second):
+		thisSelf.Status = "timeout"
+		break
+	}
+	return thisSelf.Status
 }
 
 func CreateTaskQueue() TaskQueue {
@@ -104,6 +109,12 @@ func (thisSelf *TaskQueue) Start() {
 func (thisSelf *TaskQueue) runner(t task) {
 	thisSelf.Running = &t
 	thisSelf.Todo -= 1
+	history := TaskQueueHistory{
+		SerialId: thisSelf.Times,
+		Name:     t.Name,
+
+		StartEpoch: TimeEpoch(),
+	}
 	switch t.run() {
 	case "error":
 		thisSelf.Errors = append(thisSelf.Errors, t.Name)
@@ -112,6 +123,9 @@ func (thisSelf *TaskQueue) runner(t task) {
 		break
 	}
 	thisSelf.Done = append(thisSelf.Done, t.Name)
+	history.EndEpoch = TimeEpoch()
+	history.Result = t.Status
+	thisSelf.History = append(thisSelf.History, history)
 }
 
 func (thisSelf *TaskQueue) Status() {
