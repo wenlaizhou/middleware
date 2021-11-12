@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"container/list"
+	"errors"
 	"sync"
 	"time"
 )
@@ -96,7 +97,11 @@ func (thisSelf *TaskQueue) AddTask(name string, timeoutSeconds int, runner func(
 }
 
 // 执行一次任务队列, 异步
-func (thisSelf *TaskQueue) Start() {
+func (thisSelf *TaskQueue) Start() error {
+	if thisSelf.status != "new" {
+		return errors.New("队列正在运行中")
+	}
+	thisSelf.status = "running"
 	thisSelf.Done = []string{}
 	thisSelf.Errors = []string{}
 	thisSelf.Todo = thisSelf.Queue.Len()
@@ -105,7 +110,9 @@ func (thisSelf *TaskQueue) Start() {
 		for e := thisSelf.Queue.Front(); e != nil; e = e.Next() {
 			thisSelf.runner(e.Value.(task))
 		}
+		thisSelf.status = "new"
 	}()
+	return nil
 }
 
 func (thisSelf *TaskQueue) runner(t task) {
