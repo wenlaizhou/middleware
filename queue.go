@@ -62,32 +62,32 @@ type TaskQueueInfo struct {
 	Status     string
 }
 
-func (thisSelf *task) run() string {
-	thisSelf.Status = "running"
+func (t *task) run() string {
+	t.Status = "running"
 	done := make(chan bool)
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				thisSelf.Status = "error"
+				t.Status = "error"
 				done <- false
 			}
 		}()
-		thisSelf.Runner()
+		t.Runner()
 		done <- true
 	}()
 	select {
 	case res := <-done:
 		if res {
-			thisSelf.Status = "done"
+			t.Status = "done"
 		} else {
-			thisSelf.Status = "error"
+			t.Status = "error"
 		}
 		break
-	case <-time.After(time.Duration(thisSelf.TimeoutSeconds) * time.Second):
-		thisSelf.Status = "timeout"
+	case <-time.After(time.Duration(t.TimeoutSeconds) * time.Second):
+		t.Status = "timeout"
 		break
 	}
-	return thisSelf.Status
+	return t.Status
 }
 
 // 创建任务队列框架(异步, 可监测, 完整运行记录)
@@ -107,36 +107,36 @@ func CreateTaskQueue() TaskQueue {
 	}
 }
 
-func (thisSelf *TaskQueue) AddTask(name string, timeoutSeconds int, runner func()) {
-	thisSelf.queueLock.Lock()
-	defer thisSelf.queueLock.Unlock()
-	thisSelf.Queue.PushBack(createTask(name, timeoutSeconds, runner))
+func (q *TaskQueue) AddTask(name string, timeoutSeconds int, runner func()) {
+	q.queueLock.Lock()
+	defer q.queueLock.Unlock()
+	q.Queue.PushBack(createTask(name, timeoutSeconds, runner))
 }
 
 // 执行一次任务队列, 异步
-func (thisSelf *TaskQueue) Start() (error, chan string) {
-	if thisSelf.status != "new" && thisSelf.status != "done" {
+func (q *TaskQueue) Start() (error, chan string) {
+	if q.status != "new" && q.status != "done" {
 		return errors.New("队列正在运行中"), nil
 	}
 	done := make(chan string)
-	thisSelf.status = "running"
-	thisSelf.Done = []string{}
-	thisSelf.Errors = []string{}
-	thisSelf.Todo = thisSelf.Queue.Len()
-	thisSelf.Times += 1
-	thisSelf.StartEpoch = TimeEpoch()
-	thisSelf.EndEpoch = 0
-	thisSelf.TaskQueueHistories[thisSelf.StartEpoch] = []TaskQueueHistory{}
+	q.status = "running"
+	q.Done = []string{}
+	q.Errors = []string{}
+	q.Todo = q.Queue.Len()
+	q.Times += 1
+	q.StartEpoch = TimeEpoch()
+	q.EndEpoch = 0
+	q.TaskQueueHistories[q.StartEpoch] = []TaskQueueHistory{}
 	go func() {
-		for e := thisSelf.Queue.Front(); e != nil; e = e.Next() {
-			thisSelf.runner(e.Value.(task))
+		for e := q.Queue.Front(); e != nil; e = e.Next() {
+			q.runner(e.Value.(task))
 			select {
-			case sig := <-thisSelf.signal:
+			case sig := <-q.signal:
 				switch sig {
 				case "pause":
 				pause:
 					select {
-					case sig := <-thisSelf.signal:
+					case sig := <-q.signal:
 						switch sig {
 						case "continue":
 							break
@@ -148,7 +148,7 @@ func (thisSelf *TaskQueue) Start() (error, chan string) {
 				case "continue":
 					break
 				case "stop":
-					thisSelf.status = "done"
+					q.status = "done"
 					panic(errors.New("force stop"))
 				default:
 					break
@@ -157,66 +157,66 @@ func (thisSelf *TaskQueue) Start() (error, chan string) {
 				break
 			}
 		}
-		thisSelf.EndEpoch = TimeEpoch()
+		q.EndEpoch = TimeEpoch()
 		done <- "done"
-		thisSelf.status = "done"
+		q.status = "done"
 	}()
 	return nil, done
 }
 
-func (thisSelf *TaskQueue) Pause() {
-	thisSelf.signal <- "pause"
+func (q *TaskQueue) Pause() {
+	q.signal <- "pause"
 }
 
-func (thisSelf *TaskQueue) Continue() {
-	thisSelf.signal <- "continue"
+func (q *TaskQueue) Continue() {
+	q.signal <- "continue"
 }
 
-func (thisSelf *TaskQueue) Stop() {
-	thisSelf.signal <- "stop"
+func (q *TaskQueue) Stop() {
+	q.signal <- "stop"
 }
 
-func (thisSelf *TaskQueue) Status() TaskQueueInfo {
+func (q *TaskQueue) Status() TaskQueueInfo {
 	running := ""
-	if thisSelf.Running != nil {
-		running = thisSelf.Running.Name
+	if q.Running != nil {
+		running = q.Running.Name
 	}
 	return TaskQueueInfo{
-		Length:     thisSelf.Queue.Len(),
-		Done:       thisSelf.Done,
-		Errors:     thisSelf.Errors,
-		StartEpoch: thisSelf.StartEpoch,
-		EndEpoch:   thisSelf.EndEpoch,
+		Length:     q.Queue.Len(),
+		Done:       q.Done,
+		Errors:     q.Errors,
+		StartEpoch: q.StartEpoch,
+		EndEpoch:   q.EndEpoch,
 		Running:    running,
-		Times:      thisSelf.Times,
-		Status:     thisSelf.status,
+		Times:      q.Times,
+		Status:     q.status,
 	}
 
 }
 
-func (thisSelf *TaskQueue) History() map[int64][]TaskQueueHistory {
-	return thisSelf.TaskQueueHistories
+func (q *TaskQueue) History() map[int64][]TaskQueueHistory {
+	return q.TaskQueueHistories
 }
 
-func (thisSelf *TaskQueue) runner(t task) {
-	thisSelf.Running = &t
-	thisSelf.Todo -= 1
+func (q *TaskQueue) runner(t task) {
+	q.Running = &t
+	q.Todo -= 1
 	history := TaskQueueHistory{
-		SerialId: thisSelf.Times,
+		SerialId: q.Times,
 		Name:     t.Name,
 
 		StartEpoch: TimeEpoch(),
 	}
 	switch t.run() {
 	case "error":
-		thisSelf.Errors = append(thisSelf.Errors, t.Name)
+		q.Errors = append(q.Errors, t.Name)
 		break
 	default:
 		break
 	}
-	thisSelf.Done = append(thisSelf.Done, t.Name)
+	q.Done = append(q.Done, t.Name)
 	history.EndEpoch = TimeEpoch()
 	history.Result = t.Status
-	thisSelf.TaskQueueHistories[thisSelf.StartEpoch] =
-		append(thisSelf.TaskQueueHistories[thisSelf.StartEpoch], history)
+	q.TaskQueueHistories[q.StartEpoch] =
+		append(q.TaskQueueHistories[q.StartEpoch], history)
 }
