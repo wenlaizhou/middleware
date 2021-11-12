@@ -43,24 +43,29 @@ type TaskQueue struct {
 }
 
 type TaskQueueHistory struct {
-	SerialId   int
-	Span       int
-	Name       string
-	Result     string
-	StartEpoch int64
-	EndEpoch   int64
+	SerialId   int    `json:"serialId"`
+	Span       int    `json:"span"`
+	Name       string `json:"name"`
+	Result     string `json:"result"`
+	StartEpoch int64  `json:"startEpoch"`
+	EndEpoch   int64  `json:"endEpoch"`
 }
 
 type TaskQueueInfo struct {
-	Length     int
-	Tasks      []string
-	Done       []string
-	Errors     []string
-	StartEpoch int64
-	EndEpoch   int64
-	Running    string
-	Times      int
-	Status     string
+	Length     int        `json:"length"`
+	Tasks      []TaskInfo `json:"tasks"`
+	Done       []string   `json:"done"`
+	Errors     []string   `json:"errors"`
+	StartEpoch int64      `json:"startEpoch"`
+	EndEpoch   int64      `json:"endEpoch"`
+	Running    string     `json:"running"`
+	Times      int        `json:"times"`
+	Status     string     `json:"status"`
+}
+
+type TaskInfo struct {
+	Name    string `json:"name"`
+	Timeout int    `json:"timeout"`
 }
 
 func (t *task) run() string {
@@ -193,8 +198,16 @@ func (q *TaskQueue) Status() TaskQueueInfo {
 	if q.Running != nil {
 		running = q.Running.Name
 	}
+	tasks := []TaskInfo{}
+	for _, task := range q.Queue {
+		tasks = append(tasks, TaskInfo{
+			Name:    task.Name,
+			Timeout: task.TimeoutSeconds,
+		})
+	}
 	return TaskQueueInfo{
 		Length:     len(q.Queue),
+		Tasks:      tasks,
 		Done:       q.Done,
 		Errors:     q.Errors,
 		StartEpoch: q.StartEpoch,
