@@ -103,7 +103,7 @@ func CreateTaskQueue() TaskQueue {
 		Running:            nil,
 		status:             "new",
 		TaskQueueHistories: map[int64][]TaskQueueHistory{},
-		signal:             make(chan string),
+		signal:             make(chan string, 1),
 	}
 }
 
