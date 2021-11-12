@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"container/list"
 	"errors"
 	"sync"
 	"time"
@@ -29,7 +28,7 @@ func createTask(name string, timeoutSeconds int, runner func()) task {
 }
 
 type TaskQueue struct {
-	Queue              *list.List
+	Queue              []task
 	queueLock          sync.RWMutex
 	Done               []string
 	Errors             []string
@@ -54,6 +53,7 @@ type TaskQueueHistory struct {
 
 type TaskQueueInfo struct {
 	Length     int
+	Tasks      []string
 	Done       []string
 	Errors     []string
 	StartEpoch int64
@@ -94,7 +94,7 @@ func (t *task) run() string {
 // 创建任务队列框架(异步, 可监测, 完整运行记录)
 func CreateTaskQueue() TaskQueue {
 	return TaskQueue{
-		Queue:              list.New(),
+		Queue:              []task{},
 		Done:               []string{},
 		Errors:             []string{},
 		Todo:               0,
@@ -111,7 +111,7 @@ func CreateTaskQueue() TaskQueue {
 func (q *TaskQueue) AddTask(name string, timeoutSeconds int, runner func()) {
 	q.queueLock.Lock()
 	defer q.queueLock.Unlock()
-	q.Queue.PushBack(createTask(name, timeoutSeconds, runner))
+	q.Queue = append(q.Queue, createTask(name, timeoutSeconds, runner))
 }
 
 // 执行一次任务队列, 异步
@@ -123,15 +123,15 @@ func (q *TaskQueue) Start() (error, chan string) {
 	q.status = "running"
 	q.Done = []string{}
 	q.Errors = []string{}
-	q.Todo = q.Queue.Len()
+	q.Todo = len(q.Queue)
 	q.Times += 1
 	q.StartEpoch = TimeEpoch()
 	q.EndEpoch = 0
 	q.TaskQueueHistories[q.StartEpoch] = []TaskQueueHistory{}
 	go func() {
 		spanId := 0
-		for e := q.Queue.Front(); e != nil; e = e.Next() {
-			q.runner(e.Value.(task), spanId)
+		for _, task := range q.Queue {
+			q.runner(task, spanId)
 			spanId++
 			select {
 			case sig := <-q.signal:
@@ -194,7 +194,7 @@ func (q *TaskQueue) Status() TaskQueueInfo {
 		running = q.Running.Name
 	}
 	return TaskQueueInfo{
-		Length:     q.Queue.Len(),
+		Length:     len(q.Queue),
 		Done:       q.Done,
 		Errors:     q.Errors,
 		StartEpoch: q.StartEpoch,
