@@ -79,42 +79,42 @@ func NewServer(host string, port int) Server {
 	return srv
 }
 
-func (this *Server) GetStatus() int {
-	this.RLock()
-	defer this.RUnlock()
-	return this.status
+func (t *Server) GetStatus() int {
+	t.RLock()
+	defer t.RUnlock()
+	return t.status
 }
 
-func (this *Server) Start() {
+func (t *Server) Start() {
 	defer func() {
 		if err := recover(); err != nil {
 			mLogger.ErrorF("%v", err)
 		}
 	}()
-	this.Lock()
-	if this.status != 0 {
-		this.Unlock()
+	t.Lock()
+	if t.status != 0 {
+		t.Unlock()
 		return
 	}
-	this.status = 1
-	this.Unlock()
-	http.HandleFunc("/", this.ServeHTTP)
-	hostStr := fmt.Sprintf("%s:%d", this.Host, this.Port)
+	t.status = 1
+	t.Unlock()
+	http.HandleFunc("/", t.ServeHTTP)
+	hostStr := fmt.Sprintf("%s:%d", t.Host, t.Port)
 	mLogger.Info("server start " + hostStr)
 	log.Fatal(http.ListenAndServe(hostStr, nil))
 }
 
 // 核心处理逻辑
-func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := newContext(w, r)
-	ctx.tpl = this.baseTpl
-	ctx.restProcessors = this.restProcessors
+	ctx.tpl = t.baseTpl
+	ctx.restProcessors = t.restProcessors
 	ctx.code = 200 // 是否合适
-	if this.enableI18n {
+	if t.enableI18n {
 		ctx.EnableI18n = true
-		ctx.Message = this.i18n
+		ctx.Message = t.i18n
 	}
-	if this.CrossDomain {
+	if t.CrossDomain {
 		ctx.SetHeader(AccessControlAllowOrigin, "*")
 		ctx.SetHeader(AccessControlAllowMethods, METHODS)
 		ctx.SetHeader(AccessControlAllowHeaders, "*")
@@ -124,23 +124,23 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	atomic.AddInt64(&this.totalAccess, 1)
+	atomic.AddInt64(&t.totalAccess, 1)
 	start := TimeEpoch()
-	for _, filterNode := range this.filter {
+	for _, filterNode := range t.filter {
 		if filterNode.pathReg.MatchString(r.URL.Path) {
 			if !filterNode.handler(ctx) {
-				atomic.AddInt64(&this.totalExpire, TimeEpoch()-start)
+				atomic.AddInt64(&t.totalExpire, TimeEpoch()-start)
 				return
 			}
 		}
 	}
-	if this.hasIndex && r.URL.Path == "/" {
-		this.index.handler(ctx)
-		atomic.AddInt64(&this.totalExpire, TimeEpoch()-start)
+	if t.hasIndex && r.URL.Path == "/" {
+		t.index.handler(ctx)
+		atomic.AddInt64(&t.totalExpire, TimeEpoch()-start)
 		return
 	}
 	var handler func(Context)
-	for _, pathNode := range this.pathNodes {
+	for _, pathNode := range t.pathNodes {
 		if pathNode.pathReg.MatchString(r.URL.Path) {
 			pathParams := pathNode.pathReg.FindAllStringSubmatch(r.URL.Path, 10) // 最多10个路径参数
 			if len(pathParams) > 0 && len(pathParams[0]) > 0 {
@@ -157,59 +157,59 @@ func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if handler == nil {
 		_ = ctx.Error(StatusNotFound, StatusNotFoundView)
-		atomic.AddInt64(&this.totalExpire, TimeEpoch()-start)
+		atomic.AddInt64(&t.totalExpire, TimeEpoch()-start)
 		return
 	}
 	handler(ctx)
 	if ctx.code == 200 {
-		atomic.AddInt64(&this.successAccess, 1)
-		atomic.AddInt64(&this.successExpire, TimeEpoch()-start)
+		atomic.AddInt64(&t.successAccess, 1)
+		atomic.AddInt64(&t.successExpire, TimeEpoch()-start)
 	}
-	atomic.AddInt64(&this.totalExpire, TimeEpoch()-start)
+	atomic.AddInt64(&t.totalExpire, TimeEpoch()-start)
 	return
 }
 
-func (this *Server) RegisterDefaultIndex(link string) {
-	this.RegisterIndex(func(context Context) {
+func (t *Server) RegisterDefaultIndex(link string) {
+	t.RegisterIndex(func(context Context) {
 		context.OK(Html, []byte(fmt.Sprintf(DefaultIndex, link)))
 	})
-	this.RegisterHandler("/static/default/css/bootstrap.v5.min", func(context Context) {
+	t.RegisterHandler("/static/default/css/bootstrap.v5.min", func(context Context) {
 		context.OK(Css, []byte(BootstrapCss))
 	})
-	this.RegisterHandler("/static/default/images/default_background", func(context Context) {
+	t.RegisterHandler("/static/default/images/default_background", func(context Context) {
 		context.OK(Jpeg, defaultBackground)
 	})
 }
 
 //设置静态文件目录
-func (this *Server) Static(path string) {
+func (t *Server) Static(path string) {
 	if !strings.HasSuffix(path, "/") {
 		path = fmt.Sprintf("%s/", path)
 	}
-	this.RegisterHandler(path, StaticProcessor)
+	t.RegisterHandler(path, StaticProcessor)
 }
 
 // 注册首页
-func (this *Server) RegisterIndex(handler func(Context)) {
-	this.Lock()
-	defer this.Unlock()
-	this.hasIndex = true
-	this.index = pathProcessor{
+func (t *Server) RegisterIndex(handler func(Context)) {
+	t.Lock()
+	defer t.Unlock()
+	t.hasIndex = true
+	t.index = pathProcessor{
 		handler: handler,
 	}
 }
 
 // 结合 react 前端, 注册前端dist目录
-func (this *Server) RegisterFrontendDist(distPath string) {
+func (t *Server) RegisterFrontendDist(distPath string) {
 	exp := regexp.MustCompile("\\.html$|\\.js$|\\.css$|\\.svg$|\\.icon$|\\.ico$|\\.png$|\\.jpg$|\\.jpeg$|\\.gif$")
-	this.RegisterFilter("/.*", func(context Context) bool {
+	t.RegisterFilter("/.*", func(context Context) bool {
 		if exp.MatchString(context.Request.URL.Path) {
 			http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/%s", distPath, context.Request.URL.Path[1:]))
 			return false
 		}
 		return true
 	})
-	this.RegisterIndex(func(context Context) {
+	t.RegisterIndex(func(context Context) {
 		http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/index.html", distPath))
 	})
 }
@@ -234,14 +234,14 @@ func RegisterFrontendDist(distPath string) {
 }
 
 // 注册模板服务
-func (this *Server) RegisterTemplate(filePath string) {
-	this.Lock()
+func (t *Server) RegisterTemplate(filePath string) {
+	t.Lock()
 	var err error
-	this.baseTpl, err = includeTemplate(this.baseTpl, ".html", []string{filePath}...)
+	t.baseTpl, err = includeTemplate(t.baseTpl, ".html", []string{filePath}...)
 	if err != nil {
 		mLogger.Error(err.Error())
 	}
-	this.Unlock()
+	t.Unlock()
 	mLogger.InfoF("render template %v done!", filePath)
 }
 
@@ -252,10 +252,10 @@ func RegisterTemplate(filePath string) {
 
 // 注册模板函数
 // warning: 请在设置模板目录前使用
-func (this *Server) TemplateFunc(name string, function interface{}) {
-	this.Lock()
-	defer this.Unlock()
-	this.baseTpl.Funcs(template.FuncMap{
+func (t *Server) TemplateFunc(name string, function interface{}) {
+	t.Lock()
+	defer t.Unlock()
+	t.baseTpl.Funcs(template.FuncMap{
 		name: function})
 }
 
@@ -304,40 +304,40 @@ func RegisterHandler(path string, handler func(Context)) {
 	globalServer.RegisterHandler(path, handler)
 }
 
-func (this *Server) EnableMetrics() {
-	this.RegisterHandler("/metrics", func(context Context) {
+func (t *Server) EnableMetrics() {
+	t.RegisterHandler("/metrics", func(context Context) {
 		context.OK(Plain, []byte(GetMetricsData([]MetricsData{
 			{
 				Key:   "request_count",
-				Value: int64(this.totalAccess),
+				Value: int64(t.totalAccess),
 			},
 			{
 				Key:   "request_time",
-				Value: int64(this.totalExpire),
+				Value: int64(t.totalExpire),
 			},
 			{
 				Key:   "success_count",
-				Value: int64(this.successAccess),
+				Value: int64(t.successAccess),
 			},
 			{
 				Key:   "success_time",
-				Value: int64(this.successExpire),
+				Value: int64(t.successExpire),
 			},
 		})))
 	})
 }
 
-func (this *Server) SetI18n(name string) {
+func (t *Server) SetI18n(name string) {
 	if len(name) <= 0 {
 		name = "message"
 	}
 	cn := LoadConfig(fmt.Sprintf("%s_cn.properties", name))
 	en := LoadConfig(fmt.Sprintf("%s_en.properties", name))
-	this.i18n = I18n{
+	t.i18n = I18n{
 		Cn: cn,
 		En: en,
 	}
-	this.enableI18n = true
+	t.enableI18n = true
 }
 
 func EnableMetrics() {
@@ -351,9 +351,9 @@ func SetI18n(name string) {
 var pathParamReg, _ = regexp.Compile("\\{(.*?)\\}")
 
 // 注册服务
-func (this *Server) RegisterHandler(path string, handler func(Context)) {
-	this.Lock()
-	defer this.Unlock()
+func (t *Server) RegisterHandler(path string, handler func(Context)) {
+	t.Lock()
+	defer t.Unlock()
 	if len(path) <= 0 {
 		return
 	}
@@ -383,7 +383,7 @@ func (this *Server) RegisterHandler(path string, handler func(Context)) {
 	pathReg, err := regexp.Compile(path)
 	mLogger.InfoF("注册handler: %s", path)
 	if !ProcessError(err) {
-		this.pathNodes[path] = pathProcessor{
+		t.pathNodes[path] = pathProcessor{
 			pathReg: pathReg,
 			handler: handler,
 			params:  params,
@@ -391,10 +391,10 @@ func (this *Server) RegisterHandler(path string, handler func(Context)) {
 	}
 }
 
-func (this *Server) RegisterRestProcessor(processor func(model interface{}) interface{}) {
-	this.Lock()
-	this.restProcessors = append(this.restProcessors, processor)
-	this.Unlock()
+func (t *Server) RegisterRestProcessor(processor func(model interface{}) interface{}) {
+	t.Lock()
+	t.restProcessors = append(t.restProcessors, processor)
+	t.Unlock()
 	mLogger.InfoLn("新增restProcessor")
 }
 

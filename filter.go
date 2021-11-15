@@ -10,16 +10,16 @@ import (
 
 handle : return false 拦截请求
 */
-func (this *Server) RegisterFilter(path string, handle func(Context) bool) {
-	this.Lock()
-	defer this.Unlock()
+func (t *Server) RegisterFilter(path string, handle func(Context) bool) {
+	t.Lock()
+	defer t.Unlock()
 	if len(path) <= 0 {
 		return
 	}
 	if strings.HasSuffix(path, "/") {
 		path = path + ".*"
 	}
-	this.filter = append(this.filter, filterProcessor{
+	t.filter = append(t.filter, filterProcessor{
 		handler: handle,
 		pathReg: regexp.MustCompile(path),
 	})
