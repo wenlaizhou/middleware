@@ -96,11 +96,11 @@ const (
 const (
 	ApplicationJson   = "application/json; charset=utf-8"
 	Json              = "application/json; charset=utf-8"
-	Css               = "text/css; charset=utf-8"
+	Css               = "text/css"
 	Plain             = "text/plain; charset=utf-8"
 	Html              = "text/html; charset=utf-8"
 	Jpeg              = "image/jpeg"
-	Js                = "application/x-javascript; charset=utf-8"
+	Js                = "text/javascript"
 	Pdf               = "application/pdf"
 	Png               = "image/png"
 	Svg               = "image/svg+xml"
