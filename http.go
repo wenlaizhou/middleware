@@ -218,14 +218,17 @@ func RegisterDefaultIndex(link string) {
 	globalServer.RegisterDefaultIndex(link)
 }
 
+// 注册首页处理器
 func RegisterIndex(handler func(Context)) {
 	globalServer.RegisterIndex(handler)
 }
 
+// 注册静态文件目录
 func RegisterStatic(path string) {
 	globalServer.Static(path)
 }
 
+// 注册前端编译后程序路径
 func RegisterFrontendDist(distPath string) {
 	globalServer.RegisterFrontendDist(distPath)
 }
@@ -295,6 +298,8 @@ func includeTemplate(tpl *template.Template, suffix string, filePaths ...string)
 }
 
 // 注册http请求处理器
+//
+// @param path:路径, 可以用 {占位符} 进行路径参数设置
 func RegisterHandler(path string, handler func(Context)) {
 	globalServer.RegisterHandler(path, handler)
 }

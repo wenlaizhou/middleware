@@ -64,7 +64,7 @@ func GetLogger(name string) Logger {
 		return &res
 	}
 	loggerLocker.Lock()
-	err := os.Mkdir("log", os.ModePerm)
+	err := os.Mkdir("logs", os.ModePerm)
 	if err != nil {
 		// filepath exist
 	}
