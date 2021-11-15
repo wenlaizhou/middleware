@@ -142,6 +142,10 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var handler func(Context)
 	for _, pathNode := range t.pathNodes {
 		if pathNode.pathReg.MatchString(r.URL.Path) {
+			if len(pathNode.params) <= 0 {
+				handler = pathNode.handler
+				break
+			}
 			pathParams := pathNode.pathReg.FindAllStringSubmatch(r.URL.Path, 10) // 最多10个路径参数
 			if len(pathParams) > 0 && len(pathParams[0]) > 0 {
 				for i, pathParam := range pathParams[0][1:] {
@@ -348,7 +352,7 @@ func SetI18n(name string) {
 	globalServer.SetI18n(name)
 }
 
-var pathParamReg, _ = regexp.Compile("\\{(.*?)\\}")
+var pathParamReg, _ = regexp.Compile("\\{(.+?)\\}")
 
 // 注册服务
 func (t *Server) RegisterHandler(path string, handler func(Context)) {
@@ -360,6 +364,17 @@ func (t *Server) RegisterHandler(path string, handler func(Context)) {
 	if handler == nil {
 		return
 	}
+
+	var params = []string{}
+
+	paramMather := pathParamReg.FindAllStringSubmatch(path, -1)
+
+	for _, param := range paramMather {
+		params = append(params, param[1])
+		path = strings.Replace(path,
+			param[0], "(.+?)", -1)
+	}
+
 	if strings.HasSuffix(path, "/") {
 		path = fmt.Sprintf("%s.*", path)
 	} else {
@@ -371,16 +386,6 @@ func (t *Server) RegisterHandler(path string, handler func(Context)) {
 	}
 
 	path = fmt.Sprintf("^%s", path)
-
-	paramMather := pathParamReg.FindAllStringSubmatch(path, -1)
-
-	var params []string
-
-	for _, param := range paramMather {
-		params = append(params, param[1])
-		path = strings.Replace(path,
-			param[0], "(.*)", -1)
-	}
 
 	pathReg, err := regexp.Compile(path)
 	mLogger.InfoF("注册handler: %s", path)
