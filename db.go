@@ -3,12 +3,14 @@ package middleware
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/go-sql-driver/mysql"
 	"time"
 )
 
 type Database struct {
 	conn           *sql.DB
+	dbName         string
 	cfg            mysql.Config
 	timeoutSeconds time.Duration
 }
@@ -48,15 +50,16 @@ func DbPool(addr string, user string, password string, dbName string, maxConnect
 	return Database{
 		conn:           db,
 		cfg:            cfg,
+		dbName:         dbName,
 		timeoutSeconds: time.Duration(timeoutSecond) * time.Second,
 	}, nil
 }
 
 // ? 代表参数
-func (thisSelf Database) Query(sql string, params ...interface{}) ([]map[string]string, error) {
+func (d Database) Query(sql string, params ...interface{}) ([]map[string]string, error) {
 	result := []map[string]string{}
-	timeoutContext, _ := context.WithTimeout(context.Background(), thisSelf.timeoutSeconds)
-	rows, err := thisSelf.conn.QueryContext(timeoutContext, sql, params...)
+	timeoutContext, _ := context.WithTimeout(context.Background(), d.timeoutSeconds)
+	rows, err := d.conn.QueryContext(timeoutContext, sql, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,9 +85,9 @@ func (thisSelf Database) Query(sql string, params ...interface{}) ([]map[string]
 }
 
 // ? 代表参数
-func (thisSelf Database) Exec(sql string, params ...interface{}) (int64, int64, error) {
-	timeoutContext, _ := context.WithTimeout(context.Background(), thisSelf.timeoutSeconds)
-	rows, err := thisSelf.conn.ExecContext(timeoutContext, sql, params...)
+func (d Database) Exec(sql string, params ...interface{}) (int64, int64, error) {
+	timeoutContext, _ := context.WithTimeout(context.Background(), d.timeoutSeconds)
+	rows, err := d.conn.ExecContext(timeoutContext, sql, params...)
 	if err != nil {
 		return -1, -1, err
 	}
@@ -93,6 +96,61 @@ func (thisSelf Database) Exec(sql string, params ...interface{}) (int64, int64, 
 	return rowsAffected, lastInsertedId, nil
 }
 
-func (thisSelf Database) Close() {
-	thisSelf.conn.Close()
+type DatabaseSchema struct {
+	Name   string                 `json:"name"`
+	Tables map[string]TableSchema `json:"tables"`
+}
+
+type TableSchema struct {
+	Name    string                  `json:"name"`
+	Columns map[string]ColumnSchema `json:"columns"`
+}
+
+type ColumnSchema struct {
+	Name     string `json:"name"`
+	DataType string `json:"dataType"`
+	Comment  string `json:"comment"`
+}
+
+func (d Database) Schema() (DatabaseSchema, error) {
+	res, err := d.Query("select table_name, column_name, data_type, column_comment from information_schema.columns where table_schema = ? order by table_name", d.dbName)
+	if err != nil {
+		return DatabaseSchema{}, err
+	}
+	result := DatabaseSchema{
+		Name:   d.dbName,
+		Tables: map[string]TableSchema{},
+	}
+	if len(res) <= 0 {
+		return DatabaseSchema{}, errors.New("no privileges")
+	}
+	for _, row := range res {
+		tableName, has := row["table_name"]
+		if !has {
+			continue
+		}
+		t, has := result.Tables[tableName]
+		if has {
+			t.Columns[row["column_name"]] = ColumnSchema{
+				Name:     row["column_name"],
+				DataType: row["data_type"],
+				Comment:  row["column_comment"],
+			}
+		} else {
+			result.Tables[tableName] = TableSchema{
+				Name: tableName,
+				Columns: map[string]ColumnSchema{
+					row["column_name"]: ColumnSchema{
+						Name:     row["column_name"],
+						DataType: row["data_type"],
+						Comment:  row["column_comment"],
+					}},
+			}
+		}
+	}
+	return result, nil
+}
+
+func (d Database) Close() {
+	d.conn.Close()
 }
