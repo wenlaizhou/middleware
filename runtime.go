@@ -35,6 +35,14 @@ type MemoryInfo struct {
 	NumGC uint32 `json:"numGc"`
 
 	LastGC uint64 `json:"lastGc"`
+
+	Os string `json:"os"`
+
+	OsArch string `json:"osArch"`
+
+	RuntimeVersion string `json:"runtimeVersion"`
+
+	Dependencies []map[string]string `json:"dependencies"`
 }
 
 func MemoryUsage() MemoryInfo {
@@ -51,6 +59,18 @@ func MemoryUsage() MemoryInfo {
 	res.CpuCount = runtime.NumCPU()
 	res.NumGoroutines = runtime.NumGoroutine()
 	res.NumCgoCalls = runtime.NumCgoCall()
+	res.Os = runtime.GOOS
+	res.OsArch = runtime.GOARCH
+	res.RuntimeVersion = runtime.Version()
+	buildInfo, buildRes := debug.ReadBuildInfo()
+	if buildRes {
+		for _, dep := range buildInfo.Deps {
+			res.Dependencies = append(res.Dependencies, map[string]string{
+				"name":    dep.Path,
+				"version": dep.Version,
+			})
+		}
+	}
 	return res
 }
 
