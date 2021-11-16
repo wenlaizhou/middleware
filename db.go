@@ -178,6 +178,12 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 	}
 
 	selectSwagger := SwaggerBuildPath(fmt.Sprintf("%s/select/{table}", prefix), d.dbName, "get", "select from table")
+	selectSwagger.AddParameter(SwaggerParameter{
+		Name:        "table",
+		Description: "table name",
+		In:          "path",
+		Required:    true,
+	})
 	RegisterHandler(fmt.Sprintf("%s/select/{table}", prefix), func(c Context) {
 		table := c.GetPathParam("table")
 		if !SqlParamCheck(table) {
@@ -194,6 +200,12 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 	})
 
 	insertSwagger := SwaggerBuildPath(fmt.Sprintf("%s/insert/{table}", prefix), d.dbName, "post", "insert into table")
+	insertSwagger.AddParameter(SwaggerParameter{
+		Name:        "table",
+		Description: "table name",
+		In:          "path",
+		Required:    true,
+	})
 	insertSwagger.AddParameter(SwaggerParameter{
 		Name:        "json",
 		Default:     "{}",
@@ -240,6 +252,12 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 	})
 
 	updateSwagger := SwaggerBuildPath(fmt.Sprintf("%s/update/{table}", prefix), d.dbName, "post", "update table")
+	updateSwagger.AddParameter(SwaggerParameter{
+		Name:        "table",
+		Description: "table name",
+		In:          "path",
+		Required:    true,
+	})
 	updateSwagger.AddParameter(SwaggerParameter{
 		Name: "json",
 		Default: `{
