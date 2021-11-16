@@ -233,14 +233,61 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 
 		insertSql = fmt.Sprintf("%s %s", insertSql, values)
 
-		c.ApiResponse(0, insertSql, nil)
+		c.ApiResponse(0, insertSql, sqlParams)
 		return
 		//d.Exec(insertSql, sqlParams...)
 
 	})
 
+	updateSwagger := SwaggerBuildPath(fmt.Sprintf("%s/update/{table}", prefix), d.dbName, "post", "update table")
+	updateSwagger.AddParameter(SwaggerParameter{
+		Name: "json",
+		Default: `{
+  "id" : 1
+}`,
+		Description: "必须具有id字段进行数据定位",
+		In:          "body",
+		Required:    true,
+	})
 	RegisterHandler(fmt.Sprintf("%s/update/{table}", prefix), func(c Context) {
+		table := c.GetPathParam("table")
+		if !SqlParamCheck(table) {
+			c.ApiResponse(-1, "", nil)
+			return
+		}
+		params, err := c.GetJSON()
+		if err != nil {
+			c.ApiResponse(-1, err.Error(), nil)
+			return
+		}
+		if len(params) <= 0 {
+			c.ApiResponse(-1, "invalid params", nil)
+			return
+		}
+		updateSql := fmt.Sprintf("update %v set (", table)
+		sqlParams := []interface{}{}
+		id, hasId := params["id"]
+		if !hasId {
+			c.ApiResponse(-1, "no id", nil)
+			return
+		}
+		for k, v := range params {
+			if !SqlParamCheck(k) {
+				c.ApiResponse(-1, "", nil)
+				return
+			}
+			if k == "id" {
+				continue
+			}
+			updateSql = fmt.Sprintf("%s %s = ?,", updateSql, k)
+			sqlParams = append(sqlParams, v)
+		}
+		updateSql = updateSql[:len(updateSql)-2]
 
+		updateSql = fmt.Sprintf("%s ) where id = ?", updateSql)
+		sqlParams = append(sqlParams, id)
+		c.ApiResponse(0, updateSql, sqlParams)
+		return
 	})
 
 	RegisterHandler(fmt.Sprintf("%s/delete/{table}", prefix), func(c Context) {
