@@ -80,7 +80,11 @@ func (d Database) Query(sql string, params ...interface{}) ([]map[string]string,
 		}
 		row := map[string]string{}
 		for i, _ := range columns {
-			row[columns[i]] = fmt.Sprintf("%v", data[i])
+			if data[i] == nil {
+				row[columns[i]] = ""
+			} else {
+				row[columns[i]] = string(data[i].([]byte))
+			}
 		}
 		result = append(result, row)
 	}
@@ -176,6 +180,17 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 	if !strings.HasPrefix(prefix, "/") {
 		prefix = fmt.Sprintf("/%s", prefix)
 	}
+
+	schemaSwagger := SwaggerBuildPath(fmt.Sprintf("%s/schema", prefix), d.dbName, "get", "db schema")
+	RegisterHandler(fmt.Sprintf("%s/schema", prefix), func(c Context) {
+		res, err := d.Schema()
+		if err != nil {
+			c.ApiResponse(-1, err.Error(), nil)
+			return
+		}
+		c.ApiResponse(0, "", res)
+		return
+	})
 
 	selectSwagger := SwaggerBuildPath(fmt.Sprintf("%s/select/{table}", prefix), d.dbName, "get", "select from table")
 	selectSwagger.AddParameter(SwaggerParameter{
@@ -312,5 +327,5 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 
 	})
 
-	return []SwaggerPath{selectSwagger, insertSwagger}
+	return []SwaggerPath{schemaSwagger, selectSwagger, insertSwagger}
 }
