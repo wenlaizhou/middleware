@@ -69,7 +69,7 @@ func (d Database) Query(sql string, params ...interface{}) ([]map[string]string,
 	}
 	columns, _ := rows.Columns()
 	for rows.Next() {
-		data := make([]string, len(columns))
+		data := make([]interface{}, len(columns))
 		columnPointers := make([]interface{}, len(columns))
 		for i, _ := range data {
 			columnPointers[i] = &data[i]
@@ -80,7 +80,7 @@ func (d Database) Query(sql string, params ...interface{}) ([]map[string]string,
 		}
 		row := map[string]string{}
 		for i, _ := range columns {
-			row[columns[i]] = data[i]
+			row[columns[i]] = fmt.Sprintf("%v", data[i])
 		}
 		result = append(result, row)
 	}
