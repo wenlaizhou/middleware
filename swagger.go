@@ -49,14 +49,8 @@ func SwaggerBuildModel(title string, desc string, version string) SwaggerData {
 	}
 }
 
-func (thisSelf *SwaggerData) AddPath(path SwaggerPath, response []SwaggerResponseProperty) SwaggerData {
-	pathData := path
-	if response != nil && len(response) > 0 {
-		for _, resp := range response {
-			pathData.AddResponseProperty(resp)
-		}
-	}
-	thisSelf.Apis = append(thisSelf.Apis, pathData)
+func (thisSelf *SwaggerData) AddPath(path SwaggerPath) SwaggerData {
+	thisSelf.Apis = append(thisSelf.Apis, path)
 	return *thisSelf
 }
 
