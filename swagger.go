@@ -54,6 +54,11 @@ func (thisSelf *SwaggerData) AddPath(path SwaggerPath) SwaggerData {
 	return *thisSelf
 }
 
+func (thisSelf *SwaggerData) AddPathList(p []SwaggerPath) SwaggerData {
+	thisSelf.Apis = append(thisSelf.Apis, p...)
+	return *thisSelf
+}
+
 func SwaggerBuildPath(path string, group string, method string, description string) SwaggerPath {
 	return SwaggerPath{
 		Path:        path,
