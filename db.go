@@ -171,12 +171,13 @@ func SqlParamCheck(p string) bool {
 	return true
 }
 
-func RegisterDbHandler(d Database, prefix string) {
+func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 
 	if !strings.HasPrefix(prefix, "/") {
 		prefix = fmt.Sprintf("/%s", prefix)
 	}
 
+	selectSwagger := SwaggerBuildPath(fmt.Sprintf("%s/select/{table}", prefix), d.dbName, "get", "select from table")
 	RegisterHandler(fmt.Sprintf("%s/select/{table}", prefix), func(c Context) {
 		table := c.GetPathParam("table")
 		if !SqlParamCheck(table) {
@@ -192,6 +193,14 @@ func RegisterDbHandler(d Database, prefix string) {
 		return
 	})
 
+	insertSwagger := SwaggerBuildPath(fmt.Sprintf("%s/insert/{table}", prefix), d.dbName, "post", "insert into table")
+	insertSwagger.AddParameter(SwaggerParameter{
+		Name:        "json",
+		Default:     "{}",
+		Description: "对象类型数据",
+		In:          "body",
+		Required:    true,
+	})
 	RegisterHandler(fmt.Sprintf("%s/insert/{table}", prefix), func(c Context) {
 		table := c.GetPathParam("table")
 		if !SqlParamCheck(table) {
@@ -238,4 +247,5 @@ func RegisterDbHandler(d Database, prefix string) {
 
 	})
 
+	return []SwaggerPath{selectSwagger, insertSwagger}
 }
