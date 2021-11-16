@@ -4,7 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/go-sql-driver/mysql"
+	"html"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -153,4 +157,85 @@ func (d Database) Schema() (DatabaseSchema, error) {
 
 func (d Database) Close() {
 	d.conn.Close()
+}
+
+var sqlCheckReg = regexp.MustCompile("where")
+
+func SqlParamCheck(p string) bool {
+	if html.EscapeString(p) != p {
+		return false
+	}
+	if sqlCheckReg.MatchString(p) {
+		return false
+	}
+	return true
+}
+
+func RegisterDbHandler(d Database, prefix string) {
+
+	if !strings.HasPrefix(prefix, "/") {
+		prefix = fmt.Sprintf("/%s", prefix)
+	}
+
+	RegisterHandler(fmt.Sprintf("%s/select/{table}", prefix), func(c Context) {
+		table := c.GetPathParam("table")
+		if !SqlParamCheck(table) {
+			c.ApiResponse(-1, "", nil)
+			return
+		}
+		res, err := d.Query(fmt.Sprintf("select * from %s", table))
+		if err != nil {
+			c.ApiResponse(-1, err.Error(), nil)
+			return
+		}
+		c.ApiResponse(0, "", res)
+		return
+	})
+
+	RegisterHandler(fmt.Sprintf("%s/insert/{table}", prefix), func(c Context) {
+		table := c.GetPathParam("table")
+		if !SqlParamCheck(table) {
+			c.ApiResponse(-1, "", nil)
+			return
+		}
+		params, err := c.GetJSON()
+		if err != nil {
+			c.ApiResponse(-1, err.Error(), nil)
+			return
+		}
+		if len(params) <= 0 {
+			c.ApiResponse(-1, "invalid params", nil)
+			return
+		}
+		insertSql := fmt.Sprintf("insert into %v (", table)
+		values := "values ("
+		sqlParams := []interface{}{}
+		for k, v := range params {
+			if !SqlParamCheck(k) {
+				c.ApiResponse(-1, "", nil)
+				return
+			}
+			insertSql = fmt.Sprintf("%s %s,", insertSql, k)
+			values = fmt.Sprintf("%s ?,", values)
+			sqlParams = append(sqlParams, v)
+		}
+		insertSql = insertSql[:len(insertSql)-2]
+		values = values[:len(values)-2]
+
+		insertSql = fmt.Sprintf("%s %s", insertSql, values)
+
+		c.ApiResponse(0, insertSql, nil)
+		return
+		//d.Exec(insertSql, sqlParams...)
+
+	})
+
+	RegisterHandler(fmt.Sprintf("%s/update/{table}", prefix), func(c Context) {
+
+	})
+
+	RegisterHandler(fmt.Sprintf("%s/delete/{table}", prefix), func(c Context) {
+
+	})
+
 }
