@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"sync/atomic"
 )
 
 var mLogger = GetLogger("middleware")
@@ -27,10 +26,6 @@ type Server struct {
 	CrossDomain    bool
 	status         int
 	filter         []filterProcessor
-	successAccess  int64
-	successExpire  int64
-	totalAccess    int64
-	totalExpire    int64
 	i18n           I18n
 	enableI18n     bool
 	swagger        *SwaggerData
@@ -57,16 +52,12 @@ func GetGlobalServer() Server {
 // 创建服务
 func NewServer(host string, port int) Server {
 	srv := Server{
-		Host:          host,
-		Port:          port,
-		CrossDomain:   true,
-		hasIndex:      false,
-		enableI18n:    false,
-		baseTpl:       template.New("middleware.Base"),
-		successAccess: 0,
-		successExpire: 0,
-		totalAccess:   0,
-		totalExpire:   0,
+		Host:        host,
+		Port:        port,
+		CrossDomain: true,
+		hasIndex:    false,
+		enableI18n:  false,
+		baseTpl:     template.New("middleware.Base"),
 		swagger: &SwaggerData{
 			Title:       "",
 			Version:     "",
@@ -124,19 +115,15 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	atomic.AddInt64(&t.totalAccess, 1)
-	start := TimeEpoch()
 	for _, filterNode := range t.filter {
 		if filterNode.pathReg.MatchString(r.URL.Path) {
 			if !filterNode.handler(ctx) {
-				atomic.AddInt64(&t.totalExpire, TimeEpoch()-start)
 				return
 			}
 		}
 	}
 	if t.hasIndex && r.URL.Path == "/" {
 		t.index.handler(ctx)
-		atomic.AddInt64(&t.totalExpire, TimeEpoch()-start)
 		return
 	}
 	var handler func(Context)
@@ -161,15 +148,11 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if handler == nil {
 		_ = ctx.Error(StatusNotFound, StatusNotFoundView)
-		atomic.AddInt64(&t.totalExpire, TimeEpoch()-start)
 		return
 	}
 	handler(ctx)
 	if ctx.code == 200 {
-		atomic.AddInt64(&t.successAccess, 1)
-		atomic.AddInt64(&t.successExpire, TimeEpoch()-start)
 	}
-	atomic.AddInt64(&t.totalExpire, TimeEpoch()-start)
 	return
 }
 
@@ -308,29 +291,6 @@ func RegisterHandler(path string, handler func(Context)) {
 	globalServer.RegisterHandler(path, handler)
 }
 
-func (t *Server) EnableMetrics() {
-	t.RegisterHandler("/metrics", func(context Context) {
-		context.OK(Plain, []byte(GetMetricsData([]MetricsData{
-			{
-				Key:   "request_count",
-				Value: int64(t.totalAccess),
-			},
-			{
-				Key:   "request_time",
-				Value: int64(t.totalExpire),
-			},
-			{
-				Key:   "success_count",
-				Value: int64(t.successAccess),
-			},
-			{
-				Key:   "success_time",
-				Value: int64(t.successExpire),
-			},
-		})))
-	})
-}
-
 func (t *Server) SetI18n(name string) {
 	if len(name) <= 0 {
 		name = "message"
@@ -342,10 +302,6 @@ func (t *Server) SetI18n(name string) {
 		En: en,
 	}
 	t.enableI18n = true
-}
-
-func EnableMetrics() {
-	globalServer.EnableMetrics()
 }
 
 func SetI18n(name string) {
