@@ -323,8 +323,45 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 		return
 	})
 
+	deleteSwagger := SwaggerBuildPath(fmt.Sprintf("%s/delete/{table}", prefix), d.dbName, "post", "delete from table")
+	deleteSwagger.AddParameter(SwaggerParameter{
+		Name:        "table",
+		Description: "table name",
+		In:          "path",
+		Required:    true,
+	})
+	updateSwagger.AddParameter(SwaggerParameter{
+		Name: "json",
+		Default: `{
+  "id" : 1
+}`,
+		Description: "必须具有id字段进行数据定位",
+		In:          "body",
+		Required:    true,
+	})
 	RegisterHandler(fmt.Sprintf("%s/delete/{table}", prefix), func(c Context) {
-
+		table := c.GetPathParam("table")
+		if !SqlParamCheck(table) {
+			c.ApiResponse(-1, "", nil)
+			return
+		}
+		params, err := c.GetJSON()
+		if err != nil {
+			c.ApiResponse(-1, err.Error(), nil)
+			return
+		}
+		if len(params) <= 0 {
+			c.ApiResponse(-1, "invalid params", nil)
+			return
+		}
+		id, hasId := params["id"]
+		if !hasId {
+			c.ApiResponse(-1, "no id", nil)
+			return
+		}
+		deleteSql := fmt.Sprintf("delete from %s where id = ?", table)
+		c.ApiResponse(0, deleteSql, id)
+		return
 	})
 
 	return []SwaggerPath{schemaSwagger, selectSwagger, insertSwagger}
