@@ -364,5 +364,5 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 		return
 	})
 
-	return []SwaggerPath{schemaSwagger, selectSwagger, insertSwagger}
+	return []SwaggerPath{schemaSwagger, selectSwagger, insertSwagger, updateSwagger, deleteSwagger}
 }
