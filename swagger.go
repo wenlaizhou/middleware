@@ -295,7 +295,10 @@ const swaggerHtml = `
 //}
 
 // 启动swagger服务
-func (t *Server) EnableSwagger(swaggerData SwaggerData) []SwaggerPath {
+func (t *Server) EnableSwagger(swaggerData SwaggerData) {
+
+	swaggerData.AddPath(SwaggerBuildPath("/swagger-ui", "swagger", "get", "swagger-ui"))
+	swaggerData.AddPath(SwaggerBuildPath("/swagger-ui.json", "swagger", "get", "swagger-json"))
 
 	t.RegisterHandler("/static/swagger-ui-bundle", func(context Context) {
 		context.OK(Js, []byte(SwaggerJs))
@@ -312,11 +315,6 @@ func (t *Server) EnableSwagger(swaggerData SwaggerData) []SwaggerPath {
 	t.RegisterHandler("/swagger-ui.json", func(context Context) {
 		context.OK(Json, []byte(GenerateSwagger(swaggerData)))
 	})
-
-	return []SwaggerPath{
-		SwaggerBuildPath("/swagger-ui", "swagger", "get", "swagger-ui"),
-		SwaggerBuildPath("/swagger-ui.json", "swagger", "get", "swagger-json"),
-	}
 }
 
 func EnableSwagger(data SwaggerData) {
