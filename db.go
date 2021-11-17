@@ -345,7 +345,7 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 		In:          "path",
 		Required:    true,
 	})
-	updateSwagger.AddParameter(SwaggerParameter{
+	deleteSwagger.AddParameter(SwaggerParameter{
 		Name: "json",
 		Default: `{
   "id" : 1
