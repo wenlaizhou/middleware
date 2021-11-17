@@ -78,6 +78,27 @@ func GetLogger(name string) Logger {
 	return &res
 }
 
+// 获取日志服务
+func GetLoggerClear(name string) Logger {
+	res, hasEle := loggerContainer[name]
+	if hasEle {
+		return &res
+	}
+	loggerLocker.Lock()
+	err := os.Mkdir("logs", os.ModePerm)
+	if err != nil {
+		// filepath exist
+	}
+	fs, err := os.OpenFile(fmt.Sprintf("logs/%s.log", name), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
+	res = logger{
+		Logger: log.New(fs, "", log.Lmsgprefix),
+		fs:     fs,
+	}
+	loggerContainer[name] = res
+	loggerLocker.Unlock()
+	return &res
+}
+
 // 注册日志滚动服务
 //
 // seconds: 设置日志滚动时间 单位: 秒

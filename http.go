@@ -96,7 +96,7 @@ func (t *Server) Start() {
 	log.Fatal(http.ListenAndServe(hostStr, nil))
 }
 
-var accessLogger = GetLogger("access")
+var accessLogger = GetLoggerClear("access")
 
 // 核心处理逻辑
 func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -106,6 +106,9 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx.tpl = t.baseTpl
 	ctx.restProcessors = t.restProcessors
 	ctx.code = 200 // 是否合适
+	defer func() {
+		accessLogger.LogF(`"%v", "%v", "%v", "%v", %v, %v`, startTime, ctx.Request.RequestURI, ctx.Request.RemoteAddr, ctx.GetMethod(), ctx.code, TimeEpoch()-start)
+	}()
 	if t.enableI18n {
 		ctx.EnableI18n = true
 		ctx.Message = t.i18n
@@ -156,7 +159,6 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	handler(ctx)
-	accessLogger.InfoF(`"%v", "%v", "%v", "%v", %v, %v`, startTime, ctx.Request.RequestURI, ctx.Request.RemoteAddr, ctx.GetMethod(), ctx.code, TimeEpoch()-start)
 	return
 }
 
