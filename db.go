@@ -246,17 +246,27 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 		insertSql := fmt.Sprintf("insert into %v (", table)
 		values := "values ("
 		sqlParams := []interface{}{}
+		first := true
 		for k, v := range params {
 			if !SqlParamCheck(k) {
-				c.ApiResponse(-1, "", nil)
+				c.ApiResponse(-1, fmt.Sprintf("invalid Key : %s", k), nil)
 				return
 			}
-			insertSql = fmt.Sprintf("%s %s,", insertSql, k)
-			values = fmt.Sprintf("%s ?,", values)
+			if first {
+				insertSql = fmt.Sprintf("%s %s", insertSql, k)
+				values = fmt.Sprintf("%s ?", values)
+			} else {
+				insertSql = fmt.Sprintf("%s, %s", insertSql, k)
+				values = fmt.Sprintf("%s, ?", values)
+			}
 			sqlParams = append(sqlParams, v)
+			first = false
 		}
-		insertSql = insertSql[:len(insertSql)-2]
-		values = values[:len(values)-2]
+		//insertSql = insertSql[:len(insertSql)-2]
+		insertSql = fmt.Sprintf("%s )", insertSql)
+
+		//values = values[:len(values)-2]
+		values = fmt.Sprintf("%s )", values)
 
 		insertSql = fmt.Sprintf("%s %s", insertSql, values)
 
