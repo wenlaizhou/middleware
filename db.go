@@ -314,18 +314,23 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 			c.ApiResponse(-1, "no id", nil)
 			return
 		}
+		first := true
 		for k, v := range params {
 			if !SqlParamCheck(k) {
-				c.ApiResponse(-1, "", nil)
+				c.ApiResponse(-1, fmt.Sprintf("invalid Param : %s", k), nil)
 				return
 			}
 			if k == "id" {
 				continue
 			}
-			updateSql = fmt.Sprintf("%s %s = ?,", updateSql, k)
+			if first {
+				updateSql = fmt.Sprintf("%s %s = ?", updateSql, k)
+			} else {
+				updateSql = fmt.Sprintf("%s, %s = ?", updateSql, k)
+			}
 			sqlParams = append(sqlParams, v)
+			first = false
 		}
-		updateSql = updateSql[:len(updateSql)-2]
 
 		updateSql = fmt.Sprintf("%s ) where id = ?", updateSql)
 		sqlParams = append(sqlParams, id)
