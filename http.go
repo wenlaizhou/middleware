@@ -156,7 +156,7 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	handler(ctx)
-	accessLogger.InfoF(`"%v", "%v", "%v", "%v", %v, %v`, startTime, ctx.Request.URL.RawPath, ctx.Request.RemoteAddr, ctx.GetMethod(), ctx.code, TimeEpoch()-start)
+	accessLogger.InfoF(`"%v", "%v", "%v", "%v", %v, %v`, startTime, ctx.Request.RequestURI, ctx.Request.RemoteAddr, ctx.GetMethod(), ctx.code, TimeEpoch()-start)
 	return
 }
 
