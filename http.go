@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 var mLogger = GetLogger("middleware")
@@ -95,8 +96,12 @@ func (t *Server) Start() {
 	log.Fatal(http.ListenAndServe(hostStr, nil))
 }
 
+var accessLogger = GetLogger("access")
+
 // 核心处理逻辑
 func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	start := TimeEpoch()
+	startTime := time.Now().Format(TimeFormat)
 	ctx := newContext(w, r)
 	ctx.tpl = t.baseTpl
 	ctx.restProcessors = t.restProcessors
@@ -151,8 +156,7 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	handler(ctx)
-	if ctx.code == 200 {
-	}
+	accessLogger.InfoF(`"%v", "%v", "%v", "%v", %v, %v`, startTime, ctx.Request.URL.RawPath, ctx.Request.RemoteAddr, ctx.GetMethod(), ctx.code, TimeEpoch()-start)
 	return
 }
 
