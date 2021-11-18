@@ -1,6 +1,8 @@
 package middleware
 
-import ()
+import (
+	"errors"
+)
 
 const (
 	LINE   = 0
@@ -17,24 +19,63 @@ type Pipeline struct {
 	Name string
 
 	// 根节点
-	Root LogicLine
+	Root *LogicLine
 
 	// 总逻辑数
 	Total int
 }
 
-func StartPipeline(pipeline Pipeline) PipelineStatus {
-
-	result := PipelineStatus{
-		Start:   TimeEpoch(),
-		Current: pipeline.Name,
+func (p *Pipeline) AddLogic(logic LogicLine) {
+	if p.Root == nil {
+		p.Root = &logic
+		return
 	}
-
-	return result
+	curr := p.Root
+	next := p.Root
+	for ; next.Children != nil; next = next.Children {
+		curr = next
+	}
+	curr.Children = &logic
 }
 
-func runLogic(line LogicLine, ctx PipelineContext) []LogicLine {
-	return nil
+func StartPipeline(pipeline Pipeline, input interface{}) PipelineContext {
+
+	ctx := &PipelineContext{
+		Input: input,
+	}
+
+	go runLogic(*pipeline.Root, ctx)
+
+	return *ctx
+}
+
+func runLogic(line LogicLine, ctx *PipelineContext) PipelineContext {
+	result := LogicResult{
+		Name:  line.Name,
+		Type:  line.Type,
+		Node:  line.Node.Name,
+		Start: TimeEpoch(),
+		Input: ctx.Input,
+		Error: nil,
+	}
+	defer func() {
+		if err := recover(); err != nil {
+			result.Error = errors.New("panic")
+			ctx.Done[line.Name] = result
+		}
+	}()
+	ctx.Current = line.Name
+	input := line.InputFilter(ctx.Input)
+	output := line.Node.Runner(input)
+	output = line.OutputFilter(output)
+	result.Output = output
+	result.End = TimeEpoch()
+	ctx.Done[line.Name] = result
+	ctx.Input = output
+	if line.Children != nil {
+		return runLogic(*line.Children, ctx)
+	}
+	return *ctx
 }
 
 type PipelineStatus struct {
@@ -70,7 +111,7 @@ type LogicLine struct {
 	Len int
 
 	// 子逻辑
-	Children []LogicLine
+	Children *LogicLine
 }
 
 // 节点
@@ -89,6 +130,9 @@ type PipelineNode struct {
 // 上下文对象
 type PipelineContext struct {
 
+	// 输入参数
+	Input interface{}
+
 	// 当前处理状态
 	Current string
 
@@ -104,4 +148,5 @@ type LogicResult struct {
 	End    int64       `json:"end"`
 	Input  interface{} `json:"input"`
 	Output interface{} `json:"output"`
+	Error  error       `json:"error"`
 }
