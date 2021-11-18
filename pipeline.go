@@ -17,13 +17,11 @@ type Pipeline struct {
 	Root LogicLine
 
 	// 总逻辑数
-	Total   int
-	Running []PipelineStatus
-	History []PipelineStatus
+	Total int
 }
 
-func (p *Pipeline) Start() PipelineStatus {
-
+func StartPipeline(pipeline Pipeline) PipelineStatus {
+	return PipelineStatus{}
 }
 
 type PipelineStatus struct {
