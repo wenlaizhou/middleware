@@ -1,5 +1,9 @@
 package middleware
 
+import (
+	"reflect"
+)
+
 const (
 	LINE   = 0
 	SWITCH = 1
@@ -20,7 +24,15 @@ type Pipeline struct {
 	History []PipelineStatus
 }
 
+func (p *Pipeline) Start() PipelineStatus {
+
+}
+
 type PipelineStatus struct {
+}
+
+func (p *PipelineStatus) Status() {
+
 }
 
 // 逻辑线
@@ -39,7 +51,7 @@ type LogicLine struct {
 	Config map[string]string
 
 	// 子逻辑
-	Next []LogicLine
+	Children []LogicLine
 }
 
 // 节点
@@ -61,7 +73,24 @@ type PipelineNode struct {
 	Online func() bool
 }
 
+// 上下文对象
 type PipelineContext struct {
+
+	// 输入, 每过一个流程, Input都会变更
+	Input interface{}
+
+	// 配置
+	Config map[string]interface{}
+
+	// 已完成的流程上下文
+	Done map[string]NodeResult
+}
+
+type NodeResult struct {
+	Start  int64
+	End    int64
+	Input  interface{}
+	Output interface{}
 }
 
 func (c *PipelineContext) Put() {
@@ -75,11 +104,11 @@ func (c *PipelineContext) Get() {
 func (l *LogicLine) run(c PipelineContext) PipelineContext {
 	if l.Type == LINE {
 		ctx := l.Node.Runner(c)
-		if l.Next == nil || len(l.Next) <= 0 {
+		if l.Children == nil || len(l.Children) <= 0 {
 			return ctx
 		}
-		for i := 0; i < len(l.Next); i++ {
-			ctx = l.Next[i].run(ctx)
+		for i := 0; i < len(l.Children); i++ {
+			ctx = l.Children[i].run(ctx)
 		}
 		return ctx
 	}
