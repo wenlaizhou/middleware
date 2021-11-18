@@ -21,14 +21,20 @@ type Pipeline struct {
 }
 
 func StartPipeline(pipeline Pipeline) PipelineStatus {
+
 	return PipelineStatus{}
 }
 
-type PipelineStatus struct {
+func runLogic(line LogicLine, ctx PipelineContext) []LogicLine {
+	return nil
 }
 
-func (p *PipelineStatus) Status() {
-
+type PipelineStatus struct {
+	Start   int64         `json:"start"`
+	End     int64         `json:"end"`
+	Current string        `json:"current"`
+	Done    []LogicResult `json:"done"`
+	Total   int           `json:"total"`
 }
 
 // 逻辑线
@@ -36,6 +42,12 @@ type LogicLine struct {
 
 	// 类型
 	Type int
+
+	// 输入过滤
+	InputFilter func(interface{}) interface{}
+
+	// 输出过滤
+	OutputFilter func(interface{}) interface{}
 
 	// 名称
 	Name string
@@ -60,58 +72,25 @@ type PipelineNode struct {
 	Config map[string]string
 
 	// 节点处理器
-	Runner func(ctx PipelineContext) PipelineContext
-
-	// 节点是否在线
-	Health func() bool
-
-	// 节点上线
-	Online func() bool
+	Runner func(interface{}) interface{}
 }
 
 // 上下文对象
 type PipelineContext struct {
 
-	// 输入, 每过一个流程, Input都会变更
-	Input interface{}
-
-	// 配置
-	Config map[string]interface{}
+	// 当前处理状态
+	Current string
 
 	// 已完成的流程上下文
-	Done map[string]NodeResult
+	Done map[string]LogicResult
 }
 
-type NodeResult struct {
-	Start  int64
-	End    int64
-	Input  interface{}
-	Output interface{}
-}
-
-func (c *PipelineContext) Put() {
-
-}
-
-func (c *PipelineContext) Get() {
-
-}
-
-func (l *LogicLine) run(c PipelineContext) PipelineContext {
-	if l.Type == LINE {
-		ctx := l.Node.Runner(c)
-		if l.Children == nil || len(l.Children) <= 0 {
-			return ctx
-		}
-		for i := 0; i < len(l.Children); i++ {
-			ctx = l.Children[i].run(ctx)
-		}
-		return ctx
-	}
-	if l.Type == ASYNC {
-		l.Type = LINE
-		go l.run(c)
-		return c
-	}
-	return c
+type LogicResult struct {
+	Name   string      `json:"name"`
+	Type   int         `json:"type"`
+	Node   string      `json:"node"`
+	Start  int64       `json:"start"`
+	End    int64       `json:"end"`
+	Input  interface{} `json:"input"`
+	Output interface{} `json:"output"`
 }
