@@ -13,6 +13,9 @@ const (
 // pipeline
 type Pipeline struct {
 
+	// pipeline 名称
+	Name string
+
 	// 根节点
 	Root LogicLine
 
@@ -22,7 +25,12 @@ type Pipeline struct {
 
 func StartPipeline(pipeline Pipeline) PipelineStatus {
 
-	return PipelineStatus{}
+	result := PipelineStatus{
+		Start:   TimeEpoch(),
+		Current: pipeline.Name,
+	}
+
+	return result
 }
 
 func runLogic(line LogicLine, ctx PipelineContext) []LogicLine {
@@ -57,6 +65,9 @@ type LogicLine struct {
 
 	// 配置
 	Config map[string]string
+
+	// 逻辑数量
+	Len int
 
 	// 子逻辑
 	Children []LogicLine
