@@ -1,6 +1,9 @@
 package middleware
 
-import "sync/atomic"
+import (
+	"sync"
+	"sync/atomic"
+)
 
 var pipelineLogger = GetLogger("pipeline")
 
@@ -18,41 +21,56 @@ type PipeLine struct {
 }
 
 type PipelineManager struct {
+	locker sync.RWMutex
+
+	Results []*PipelineResult
 
 	// pipeline
 }
 
 func (p *PipelineManager) Start(pipe PipeLine, input interface{}) {
 	//p.Pipelines[pipe.Name] = map[string][]LogicResult{}
+	p.locker.Lock()
+	defer p.locker.Unlock()
+	trace := Guid()
+	result := &PipelineResult{
+		Name:   pipe.Name,
+		Trace:  trace,
+		Start:  TimeEpoch(),
+		Status: "start",
+	}
+	result.Current(0, pipe.Root.Name)
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
 				pipelineLogger.ErrorF("%v", err)
 			}
 		}()
-		result := []LogicResult{}
-		trace := Guid()
 		var span int32 = 0
 		res, output, next := StartLogic(pipe.Name, trace, span, pipe.Root, input)
 		span++
-		result = append(result, res)
+		result.AddResult(res)
 		if next == nil {
+			result.Status = "done"
 			return
 		}
 		NextLogics(pipe.Name, trace, &span, next, output, result)
+		result.Status = "done"
 	}()
+	p.Results = append(p.Results, result)
 }
 
-func NextLogics(pipeline string, trace string, span *int32, logics []*Logic, input interface{}, results []LogicResult) {
+func NextLogics(pipeline string, trace string, span *int32, logics []*Logic, input interface{}, result *PipelineResult) {
 	if logics == nil {
 		return
 	}
 	for _, n := range logics {
 		atomic.AddInt32(span, 1)
+		result.Current(*span, n.Name)
 		res, output, next := StartLogic(pipeline, trace, *span, n, input)
-		results = append(results, res)
+		result.AddResult(res)
 		if next != nil {
-			NextLogics(pipeline, trace, span, logics, output, results)
+			NextLogics(pipeline, trace, span, logics, output, result)
 		}
 		continue
 	}
@@ -76,10 +94,14 @@ func StartLogic(pipeline string, trace string, span int32, logic *Logic, input i
 		result.Result = "condition not passed"
 		return result, output, next
 	}
+
 	output := logic.After(logic.Runner(parsedInput))
+
 	next := logic.Selector(logic, output)
+
 	result.End = TimeEpoch()
 	result.Result = "success"
+
 	return result, output, next
 }
 
@@ -106,6 +128,53 @@ type Logic struct {
 
 	// 子节点
 	Children []*Logic
+}
+
+type PipelineResult struct {
+
+	// pipeline name
+	Name string
+
+	// start time
+	Start int64
+
+	// status
+	Status string
+
+	// 结束时间
+	End int64
+
+	// trace id
+	Trace string
+
+	// 当前span
+	CurrentSpan int32
+
+	// 当前逻辑
+	CurrentLogic string
+
+	// 锁数据
+	locker sync.RWMutex
+
+	// 执行结果
+	logicResults []LogicResult
+}
+
+func (p *PipelineResult) AddResult(l LogicResult) {
+	p.locker.Lock()
+	defer p.locker.Unlock()
+	p.logicResults = append(p.logicResults, l)
+}
+
+func (p *PipelineResult) Results() []LogicResult {
+	return p.logicResults
+}
+
+func (p *PipelineResult) Current(span int32, logic string) {
+	p.locker.Lock()
+	defer p.locker.Unlock()
+	p.CurrentSpan = span
+	p.CurrentLogic = logic
 }
 
 type LogicResult struct {
