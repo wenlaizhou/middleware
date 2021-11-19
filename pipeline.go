@@ -1,152 +1,80 @@
 package middleware
 
-import (
-	"errors"
-)
-
-const (
-	LINE   = 0
-	SWITCH = 1
-	LOOP   = 2
-	IF     = 3
-	ASYNC  = 4
-)
-
-// pipeline
-type Pipeline struct {
-
-	// pipeline 名称
-	Name string
-
-	// 根节点
-	Root *LogicLine
-
-	// 总逻辑数
-	Total int
-}
-
-func (p *Pipeline) AddLogic(logic LogicLine) {
-	if p.Root == nil {
-		p.Root = &logic
-		return
-	}
-	curr := p.Root
-	next := p.Root
-	for ; next.Children != nil; next = next.Children {
-		curr = next
-	}
-	curr.Children = &logic
-}
-
-func StartPipeline(pipeline Pipeline, input interface{}) PipelineContext {
-
-	ctx := &PipelineContext{
-		Input: input,
-	}
-
-	go runLogic(*pipeline.Root, ctx)
-
-	return *ctx
-}
-
-func runLogic(line LogicLine, ctx *PipelineContext) PipelineContext {
-	result := LogicResult{
-		Name:  line.Name,
-		Type:  line.Type,
-		Node:  line.Node.Name,
-		Start: TimeEpoch(),
-		Input: ctx.Input,
-		Error: nil,
-	}
-	defer func() {
-		if err := recover(); err != nil {
-			result.Error = errors.New("panic")
-			ctx.Done[line.Name] = result
-		}
-	}()
-	ctx.Current = line.Name
-	input := line.InputFilter(ctx.Input)
-	output := line.Node.Runner(input)
-	output = line.OutputFilter(output)
-	result.Output = output
-	result.End = TimeEpoch()
-	ctx.Done[line.Name] = result
-	ctx.Input = output
-	if line.Children != nil {
-		return runLogic(*line.Children, ctx)
-	}
-	return *ctx
-}
-
-type PipelineStatus struct {
-	Start   int64         `json:"start"`
-	End     int64         `json:"end"`
-	Current string        `json:"current"`
-	Done    []LogicResult `json:"done"`
-	Total   int           `json:"total"`
-}
-
-// 逻辑线
-type LogicLine struct {
-
-	// 类型
-	Type int
-
-	// 输入过滤
-	InputFilter func(interface{}) interface{}
-
-	// 输出过滤
-	OutputFilter func(interface{}) interface{}
+// 流程
+type PipeLine struct {
 
 	// 名称
 	Name string
 
-	// 节点
-	Node PipelineNode
+	// 根逻辑节点
+	Root *Logic
 
-	// 配置
-	Config map[string]string
-
-	// 逻辑数量
-	Len int
-
-	// 子逻辑
-	Children *LogicLine
+	// 总逻辑数(预估)
+	Total int
 }
 
-// 节点
-type PipelineNode struct {
+type PipelineManager struct {
 
-	// 节点名称
-	Name string
+	// pipeline
+	Pipelines map[string]PipeLine
+}
 
-	// 节点配置
-	Config map[string]string
+func (p *PipelineManager) Start(pipe PipeLine, input interface{}) {
 
-	// 节点处理器
+}
+
+func StartLogic(logic *Logic) (LogicResult, *Logic) {
+	return LogicResult{}, nil
+}
+
+// 逻辑节点
+type Logic struct {
+
+	// 输入过滤器
+	Before func(input interface{}) interface{}
+
+	// 条件判断器
+	Condition func(input interface{}) bool
+
+	// 执行器
 	Runner func(interface{}) interface{}
-}
 
-// 上下文对象
-type PipelineContext struct {
+	// 输出过滤器, 返回结果类型
+	After func(output interface{}) interface{}
 
-	// 输入参数
-	Input interface{}
+	// 返回逻辑节点
+	Selector func(output interface{}) *Logic
 
-	// 当前处理状态
-	Current string
-
-	// 已完成的流程上下文
-	Done map[string]LogicResult
+	// 子节点
+	Children []*Logic
 }
 
 type LogicResult struct {
-	Name   string      `json:"name"`
-	Type   int         `json:"type"`
-	Node   string      `json:"node"`
-	Start  int64       `json:"start"`
-	End    int64       `json:"end"`
-	Input  interface{} `json:"input"`
-	Output interface{} `json:"output"`
-	Error  error       `json:"error"`
+
+	// 流程名称
+	Pipeline string `json:"pipeline"`
+
+	// 逻辑节点名称
+	Name string `json:"name"`
+
+	// trace id
+	Trace string `json:"trace"`
+
+	// span id
+	Span int `json:"span"`
+
+	// 开始时间
+	Start int64 `json:"start"`
+
+	// 结束时间
+	End int64 `json:"end"`
+
+	// 输入
+	//Input interface{}
+
+	// 输出
+	//Output interface{}
+
+	// 执行结果
+	Result int `json:"result"`
 }
