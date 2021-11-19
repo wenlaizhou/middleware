@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"sync"
 	"sync/atomic"
 )
@@ -128,6 +129,54 @@ type Logic struct {
 
 	// 子节点
 	Children []*Logic
+}
+
+func CreatePipeline(name string, root *Logic) *PipeLine {
+	return &PipeLine{
+		Name:  name,
+		Root:  root,
+		Total: 0,
+	}
+}
+
+func PipelineAddLogic(p *PipeLine, logic []*Logic) {
+	p.Root.Children = logic
+}
+
+func PipelineAddLogicSpec(p *PipeLine, deep int, number int, logic []*Logic) error {
+	if deep == 0 {
+		if number >= len(p.Root.Children) {
+			return
+		}
+		p.Root.Children[number].Children = append(p.Root.Children[number].Children, logic...)
+		return
+	}
+	for i := 0; i < deep; i++ {
+
+	}
+}
+
+func CreateLogic(name string, before func(input interface{}) interface{},
+	condition func(input interface{}) bool, runner func(interface{}) interface{},
+	after func(output interface{}) interface{}, selector func(logic *Logic, output interface{}) []*Logic) *Logic {
+	return &Logic{
+		Name:      name,
+		Before:    before,
+		Condition: condition,
+		Runner:    runner,
+		After:     after,
+		Selector:  selector,
+		Children:  nil,
+	}
+}
+
+func AddLogicChild(logic *Logic, child []*Logic) {
+	logic.Children = append(logic.Children, child...)
+}
+
+func AddLogicChildNext(logic *Logic, deep int, next int, child []*Logic) error {
+	// todo
+	AddLogicChild(logic.Children[next], child)
 }
 
 type PipelineResult struct {
