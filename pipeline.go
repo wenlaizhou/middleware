@@ -1,5 +1,9 @@
 package middleware
 
+import "sync/atomic"
+
+var pipelineLogger = GetLogger("pipeline")
+
 // 流程
 type PipeLine struct {
 
@@ -16,19 +20,74 @@ type PipeLine struct {
 type PipelineManager struct {
 
 	// pipeline
-	Pipelines map[string]PipeLine
 }
 
 func (p *PipelineManager) Start(pipe PipeLine, input interface{}) {
-
+	//p.Pipelines[pipe.Name] = map[string][]LogicResult{}
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				pipelineLogger.ErrorF("%v", err)
+			}
+		}()
+		result := []LogicResult{}
+		trace := Guid()
+		var span int32 = 0
+		res, output, next := StartLogic(pipe.Name, trace, span, pipe.Root, input)
+		span++
+		result = append(result, res)
+		if next == nil {
+			return
+		}
+		NextLogics(pipe.Name, trace, &span, next, output, result)
+	}()
 }
 
-func StartLogic(logic *Logic) (LogicResult, *Logic) {
-	return LogicResult{}, nil
+func NextLogics(pipeline string, trace string, span *int32, logics []*Logic, input interface{}, results []LogicResult) {
+	if logics == nil {
+		return
+	}
+	for _, n := range logics {
+		atomic.AddInt32(span, 1)
+		res, output, next := StartLogic(pipeline, trace, *span, n, input)
+		results = append(results, res)
+		if next != nil {
+			NextLogics(pipeline, trace, span, logics, output, results)
+		}
+		continue
+	}
+	return
+}
+
+func StartLogic(pipeline string, trace string, span int32, logic *Logic, input interface{}) (LogicResult, interface{}, []*Logic) {
+	result := LogicResult{
+		Pipeline: pipeline,
+		Name:     logic.Name,
+		Trace:    trace,
+		Span:     int(span),
+		Start:    TimeEpoch(),
+	}
+	parsedInput := logic.Before(input)
+
+	if !logic.Condition(parsedInput) {
+		output := logic.After(parsedInput)
+		next := logic.Selector(logic, output)
+		result.End = TimeEpoch()
+		result.Result = "condition not passed"
+		return result, output, next
+	}
+	output := logic.After(logic.Runner(parsedInput))
+	next := logic.Selector(logic, output)
+	result.End = TimeEpoch()
+	result.Result = "success"
+	return result, output, next
 }
 
 // 逻辑节点
 type Logic struct {
+
+	// 名称
+	Name string
 
 	// 输入过滤器
 	Before func(input interface{}) interface{}
@@ -43,7 +102,7 @@ type Logic struct {
 	After func(output interface{}) interface{}
 
 	// 返回逻辑节点
-	Selector func(output interface{}) *Logic
+	Selector func(logic *Logic, output interface{}) []*Logic
 
 	// 子节点
 	Children []*Logic
@@ -76,5 +135,5 @@ type LogicResult struct {
 	//Output interface{}
 
 	// 执行结果
-	Result int `json:"result"`
+	Result string `json:"result"`
 }
