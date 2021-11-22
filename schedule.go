@@ -2,11 +2,14 @@ package middleware
 
 import "time"
 
+var scheduleRunner = map[string]int{}
+
 // 注册定时任务
 //
 // 时间单位 秒
 func Schedule(name string, timeSchedule int, fun func()) {
 	mLogger.InfoF("注册定时任务: %v 间隔时间: %v秒", name, timeSchedule)
+	scheduleRunner[name] = timeSchedule
 	go func(timeSchedule int, fun func()) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -18,4 +21,13 @@ func Schedule(name string, timeSchedule int, fun func()) {
 			fun()
 		}
 	}(timeSchedule, fun)
+}
+
+func RegisterScheduleService(path string) SwaggerPath {
+
+	RegisterHandler(path, func(context Context) {
+		context.ApiResponse(0, "", scheduleRunner)
+	})
+
+	return SwaggerBuildPath(path, "middleware", "get", "middleware schedule")
 }
