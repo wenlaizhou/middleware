@@ -100,8 +100,8 @@ func LoadConfig(confPath string) Config {
 }
 
 // 获取配置值, 不存在该值, 则返回 ""
-func (c Config) ConfUnsafe(key string) string {
-	v, err := c.ConfValue(key)
+func (c Config) Unsafe(key string) string {
+	v, err := c.Value(key)
 	if err != nil {
 		return ""
 	}
@@ -109,7 +109,7 @@ func (c Config) ConfUnsafe(key string) string {
 }
 
 // 获取配置中的value值
-func (c Config) ConfValue(key string) (string, error) {
+func (c Config) Value(key string) (string, error) {
 	if len(key) <= 0 {
 		return "", errors.New("key 不为空")
 	}
@@ -121,8 +121,8 @@ func (c Config) ConfValue(key string) (string, error) {
 }
 
 // 获取配置中的数值类型值
-func (c Config) ConfInt(key string) (int, error) {
-	v, err := c.ConfValue(key)
+func (c Config) Int(key string) (int, error) {
+	v, err := c.Value(key)
 	if err != nil {
 		return -1, err
 	}
@@ -133,8 +133,8 @@ func (c Config) ConfInt(key string) (int, error) {
 // 获取配置中的数值类型值
 //
 // 错误返回-1
-func (c Config) ConfIntUnsafe(key string) int {
-	v, err := c.ConfValue(key)
+func (c Config) IntUnsafe(key string) int {
+	v, err := c.Value(key)
 	if err != nil {
 		return -1
 	}
@@ -146,8 +146,8 @@ func (c Config) ConfIntUnsafe(key string) int {
 //
 // 错误, 类型错误, 没有该值, 返回false
 // "1", "t", "true" 定义为true
-func (c Config) ConfBool(key string) bool {
-	v, err := c.ConfValue(key)
+func (c Config) Bool(key string) bool {
+	v, err := c.Value(key)
 	if err != nil {
 		return false
 	}
@@ -159,7 +159,7 @@ func (c Config) ConfBool(key string) bool {
 }
 
 // 获取配置文件内容并返回json
-func (c Config) ConfPrint() string {
+func (c Config) Print() string {
 	if len(c) <= 0 {
 		return ""
 	}
@@ -174,8 +174,8 @@ func (c Config) ConfPrint() string {
 	return res
 }
 
-func (c Config) ConfIntUnsafeDefault(key string, defaultVal int) int {
-	v, err := c.ConfValue(key)
+func (c Config) IntUnsafeDefault(key string, defaultVal int) int {
+	v, err := c.Value(key)
 	if err != nil {
 		return -1
 	}
@@ -187,8 +187,8 @@ func (c Config) ConfIntUnsafeDefault(key string, defaultVal int) int {
 }
 
 // 获取配置值, 不存在该值, 则返回 ""
-func (c Config) ConfUnsafeDefault(key string, defaultVal string) string {
-	v, err := c.ConfValue(key)
+func (c Config) UnsafeDefault(key string, defaultVal string) string {
+	v, err := c.Value(key)
 	if err != nil {
 		return defaultVal
 	}
