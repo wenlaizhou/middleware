@@ -143,18 +143,19 @@ func PipelineAddLogic(p *PipeLine, logic []*Logic) {
 	p.Root.Children = logic
 }
 
-func PipelineAddLogicSpec(p *PipeLine, deep int, number int, logic []*Logic) error {
-	if deep == 0 {
-		if number >= len(p.Root.Children) {
-			return
-		}
-		p.Root.Children[number].Children = append(p.Root.Children[number].Children, logic...)
-		return
-	}
-	for i := 0; i < deep; i++ {
-
-	}
-}
+//func PipelineAddLogicSpec(p *PipeLine, deep int, number int, logic []*Logic) error {
+//	if deep == 0 {
+//		if number >= len(p.Root.Children) {
+//			return errors.New("length over flow")
+//		}
+//		p.Root.Children[number].Children = append(p.Root.Children[number].Children, logic...)
+//		return nil
+//	}
+//
+//	for i := 0; i < deep; i++ {
+//
+//	}
+//}
 
 func CreateLogic(name string, before func(input interface{}) interface{},
 	condition func(input interface{}) bool, runner func(interface{}) interface{},
