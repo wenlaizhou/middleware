@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"runtime"
 	"runtime/debug"
+	"strings"
 )
 
 type MemoryInfo struct {
@@ -93,6 +94,55 @@ func Printf(formatter string, items ...interface{}) {
 
 func StackTrace() string {
 	return string(debug.Stack())
+}
+
+func checkHidden(key string, hiddens []string) bool {
+	if hiddens == nil {
+		return false
+	}
+	for _, h := range hiddens {
+		if strings.Contains(key, h) {
+			return true
+		}
+	}
+	return false
+}
+
+func RegisterConfService(conf Config, path string, hidden string) SwaggerPath {
+
+	hiddensList := []string{}
+	if len(hidden) >= 0 {
+		hidden = strings.TrimSpace(hidden)
+		hiddens := strings.Split(hidden, ",")
+		for _, h := range hiddens {
+			hiddensList = append(hiddensList, strings.TrimSpace(h))
+		}
+	}
+
+	RegisterHandler(path, func(context Context) {
+		resp := map[string]string{}
+		for k, v := range conf {
+			if checkHidden(k, hiddensList) {
+				continue
+			}
+			resp[k] = v
+		}
+		if len(resp) <= 0 {
+			context.ApiResponse(0, "", "")
+			return
+		}
+		res := ""
+		for k, v := range resp {
+			if len(res) > 0 {
+				res = fmt.Sprintf("%s\n%s = %s", res, k, v)
+			} else {
+				res = fmt.Sprintf("%s = %s", k, v)
+			}
+		}
+		context.ApiResponse(0, "", res)
+	})
+
+	return SwaggerBuildPath(path, "middleware", "get", "config service")
 }
 
 func (thisSelf Checker) End() {
