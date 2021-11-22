@@ -110,19 +110,19 @@ func checkHidden(key string, hiddens []string) bool {
 
 func RegisterConfService(conf Config, path string, hidden string) SwaggerPath {
 
-	hiddensList := []string{ConfDir}
+	hiddenList := []string{ConfDir}
 	if len(hidden) >= 0 {
 		hidden = strings.TrimSpace(hidden)
 		hiddens := strings.Split(hidden, ",")
 		for _, h := range hiddens {
-			hiddensList = append(hiddensList, strings.TrimSpace(h))
+			hiddenList = append(hiddenList, strings.TrimSpace(h))
 		}
 	}
 
 	RegisterHandler(path, func(context Context) {
 		resp := map[string]string{}
 		for k, v := range conf {
-			if checkHidden(k, hiddensList) {
+			if checkHidden(k, hiddenList) {
 				continue
 			}
 			resp[k] = v
@@ -143,6 +143,31 @@ func RegisterConfService(conf Config, path string, hidden string) SwaggerPath {
 	})
 
 	return SwaggerBuildPath(path, "middleware", "get", "config service")
+}
+
+func RegisterMemInfoService(path string, enableMetrics bool) []SwaggerPath {
+	res := []SwaggerPath{
+		SwaggerBuildPath(path, "middleware", "get", "memInfo"),
+	}
+	RegisterHandler(path, func(context Context) {
+		mem := MemoryUsage()
+		context.ApiResponse(0, "", mem)
+	})
+	if enableMetrics {
+		res = append(res, SwaggerBuildPath("/metrics", "middleware", "get", "prometheus endpoint"))
+		RegisterHandler("/metrics", func(context Context) {
+			mem := MemoryUsage()
+			resp := []string{"# middleware"}
+			resp = append(resp, fmt.Sprintf("mem_sys %v", mem.Sys))
+			resp = append(resp, fmt.Sprintf("numObjects %v", mem.NumObjects))
+			resp = append(resp, fmt.Sprintf("numFreeObjects %v", mem.NumFreeObjects))
+			resp = append(resp, fmt.Sprintf("cpuCount %v", mem.CpuCount))
+			resp = append(resp, fmt.Sprintf("numGoroutines %v", mem.NumGoroutines))
+			resp = append(resp, fmt.Sprintf("numGc %v", mem.NumGC))
+			context.OK(Plain, []byte(strings.Join(resp, "\n")))
+		})
+	}
+	return res
 }
 
 func (thisSelf Checker) End() {
