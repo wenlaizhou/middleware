@@ -75,7 +75,6 @@ func LoadConfig(confPath string) Config {
 		value := strings.TrimSpace(kvs[1])
 		if len(kvs) > 2 {
 			value = strings.Join(kvs[1:], "=")
-			value = strings.TrimSpace(value)
 		}
 		if len(key) <= 0 {
 			continue
@@ -88,7 +87,7 @@ func LoadConfig(confPath string) Config {
 				subConf := LoadConfig(value)
 				if len(subConf) > 0 {
 					for subKey, subValue := range subConf {
-						res[subKey] = res[subValue]
+						res[subKey] = subValue
 					}
 				}
 			}
