@@ -138,7 +138,8 @@ func (q *TaskQueue) Start() (error, chan string) {
 	go func() {
 		spanId := 0
 		for _, task := range q.Queue {
-			q.runner(task, spanId)
+			//q.runner(task, spanId)
+			task.run() //todo error here
 			spanId++
 			select {
 			case sig := <-q.signal:

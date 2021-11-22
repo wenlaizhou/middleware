@@ -100,6 +100,102 @@ func LoadConfig(confPath string) Config {
 }
 
 // 获取配置值, 不存在该值, 则返回 ""
+func (c Config) ConfUnsafe(key string) string {
+	v, err := c.ConfValue(key)
+	if err != nil {
+		return ""
+	}
+	return v
+}
+
+// 获取配置中的value值
+func (c Config) ConfValue(key string) (string, error) {
+	if len(key) <= 0 {
+		return "", errors.New("key 不为空")
+	}
+	v, hasData := c[key]
+	if !hasData {
+		return "", errors.New("没有匹配的value")
+	}
+	return v, nil
+}
+
+// 获取配置中的数值类型值
+func (c Config) ConfInt(key string) (int, error) {
+	v, err := c.ConfValue(key)
+	if err != nil {
+		return -1, err
+	}
+	vStr := fmt.Sprintf("%v", v)
+	return strconv.Atoi(vStr)
+}
+
+// 获取配置中的数值类型值
+//
+// 错误返回-1
+func (c Config) ConfIntUnsafe(key string) int {
+	v, err := c.ConfValue(key)
+	if err != nil {
+		return -1
+	}
+	res, _ := strconv.Atoi(fmt.Sprintf("%v", v))
+	return res
+}
+
+// 获取配置中的bool
+//
+// 错误, 类型错误, 没有该值, 返回false
+// "1", "t", "true" 定义为true
+func (c Config) ConfBool(key string) bool {
+	v, err := c.ConfValue(key)
+	if err != nil {
+		return false
+	}
+	switch strings.ToLower(fmt.Sprintf("%v", v)) {
+	case "1", "t", "true":
+		return true
+	}
+	return false
+}
+
+// 获取配置文件内容并返回json
+func (c Config) ConfPrint() string {
+	if len(c) <= 0 {
+		return ""
+	}
+	res := ""
+	for k, v := range c {
+		if len(res) > 0 {
+			res = fmt.Sprintf("%s\n%s = %s", res, k, v)
+		} else {
+			res = fmt.Sprintf("%s = %s", k, v)
+		}
+	}
+	return res
+}
+
+func (c Config) ConfIntUnsafeDefault(key string, defaultVal int) int {
+	v, err := c.ConfValue(key)
+	if err != nil {
+		return -1
+	}
+	res, err := strconv.Atoi(fmt.Sprintf("%v", v))
+	if err != nil {
+		return defaultVal
+	}
+	return res
+}
+
+// 获取配置值, 不存在该值, 则返回 ""
+func (c Config) ConfUnsafeDefault(key string, defaultVal string) string {
+	v, err := c.ConfValue(key)
+	if err != nil {
+		return defaultVal
+	}
+	return v
+}
+
+// 获取配置值, 不存在该值, 则返回 ""
 func ConfUnsafe(conf Config, key string) string {
 	v, err := ConfValue(conf, key)
 	if err != nil {
