@@ -9,33 +9,40 @@ import (
 type ScheduleData struct {
 	Name         string `json:"name"`
 	TimeSchedule int    `json:"timeSchedule"`
+	Status       string `json:"status"`
 	handle       chan string
 }
 
 var scheduleRunner = map[string]ScheduleData{}
 
 func SchedulePause(name string) {
-	s, hasS := scheduleRunner[name]
-	if !hasS {
-		return
-	}
-	s.handle <- "pause"
+	go func() {
+		s, hasS := scheduleRunner[name]
+		if !hasS {
+			return
+		}
+		s.handle <- "pause"
+	}()
 }
 
 func ScheduleContinue(name string) {
-	s, hasS := scheduleRunner[name]
-	if !hasS {
-		return
-	}
-	s.handle <- "continue"
+	go func() {
+		s, hasS := scheduleRunner[name]
+		if !hasS {
+			return
+		}
+		s.handle <- "continue"
+	}()
 }
 
 func ScheduleStop(name string) {
-	s, hasS := scheduleRunner[name]
-	if !hasS {
-		return
-	}
-	s.handle <- "stop"
+	go func() {
+		s, hasS := scheduleRunner[name]
+		if !hasS {
+			return
+		}
+		s.handle <- "stop"
+	}()
 }
 
 // 注册定时任务
@@ -48,23 +55,30 @@ func Schedule(name string, timeSchedule int, fun func()) {
 		Name:         name,
 		TimeSchedule: timeSchedule,
 		handle:       handle,
+		Status:       "running",
 	}
-	go func(timeSchedule int, sig chan string, fun func()) {
+	go func(name string, timeSchedule int, sig chan string, fun func()) {
 		defer func() {
 			if err := recover(); err != nil {
 				mLogger.ErrorF("schedule 退出: %#v", err)
 			}
 		}()
 		for {
+			t, hasT := scheduleRunner[name]
+			if !hasT {
+				return
+			}
 			select {
 			case signal := <-sig:
 				switch signal {
 				case "pause":
+					t.Status = "pause"
 				pause:
 					select {
 					case nextSignal := <-sig:
 						switch nextSignal {
 						case "continue":
+							t.Status = "running"
 							break
 						default:
 							goto pause
@@ -72,8 +86,10 @@ func Schedule(name string, timeSchedule int, fun func()) {
 						break
 					}
 				case "continue":
+					t.Status = "running"
 					break
 				case "stop":
+					t.Status = "stop"
 					panic(errors.New("force stop"))
 				default:
 					break
@@ -84,7 +100,7 @@ func Schedule(name string, timeSchedule int, fun func()) {
 			time.Sleep(time.Second * time.Duration(timeSchedule))
 			fun()
 		}
-	}(timeSchedule, handle, fun)
+	}(name, timeSchedule, handle, fun)
 }
 
 func RegisterScheduleService(path string) []SwaggerPath {
