@@ -72,10 +72,10 @@ func init() {
 	// })
 }
 
-func (this *Context) SessionSet(key string, value interface{}) {
-	getSession(*this).Set(key, value)
+func (c *Context) SessionSet(key string, value interface{}) {
+	getSession(*c).Set(key, value)
 }
 
-func (this *Context) SessionGet(key string) interface{} {
-	return getSession(*this).Get(key)
+func (c *Context) SessionGet(key string) interface{} {
+	return getSession(*c).Get(key)
 }

@@ -32,8 +32,8 @@ type I18n struct {
 	En map[string]string
 }
 
-func (this *Context) GetPathParam(key string) string {
-	value, ok := this.pathParams[key]
+func (c *Context) GetPathParam(key string) string {
+	value, ok := c.pathParams[key]
 	if ok {
 		return value
 	}
@@ -41,17 +41,17 @@ func (this *Context) GetPathParam(key string) string {
 }
 
 // 获取请求体
-func (this *Context) GetBody() []byte {
-	this.Lock()
-	defer this.Unlock()
-	if len(this.body) > 0 {
-		return this.body
+func (c *Context) GetBody() []byte {
+	c.Lock()
+	defer c.Unlock()
+	if len(c.body) > 0 {
+		return c.body
 	}
-	data, err := ioutil.ReadAll(this.Request.Body)
-	this.body = data
+	data, err := ioutil.ReadAll(c.Request.Body)
+	c.body = data
 	if err == nil && len(data) > 0 {
-		this.body = data
-		return this.body
+		c.body = data
+		return c.body
 	}
 	return nil
 }
@@ -59,10 +59,10 @@ func (this *Context) GetBody() []byte {
 // 获取body中
 //
 // json类型数据体
-func (this *Context) GetJSON() (map[string]interface{}, error) {
+func (c *Context) GetJSON() (map[string]interface{}, error) {
 	res := make(map[string]interface{})
-	if len(this.GetBody()) > 0 {
-		err := json.Unmarshal(this.GetBody(), &res)
+	if len(c.GetBody()) > 0 {
+		err := json.Unmarshal(c.GetBody(), &res)
 		return res, err
 	}
 	return res, nil
@@ -80,40 +80,40 @@ func GetJsonParamStr(key string, jsonObj map[string]interface{}) string {
 }
 
 // 获取query参数
-func (this *Context) GetQueryParam(key string) string {
-	return this.Request.URL.Query().Get(key)
+func (c *Context) GetQueryParam(key string) string {
+	return c.Request.URL.Query().Get(key)
 }
 
 // 获取去除querystring之后的请求路径
 //
 // 以 / 为开头
-func (this *Context) GetUri() string {
-	return this.Request.URL.Path
+func (c *Context) GetUri() string {
+	return c.Request.URL.Path
 }
 
 // 返回json类型数据
-func (this *Context) WriteJSON(data interface{}) error {
+func (c *Context) WriteJSON(data interface{}) error {
 	res, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
-	err = this.OK(ApplicationJson, res)
+	err = c.OK(ApplicationJson, res)
 	return err
 }
 
 // 获取content-type值
-func (this *Context) GetContentType() string {
-	return this.Request.Header.Get(ContentType)
+func (c *Context) GetContentType() string {
+	return c.Request.Header.Get(ContentType)
 }
 
 // 获取header对应值
-func (this *Context) GetHeader(key string) string {
-	return this.Request.Header.Get(key)
+func (c *Context) GetHeader(key string) string {
+	return c.Request.Header.Get(key)
 }
 
 // 获取cookie值
-func (this *Context) GetCookie(key string) string {
-	cook, err := this.Request.Cookie(key)
+func (c *Context) GetCookie(key string) string {
+	cook, err := c.Request.Cookie(key)
 	if err != nil {
 		return ""
 	}
@@ -121,78 +121,78 @@ func (this *Context) GetCookie(key string) string {
 }
 
 // 设置cookie值
-func (this *Context) SetCookie(c *http.Cookie) {
-	http.SetCookie(this.Response, c)
+func (c *Context) SetCookie(cookie *http.Cookie) {
+	http.SetCookie(c.Response, cookie)
 }
 
 // 302跳转
-func (this *Context) Redirect(path string) error {
-	this.Lock()
-	defer this.Unlock()
-	if !this.writeable {
+func (c *Context) Redirect(path string) error {
+	c.Lock()
+	defer c.Unlock()
+	if !c.writeable {
 		return errors.New("禁止重复写入response")
 	}
-	this.writeable = false
-	this.code = http.StatusFound
-	http.Redirect(this.Response, this.Request, path, http.StatusFound)
+	c.writeable = false
+	c.code = http.StatusFound
+	http.Redirect(c.Response, c.Request, path, http.StatusFound)
 	return nil
 }
 
 // 返回http: 200
-func (this *Context) OK(contentType string, content []byte) error {
-	this.Lock()
-	defer this.Unlock()
-	if !this.writeable {
+func (c *Context) OK(contentType string, content []byte) error {
+	c.Lock()
+	defer c.Unlock()
+	if !c.writeable {
 		return errors.New("禁止重复写入response")
 	}
-	this.writeable = false
+	c.writeable = false
 	if len(contentType) > 0 {
-		this.SetHeader(ContentType, contentType)
+		c.SetHeader(ContentType, contentType)
 	}
-	this.SetHeader("server", "framework")
-	this.code = 200
-	_, err := this.Response.Write(content)
+	c.SetHeader("server", "framework")
+	c.code = 200
+	_, err := c.Response.Write(content)
 	return err
 }
 
 // 返回对应http编码
-func (this *Context) Code(static int) error {
-	this.Lock()
-	defer this.Unlock()
-	if !this.writeable {
+func (c *Context) Code(static int) error {
+	c.Lock()
+	defer c.Unlock()
+	if !c.writeable {
 		return errors.New("禁止重复写入response")
 	}
-	this.writeable = false
-	this.SetHeader("server", "framework")
-	this.code = static
-	this.Response.WriteHeader(static)
+	c.writeable = false
+	c.SetHeader("server", "framework")
+	c.code = static
+	c.Response.WriteHeader(static)
 	return nil
 }
 
 // 返回http错误响应
-func (this *Context) Error(static int, htmlStr string) error {
-	this.Lock()
-	defer this.Unlock()
-	if !this.writeable {
+func (c *Context) Error(static int, htmlStr string) error {
+	c.Lock()
+	defer c.Unlock()
+	if !c.writeable {
 		return errors.New("禁止重复写入response")
 	}
-	this.writeable = false
-	this.SetHeader("server", "framework")
-	this.SetHeader(ContentType, Html)
-	this.code = static
-	this.Response.WriteHeader(static)
-	_, _ = this.Response.Write([]byte(htmlStr))
+	c.writeable = false
+	c.SetHeader("server", "framework")
+	c.SetHeader(ContentType, Html)
+	c.code = static
+	c.Response.WriteHeader(static)
+	_, _ = c.Response.Write([]byte(htmlStr))
 	return nil
 }
 
 // 设置httpheader值
-func (this *Context) SetHeader(key string, value string) {
-	this.Response.Header().Set(key, value)
+func (c *Context) SetHeader(key string, value string) {
+	c.Response.Header().Set(key, value)
 }
 
 // 删除httpheader对应值
-func (this *Context) DelHeader(key string) {
-	this.Response.Header().Del(key)
+func (c *Context) DelHeader(key string) {
+	c.Response.Header().Del(key)
 }
 
 func newContext(w http.ResponseWriter, r *http.Request) Context {
@@ -206,55 +206,55 @@ func newContext(w http.ResponseWriter, r *http.Request) Context {
 }
 
 // 获取http方法
-func (this *Context) GetMethod() string {
-	return this.Request.Method
+func (c *Context) GetMethod() string {
+	return c.Request.Method
 }
 
 // 返回json数据
-func (this *Context) JSON(jsonStr string) error {
-	err := this.OK(ApplicationJson, []byte(jsonStr))
+func (c *Context) JSON(jsonStr string) error {
+	err := c.OK(ApplicationJson, []byte(jsonStr))
 	return err
 }
 
 // 获取http请求address
-func (this *Context) RemoteAddr() string {
-	return this.Request.RemoteAddr
+func (c *Context) RemoteAddr() string {
+	return c.Request.RemoteAddr
 }
 
 // http文件服务
-func (this *Context) ServeFile(filePath string) {
-	this.Lock()
-	defer this.Unlock()
-	if !this.writeable {
+func (c *Context) ServeFile(filePath string) {
+	c.Lock()
+	defer c.Unlock()
+	if !c.writeable {
 		return
 	}
-	http.ServeFile(this.Response, this.Request, filePath)
-	this.writeable = false
+	http.ServeFile(c.Response, c.Request, filePath)
+	c.writeable = false
 	return
 }
 
 // 设置最后修改时间
-func (this *Context) SetLastModified(modtime time.Time) {
-	w := this.Response
+func (c *Context) SetLastModified(modtime time.Time) {
+	w := c.Response
 	if !isZeroTime(modtime) {
 		w.Header().Set("Last-Modified", modtime.UTC().Format(TimeFormat))
 	}
 }
 
 // 写入未修改
-func (this *Context) WriteNotModified() error {
+func (c *Context) WriteNotModified() error {
 	// RFC 7232 section 4.1:
 	// a sender SHOULD NOT generate representation metadata other than the
 	// above listed fields unless said metadata exists for the purpose of
 	// guiding cache updates (e.g., Last-Modified might be useful if the
 	// response does not have an ETag field).
-	this.Lock()
-	defer this.Unlock()
-	if !this.writeable {
+	c.Lock()
+	defer c.Unlock()
+	if !c.writeable {
 		return errors.New("禁止重复写入response")
 	}
-	this.writeable = false
-	w := this.Response
+	c.writeable = false
+	w := c.Response
 	h := w.Header()
 	delete(h, "Content-Type")
 	delete(h, "Content-Length")
@@ -266,9 +266,9 @@ func (this *Context) WriteNotModified() error {
 }
 
 // 下载二进制文件
-func (this *Context) DownloadContent(fileName string, data []byte) {
-	this.SetHeader("Content-disposition", fmt.Sprintf("attachment;filename=%s", fileName))
-	this.code = 200
-	_, _ = this.Response.Write(data)
+func (c *Context) DownloadContent(fileName string, data []byte) {
+	c.SetHeader("Content-disposition", fmt.Sprintf("attachment;filename=%s", fileName))
+	c.code = 200
+	_, _ = c.Response.Write(data)
 	return
 }
