@@ -11,9 +11,53 @@ type task struct {
 	StartEpoch int64  `json:"startEpoch"`
 	EndEpoch   int64  `json:"endEpoch"`
 	Runner     func()
+	Process    func() TaskProcess
 	// new running done error timeout
 	Status         string `json:"status"`
 	TimeoutSeconds int    `json:"timeoutSeconds"`
+}
+
+type TaskProcess struct {
+	Name    string `json:"name"`
+	Current int    `json:"current"`
+	Total   int    `json:"total"`
+}
+
+type TaskQueue struct {
+	Name       string
+	Queue      []task
+	queueLock  sync.RWMutex
+	Done       []string
+	Errors     []string
+	Times      int
+	StartEpoch int64
+	EndEpoch   int64
+	Todo       int
+	Running    *task
+	status     string
+	signal     chan string
+}
+
+type TaskResult struct {
+	TraceId    int    `json:"traceId"`
+	Span       int    `json:"span"`
+	Name       string `json:"name"`
+	Result     string `json:"result"`
+	StartEpoch int64  `json:"startEpoch"`
+	EndEpoch   int64  `json:"endEpoch"`
+}
+
+type TaskQueueResult struct {
+	Length     int          `json:"length"`
+	Done       []TaskResult `json:"done"`
+	Errors     []string     `json:"errors"`
+	StartEpoch int64        `json:"startEpoch"`
+	EndEpoch   int64        `json:"endEpoch"`
+	Running    TaskProcess  `json:"running"`
+	Times      int          `json:"times"`
+	Status     string       `json:"status"`
+	Name       string       `json:"name"`
+	Process    TaskProcess  `json:"process"`
 }
 
 func createTask(name string, timeoutSeconds int, runner func()) task {
@@ -25,49 +69,6 @@ func createTask(name string, timeoutSeconds int, runner func()) task {
 		Status:         "new",
 		TimeoutSeconds: timeoutSeconds,
 	}
-}
-
-type TaskQueue struct {
-	Name               string
-	Queue              []task
-	queueLock          sync.RWMutex
-	Done               []string
-	Errors             []string
-	TaskQueueHistories map[int64][]TaskQueueHistory
-	Times              int
-	StartEpoch         int64
-	EndEpoch           int64
-	Todo               int
-	Running            *task
-	status             string
-	signal             chan string
-}
-
-type TaskQueueHistory struct {
-	SerialId   int    `json:"serialId"`
-	Span       int    `json:"span"`
-	Name       string `json:"name"`
-	Result     string `json:"result"`
-	StartEpoch int64  `json:"startEpoch"`
-	EndEpoch   int64  `json:"endEpoch"`
-}
-
-type TaskQueueInfo struct {
-	Length     int        `json:"length"`
-	Tasks      []TaskInfo `json:"tasks"`
-	Done       []string   `json:"done"`
-	Errors     []string   `json:"errors"`
-	StartEpoch int64      `json:"startEpoch"`
-	EndEpoch   int64      `json:"endEpoch"`
-	Running    string     `json:"running"`
-	Times      int        `json:"times"`
-	Status     string     `json:"status"`
-	Name       string     `json:"name"`
-}
-
-type TaskInfo struct {
-	Name    string `json:"name"`
-	Timeout int    `json:"timeout"`
 }
 
 func (t *task) run() string {
