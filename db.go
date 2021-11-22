@@ -175,7 +175,15 @@ func SqlParamCheck(p string) bool {
 	return true
 }
 
+func SqlParamIsTp(p string) bool {
+	checker := strings.ToLower(p)
+	reg := regexp.MustCompile("(insert)|(update)|(delete)|(alter)|(modify)")
+	return reg.MatchString(checker)
+}
+
 func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
+
+	dbHandlerLogger := GetLogger(fmt.Sprintf("db-%s", d.dbName))
 
 	if !strings.HasPrefix(prefix, "/") {
 		prefix = fmt.Sprintf("/%s", prefix)
@@ -199,13 +207,47 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 		In:          "path",
 		Required:    true,
 	})
+	selectSwagger.AddParameter(SwaggerParameter{
+		Name:        "limit",
+		Description: "limit",
+		In:          "query",
+		Required:    false,
+	})
+	selectSwagger.AddParameter(SwaggerParameter{
+		Name:        "orderBy",
+		Description: "order by ... desc",
+		In:          "query",
+		Required:    false,
+	})
 	RegisterHandler(fmt.Sprintf("%s/select/{table}", prefix), func(c Context) {
 		table := c.GetPathParam("table")
 		if !SqlParamCheck(table) {
 			c.ApiResponse(-1, "", nil)
 			return
 		}
-		res, err := d.Query(fmt.Sprintf("select * from %s", table))
+
+		limitSql := ""
+		if limit := c.GetQueryParam("limit"); len(limit) > 0 && SqlParamCheck(limit) {
+			limit = strings.TrimSpace(limit)
+			if SqlParamIsTp(limit) {
+				c.ApiResponse(-1, "limit has tp sql", nil)
+				return
+			}
+			limitSql = fmt.Sprintf("%v", limit)
+		}
+
+		orderBySql := ""
+		if orderBy := c.GetQueryParam("orderBy"); len(orderBy) > 0 && SqlParamCheck(orderBy) {
+			orderBy = strings.TrimSpace(orderBy)
+			if SqlParamIsTp(orderBy) {
+				c.ApiResponse(-1, "orderBy has tp sql", nil)
+				return
+			}
+			orderBySql = fmt.Sprintf("%v", orderBy)
+		}
+		selectSql := strings.TrimSpace(fmt.Sprintf("select * from %s %s %s", table, orderBySql, limitSql))
+		dbHandlerLogger.InfoF("sql: %s", selectSql)
+		res, err := d.Query(selectSql)
 		if err != nil {
 			c.ApiResponse(-1, err.Error(), nil)
 			return
@@ -270,6 +312,7 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 
 		insertSql = fmt.Sprintf("%s %s", insertSql, values)
 
+		dbHandlerLogger.InfoF("sql: %s, params: %v", insertSql, sqlParams)
 		c.ApiResponse(0, insertSql, sqlParams)
 		return
 		//d.Exec(insertSql, sqlParams...)
@@ -334,6 +377,7 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 
 		updateSql = fmt.Sprintf("%s ) where id = ?", updateSql)
 		sqlParams = append(sqlParams, id)
+		dbHandlerLogger.InfoF("sql: %s, params: %v", updateSql, sqlParams)
 		c.ApiResponse(0, updateSql, sqlParams)
 		return
 	})
@@ -375,6 +419,7 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 			return
 		}
 		deleteSql := fmt.Sprintf("delete from %s where id = ?", table)
+		dbHandlerLogger.InfoF("sql: %s, params: %v", deleteSql, id)
 		c.ApiResponse(0, deleteSql, id)
 		return
 	})
