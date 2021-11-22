@@ -138,6 +138,29 @@ func (c *Context) Redirect(path string) error {
 	return nil
 }
 
+func (c *Context) ProxyPass(path string, timeoutSeconds int) {
+	client := http.Client{
+		Timeout: time.Second * time.Duration(timeoutSeconds),
+	}
+	req, _ := http.NewRequest(strings.ToUpper(c.GetMethod()), path, c.Request.Body)
+	req.Header = c.Request.Header.Clone()
+	resp, err := client.Do(req)
+	if err != nil {
+		c.Error(500, err.Error())
+		return
+	}
+	for k, _ := range resp.Header {
+		c.SetHeader(k, resp.Header.Get(k))
+	}
+	bodyStr := ""
+	body, err := ioutil.ReadAll(resp.Body)
+	if err == nil {
+		bodyStr = string(body)
+	}
+	c.Error(resp.StatusCode, bodyStr)
+	return
+}
+
 // 返回http: 200
 func (c *Context) OK(contentType string, content []byte) error {
 	c.Lock()
@@ -170,6 +193,8 @@ func (c *Context) Code(static int) error {
 }
 
 // 返回http错误响应
+//
+// 请自行设定 contentType
 func (c *Context) Error(static int, htmlStr string) error {
 	c.Lock()
 	defer c.Unlock()
@@ -178,7 +203,6 @@ func (c *Context) Error(static int, htmlStr string) error {
 	}
 	c.writeable = false
 	c.SetHeader("server", "framework")
-	c.SetHeader(ContentType, Html)
 	c.code = static
 	c.Response.WriteHeader(static)
 	_, _ = c.Response.Write([]byte(htmlStr))
