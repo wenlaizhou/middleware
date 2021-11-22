@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"errors"
 	"sync"
 	"sync/atomic"
 )
@@ -178,6 +177,7 @@ func AddLogicChild(logic *Logic, child []*Logic) {
 func AddLogicChildNext(logic *Logic, deep int, next int, child []*Logic) error {
 	// todo
 	AddLogicChild(logic.Children[next], child)
+	return nil
 }
 
 type PipelineResult struct {
