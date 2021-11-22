@@ -110,7 +110,7 @@ func checkHidden(key string, hiddens []string) bool {
 
 func RegisterConfService(conf Config, path string, hidden string) SwaggerPath {
 
-	hiddensList := []string{}
+	hiddensList := []string{ConfDir}
 	if len(hidden) >= 0 {
 		hidden = strings.TrimSpace(hidden)
 		hiddens := strings.Split(hidden, ",")
