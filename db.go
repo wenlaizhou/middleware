@@ -233,9 +233,8 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 				c.ApiResponse(-1, "limit has tp sql", nil)
 				return
 			}
-			limitSql = fmt.Sprintf("%v", limit)
+			limitSql = fmt.Sprintf("limit %v", limit)
 		}
-
 		orderBySql := ""
 		if orderBy := c.GetQueryParam("orderBy"); len(orderBy) > 0 && SqlParamCheck(orderBy) {
 			orderBy = strings.TrimSpace(orderBy)
@@ -243,7 +242,7 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 				c.ApiResponse(-1, "orderBy has tp sql", nil)
 				return
 			}
-			orderBySql = fmt.Sprintf("%v", orderBy)
+			orderBySql = fmt.Sprintf("order by %v", orderBy)
 		}
 		selectSql := strings.TrimSpace(fmt.Sprintf("select * from %s %s %s", table, orderBySql, limitSql))
 		dbHandlerLogger.InfoF("sql: %s", selectSql)
