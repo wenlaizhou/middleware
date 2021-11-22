@@ -102,18 +102,17 @@ func (t *task) run() string {
 // 创建任务队列框架(异步, 可监测, 完整运行记录)
 func CreateTaskQueue(name string) TaskQueue {
 	return TaskQueue{
-		Name:               name,
-		Queue:              []task{},
-		Done:               []string{},
-		Errors:             []string{},
-		Todo:               0,
-		Times:              0,
-		StartEpoch:         0,
-		EndEpoch:           0,
-		Running:            nil,
-		status:             "new",
-		TaskQueueHistories: map[int64][]TaskQueueHistory{},
-		signal:             make(chan string),
+		Name:       name,
+		Queue:      []task{},
+		Done:       []string{},
+		Errors:     []string{},
+		Todo:       0,
+		Times:      0,
+		StartEpoch: 0,
+		EndEpoch:   0,
+		Running:    nil,
+		status:     "new",
+		signal:     make(chan string),
 	}
 }
 
@@ -136,7 +135,6 @@ func (q *TaskQueue) Start() (error, chan string) {
 	q.Times += 1
 	q.StartEpoch = TimeEpoch()
 	q.EndEpoch = 0
-	q.TaskQueueHistories[q.StartEpoch] = []TaskQueueHistory{}
 	go func() {
 		spanId := 0
 		for _, task := range q.Queue {
@@ -197,56 +195,34 @@ func (q *TaskQueue) Stop() {
 	q.signal <- "stop"
 }
 
-func (q *TaskQueue) Status() TaskQueueInfo {
-	running := ""
-	if q.Running != nil {
-		running = q.Running.Name
-	}
-	tasks := []TaskInfo{}
-	for _, task := range q.Queue {
-		tasks = append(tasks, TaskInfo{
-			Name:    task.Name,
-			Timeout: task.TimeoutSeconds,
-		})
-	}
-	return TaskQueueInfo{
-		Name:       q.Name,
-		Length:     len(q.Queue),
-		Tasks:      tasks,
-		Done:       q.Done,
-		Errors:     q.Errors,
-		StartEpoch: q.StartEpoch,
-		EndEpoch:   q.EndEpoch,
-		Running:    running,
-		Times:      q.Times,
-		Status:     q.status,
-	}
-
+func (q *TaskQueue) Status() TaskQueueResult {
+	return TaskQueueResult{}
 }
 
-func (q *TaskQueue) History() map[int64][]TaskQueueHistory {
-	return q.TaskQueueHistories
-}
-
-func (q *TaskQueue) runner(t task, span int) {
-	q.Running = &t
-	q.Todo -= 1
-	history := TaskQueueHistory{
-		SerialId:   q.Times,
-		Name:       t.Name,
-		Span:       span,
-		StartEpoch: TimeEpoch(),
-	}
-	switch t.run() {
-	case "error":
-		q.Errors = append(q.Errors, t.Name)
-		break
-	default:
-		break
-	}
-	q.Done = append(q.Done, t.Name)
-	history.EndEpoch = TimeEpoch()
-	history.Result = t.Status
-	q.TaskQueueHistories[q.StartEpoch] =
-		append(q.TaskQueueHistories[q.StartEpoch], history)
-}
+//
+//func (q *TaskQueue) History() map[int64][]TaskQueueHistory {
+//	return q.TaskQueueHistories
+//}
+//
+//func (q *TaskQueue) runner(t task, span int) {
+//	q.Running = &t
+//	q.Todo -= 1
+//	history := TaskQueueHistory{
+//		SerialId:   q.Times,
+//		Name:       t.Name,
+//		Span:       span,
+//		StartEpoch: TimeEpoch(),
+//	}
+//	switch t.run() {
+//	case "error":
+//		q.Errors = append(q.Errors, t.Name)
+//		break
+//	default:
+//		break
+//	}
+//	q.Done = append(q.Done, t.Name)
+//	history.EndEpoch = TimeEpoch()
+//	history.Result = t.Status
+//	q.TaskQueueHistories[q.StartEpoch] =
+//		append(q.TaskQueueHistories[q.StartEpoch], history)
+//}
