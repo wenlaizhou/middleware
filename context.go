@@ -92,13 +92,13 @@ func (c *Context) GetUri() string {
 }
 
 // 返回json类型数据
-func (c *Context) WriteJSON(data interface{}) error {
+func (c *Context) WriteJSON(data interface{}) {
 	res, err := json.Marshal(data)
 	if err != nil {
-		return err
+		mLogger.ErrorF("json marshal error : %v", err.Error())
+		return
 	}
-	err = c.OK(ApplicationJson, res)
-	return err
+	c.OK(ApplicationJson, res)
 }
 
 // 获取content-type值
@@ -162,11 +162,12 @@ func (c *Context) ProxyPass(path string, timeoutSeconds int) {
 }
 
 // 返回http: 200
-func (c *Context) OK(contentType string, content []byte) error {
+func (c *Context) OK(contentType string, content []byte) {
 	c.Lock()
 	defer c.Unlock()
 	if !c.writeable {
-		return errors.New("禁止重复写入response")
+		mLogger.Error("禁止重复写入response")
+		return
 	}
 	c.writeable = false
 	if len(contentType) > 0 {
@@ -175,38 +176,43 @@ func (c *Context) OK(contentType string, content []byte) error {
 	c.SetHeader("server", "framework")
 	c.code = 200
 	_, err := c.Response.Write(content)
-	return err
+	if err != nil {
+		mLogger.ErrorF("context response Ok error : %v", err.Error())
+		return
+	}
 }
 
 // 返回对应http编码
-func (c *Context) Code(static int) error {
+func (c *Context) Code(static int) {
 	c.Lock()
 	defer c.Unlock()
 	if !c.writeable {
-		return errors.New("禁止重复写入response")
+		mLogger.Error("禁止重复写入response")
+		return
 	}
 	c.writeable = false
 	c.SetHeader("server", "framework")
 	c.code = static
 	c.Response.WriteHeader(static)
-	return nil
+	return
 }
 
 // 返回http错误响应
 //
 // 请自行设定 contentType
-func (c *Context) Error(static int, htmlStr string) error {
+func (c *Context) Error(static int, htmlStr string) {
 	c.Lock()
 	defer c.Unlock()
 	if !c.writeable {
-		return errors.New("禁止重复写入response")
+		mLogger.Error("禁止重复写入response")
+		return
 	}
 	c.writeable = false
 	c.SetHeader("server", "framework")
 	c.code = static
 	c.Response.WriteHeader(static)
 	_, _ = c.Response.Write([]byte(htmlStr))
-	return nil
+	return
 }
 
 // 设置httpheader值
@@ -235,9 +241,8 @@ func (c *Context) GetMethod() string {
 }
 
 // 返回json数据
-func (c *Context) JSON(jsonStr string) error {
-	err := c.OK(ApplicationJson, []byte(jsonStr))
-	return err
+func (c *Context) JSON(jsonStr string) {
+	c.OK(ApplicationJson, []byte(jsonStr))
 }
 
 // 获取http请求address

@@ -4,7 +4,7 @@ import "encoding/json"
 
 // 返回 json数据
 // { code 格式: 0, message : "", data : {}}
-func (c *Context) ApiResponse(code int, message string, data interface{}) error {
+func (c *Context) ApiResponse(code int, message string, data interface{}) {
 	model := map[string]interface{}{
 		"code":    code,
 		"message": message,
@@ -12,8 +12,8 @@ func (c *Context) ApiResponse(code int, message string, data interface{}) error 
 	}
 	res, err := json.Marshal(model)
 	if ProcessError(err) {
-		return err
+		return
 	}
-	err = c.OK(ApplicationJson, res)
-	return err
+	c.OK(ApplicationJson, res)
+	return
 }

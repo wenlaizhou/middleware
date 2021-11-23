@@ -119,7 +119,7 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx.SetHeader(AccessControlAllowHeaders, "*")
 
 		if strings.ToUpper(ctx.GetMethod()) == OPTIONS {
-			_ = ctx.Code(202)
+			ctx.Code(202)
 			return
 		}
 	}
@@ -155,7 +155,7 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if handler == nil {
-		_ = ctx.Error(StatusNotFound, StatusNotFoundView)
+		ctx.Error(StatusNotFound, StatusNotFoundView)
 		return
 	}
 	handler(ctx)

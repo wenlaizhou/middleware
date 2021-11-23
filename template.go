@@ -9,7 +9,8 @@ import (
 func (c *Context) RenderTemplate(name string, model interface{}) error {
 	userAccept := c.GetHeader("Accept")
 	if len(userAccept) <= 0 || !strings.Contains(userAccept, "text/html") {
-		return c.ApiResponse(0, "", model)
+		c.ApiResponse(0, "", model)
+		return nil
 	}
 	if c.tpl != nil {
 		c.code = 200
@@ -61,7 +62,8 @@ func (c *Context) RenderTemplateKV(name string, kvs ...interface{}) error {
 	}
 	userAccept := c.GetHeader("Accept")
 	if len(userAccept) <= 0 || !strings.Contains(userAccept, "text/html") {
-		return c.ApiResponse(0, "", model)
+		c.ApiResponse(0, "", model)
+		return nil
 	}
 	if c.tpl == nil {
 		return errors.New("template 不存在")
