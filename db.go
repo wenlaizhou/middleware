@@ -59,6 +59,10 @@ func DbPool(addr string, user string, password string, dbName string, maxConnect
 	}, nil
 }
 
+func (d Database) Status() sql.DBStats {
+	return d.conn.Stats()
+}
+
 // ? 代表参数
 func (d Database) Query(sql string, params ...interface{}) ([]map[string]string, error) {
 	result := []map[string]string{}
@@ -197,6 +201,12 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 			return
 		}
 		c.ApiResponse(0, "", res)
+		return
+	})
+
+	statusSwagger := SwaggerBuildPath(fmt.Sprintf("%s/status", prefix), d.dbName, "get", "db status")
+	RegisterHandler(fmt.Sprintf("%s/status", prefix), func(c Context) {
+		c.ApiResponse(0, "", d.Status())
 		return
 	})
 
@@ -423,5 +433,5 @@ func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
 		return
 	})
 
-	return []SwaggerPath{schemaSwagger, selectSwagger, insertSwagger, updateSwagger, deleteSwagger}
+	return []SwaggerPath{schemaSwagger, statusSwagger, selectSwagger, insertSwagger, updateSwagger, deleteSwagger}
 }
