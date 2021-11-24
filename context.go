@@ -121,6 +121,11 @@ func (c *Context) SetCookie(cookie *http.Cookie) {
 	http.SetCookie(c.Response, cookie)
 }
 
+// 获取locale设置
+func (c *Context) Locale() string {
+	return c.GetCookie("locale")
+}
+
 // 302跳转
 func (c *Context) Redirect(path string) error {
 	if !c.writeable {
