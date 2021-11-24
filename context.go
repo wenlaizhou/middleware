@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -24,7 +23,6 @@ type Context struct {
 	Message        I18n
 	EnableI18n     bool
 	pathParams     map[string]string
-	sync.RWMutex
 }
 
 type I18n struct {
@@ -42,8 +40,6 @@ func (c *Context) GetPathParam(key string) string {
 
 // 获取请求体
 func (c *Context) GetBody() []byte {
-	c.Lock()
-	defer c.Unlock()
 	if len(c.body) > 0 {
 		return c.body
 	}
@@ -127,8 +123,6 @@ func (c *Context) SetCookie(cookie *http.Cookie) {
 
 // 302跳转
 func (c *Context) Redirect(path string) error {
-	c.Lock()
-	defer c.Unlock()
 	if !c.writeable {
 		return errors.New("禁止重复写入response")
 	}
@@ -163,8 +157,6 @@ func (c *Context) ProxyPass(path string, timeoutSeconds int) {
 
 // 返回http: 200
 func (c *Context) OK(contentType string, content []byte) {
-	c.Lock()
-	defer c.Unlock()
 	if !c.writeable {
 		mLogger.Error("禁止重复写入response")
 		return
@@ -184,8 +176,6 @@ func (c *Context) OK(contentType string, content []byte) {
 
 // 返回对应http编码
 func (c *Context) Code(static int) {
-	c.Lock()
-	defer c.Unlock()
 	if !c.writeable {
 		mLogger.Error("禁止重复写入response")
 		return
@@ -201,8 +191,6 @@ func (c *Context) Code(static int) {
 //
 // 请自行设定 contentType
 func (c *Context) Error(static int, htmlStr string) {
-	c.Lock()
-	defer c.Unlock()
 	if !c.writeable {
 		mLogger.Error("禁止重复写入response")
 		return
@@ -252,8 +240,6 @@ func (c *Context) RemoteAddr() string {
 
 // http文件服务
 func (c *Context) ServeFile(filePath string) {
-	c.Lock()
-	defer c.Unlock()
 	if !c.writeable {
 		return
 	}
@@ -277,8 +263,6 @@ func (c *Context) WriteNotModified() error {
 	// above listed fields unless said metadata exists for the purpose of
 	// guiding cache updates (e.g., Last-Modified might be useful if the
 	// response does not have an ETag field).
-	c.Lock()
-	defer c.Unlock()
 	if !c.writeable {
 		return errors.New("禁止重复写入response")
 	}
