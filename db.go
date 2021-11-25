@@ -63,6 +63,12 @@ func (d Database) Status() sql.DBStats {
 	return d.conn.Stats()
 }
 
+// ping 数据库链接
+func (d Database) Ping() error {
+	timeoutContext, _ := context.WithTimeout(context.Background(), d.timeoutSeconds)
+	return d.conn.PingContext(timeoutContext)
+}
+
 // ? 代表参数
 func (d Database) Query(sql string, params ...interface{}) ([]map[string]string, error) {
 	result := []map[string]string{}
