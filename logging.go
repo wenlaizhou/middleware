@@ -147,7 +147,6 @@ func RotateLog() {
 		fs, err := os.OpenFile(loggerFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 		if err != nil {
 			mLogger.ErrorF("%s, 文件打开错误: %s", loggerFilename, err.Error())
-			continue
 		}
 		loggerInstance.fs = fs
 		loggerInstance.Logger.SetOutput(fs)
