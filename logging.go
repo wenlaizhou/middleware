@@ -69,6 +69,9 @@ func GetLogger(name string) Logger {
 		// filepath exist
 	}
 	fs, err := os.OpenFile(fmt.Sprintf("logs/%s.log", name), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
+	if err != nil {
+		fmt.Sprintln("open file error: ", err.Error())
+	}
 	res = logger{
 		Logger: log.New(fs, "", log.LstdFlags),
 		fs:     fs,
