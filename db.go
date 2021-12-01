@@ -191,7 +191,7 @@ func SqlParamIsTp(p string) bool {
 	return reg.MatchString(checker)
 }
 
-func RegisterDbHandler(d Database, prefix string) []SwaggerPath {
+func RegisterDbHandler(d *Database, prefix string) []SwaggerPath {
 
 	dbHandlerLogger := GetLogger(fmt.Sprintf("db-%s", d.dbName))
 
