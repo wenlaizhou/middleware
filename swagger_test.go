@@ -20,7 +20,6 @@ func TestSwaggerGenerate(t *testing.T) {
 		Description: "id for hello",
 		Example:     "1",
 		Default:     "0",
-		Type:        "query",
 		Required:    false,
 	})
 	swaggerData.AddPath(path)
