@@ -98,7 +98,7 @@ func (t *task) run() string {
 	return t.Status
 }
 
-// 创建任务队列框架(异步, 可监测, 完整运行记录)
+// CreateTaskQueue 创建任务队列框架(异步, 可监测, 完整运行记录)
 func CreateTaskQueue(name string) TaskQueue {
 	return TaskQueue{
 		Name:               name,
@@ -122,7 +122,7 @@ func (q *TaskQueue) AddTask(name string, timeoutSeconds int, runner func()) {
 	q.Queue = append(q.Queue, createTask(name, timeoutSeconds, runner))
 }
 
-// 执行一次任务队列, 异步
+// Start 执行一次任务队列, 异步
 func (q *TaskQueue) Start() (error, chan string) {
 	if q.status != "new" && q.status != "done" {
 		return errors.New("队列正在运行中"), nil
