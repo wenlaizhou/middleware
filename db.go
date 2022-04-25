@@ -19,11 +19,13 @@ type Database struct {
 	timeoutSeconds time.Duration
 }
 
-// 数据库连接池 最长默认存活时间
+// DefaultConnectionLifeSeconds 数据库连接池 最长默认存活时间
+//
 // 可进行设置
 var DefaultConnectionLifeSeconds = time.Duration(60*10) * time.Second
 
-// 创建数据库连接池
+// DbPool 创建数据库连接池
+//
 // addr: 数据库链接地址, ip:port
 func DbPool(addr string, user string, password string, dbName string, maxConnections int, timeoutSecond int) (Database, error) {
 
@@ -63,12 +65,14 @@ func (d Database) Status() sql.DBStats {
 	return d.conn.Stats()
 }
 
-// ping 数据库链接
+// Ping 数据库链接
 func (d Database) Ping() error {
 	timeoutContext, _ := context.WithTimeout(context.Background(), d.timeoutSeconds)
 	return d.conn.PingContext(timeoutContext)
 }
 
+// Query 执行数据库查询
+//
 // ? 代表参数
 func (d Database) Query(sql string, params ...interface{}) ([]map[string]string, error) {
 	result := []map[string]string{}
@@ -102,6 +106,8 @@ func (d Database) Query(sql string, params ...interface{}) ([]map[string]string,
 	return result, nil
 }
 
+// Exec 执行数据库写入更改删除
+//
 // ? 代表参数
 func (d Database) Exec(sql string, params ...interface{}) (int64, int64, error) {
 	timeoutContext, _ := context.WithTimeout(context.Background(), d.timeoutSeconds)
@@ -114,22 +120,26 @@ func (d Database) Exec(sql string, params ...interface{}) (int64, int64, error) 
 	return rowsAffected, lastInsertedId, nil
 }
 
+// DatabaseSchema 库结构
 type DatabaseSchema struct {
 	Name   string                 `json:"name"`
 	Tables map[string]TableSchema `json:"tables"`
 }
 
+// TableSchema 表结构
 type TableSchema struct {
 	Name    string                  `json:"name"`
 	Columns map[string]ColumnSchema `json:"columns"`
 }
 
+// ColumnSchema 列结构
 type ColumnSchema struct {
 	Name     string `json:"name"`
 	DataType string `json:"dataType"`
 	Comment  string `json:"comment"`
 }
 
+// Schema 获取数据库结构
 func (d Database) Schema() (DatabaseSchema, error) {
 	res, err := d.Query("select table_name, column_name, data_type, column_comment from information_schema.columns where table_schema = ? order by table_name", d.dbName)
 	if err != nil {
@@ -191,6 +201,9 @@ func SqlParamIsTp(p string) bool {
 	return reg.MatchString(checker)
 }
 
+// RegisterDbHandler 注册数据库处理接口, 包含所有表的增删改查
+//
+// 返回Swagger对象
 func RegisterDbHandler(d *Database, prefix string) []SwaggerPath {
 
 	dbHandlerLogger := GetLogger(fmt.Sprintf("db-%s", d.dbName))
@@ -319,10 +332,10 @@ func RegisterDbHandler(d *Database, prefix string) []SwaggerPath {
 			sqlParams = append(sqlParams, v)
 			first = false
 		}
-		//insertSql = insertSql[:len(insertSql)-2]
+		// insertSql = insertSql[:len(insertSql)-2]
 		insertSql = fmt.Sprintf("%s )", insertSql)
 
-		//values = values[:len(values)-2]
+		// values = values[:len(values)-2]
 		values = fmt.Sprintf("%s )", values)
 
 		insertSql = fmt.Sprintf("%s %s", insertSql, values)
@@ -330,7 +343,7 @@ func RegisterDbHandler(d *Database, prefix string) []SwaggerPath {
 		dbHandlerLogger.InfoF("sql: %s, params: %v", insertSql, sqlParams)
 		c.ApiResponse(0, insertSql, sqlParams)
 		return
-		//d.Exec(insertSql, sqlParams...)
+		// d.Exec(insertSql, sqlParams...)
 
 	})
 
