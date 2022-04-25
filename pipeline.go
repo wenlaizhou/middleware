@@ -29,7 +29,7 @@ type PipelineManager struct {
 }
 
 func (p *PipelineManager) Start(pipe PipeLine, input interface{}) {
-	//p.Pipelines[pipe.Name] = map[string][]LogicResult{}
+	// p.Pipelines[pipe.Name] = map[string][]LogicResult{}
 	p.locker.Lock()
 	defer p.locker.Unlock()
 	trace := Guid()
@@ -142,7 +142,7 @@ func PipelineAddLogic(p *PipeLine, logic []*Logic) {
 	p.Root.Children = logic
 }
 
-//func PipelineAddLogicSpec(p *PipeLine, deep int, number int, logic []*Logic) error {
+// func PipelineAddLogicSpec(p *PipeLine, deep int, number int, logic []*Logic) error {
 //	if deep == 0 {
 //		if number >= len(p.Root.Children) {
 //			return errors.New("length over flow")
@@ -154,7 +154,7 @@ func PipelineAddLogic(p *PipeLine, logic []*Logic) {
 //	for i := 0; i < deep; i++ {
 //
 //	}
-//}
+// }
 
 func CreateLogic(name string, before func(input interface{}) interface{},
 	condition func(input interface{}) bool, runner func(interface{}) interface{},
@@ -248,10 +248,10 @@ type LogicResult struct {
 	End int64 `json:"end"`
 
 	// 输入
-	//Input interface{}
+	// Input interface{}
 
 	// 输出
-	//Output interface{}
+	// Output interface{}
 
 	// 执行结果
 	Result string `json:"result"`
