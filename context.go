@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// 上下文数据结构
+// Context 上下文数据结构
 type Context struct {
 	Request        *http.Request
 	Response       http.ResponseWriter
@@ -38,7 +38,7 @@ func (c *Context) GetPathParam(key string) string {
 	return ""
 }
 
-// 获取请求体
+// GetBody 获取请求体
 func (c *Context) GetBody() []byte {
 	if len(c.body) > 0 {
 		return c.body
@@ -52,7 +52,7 @@ func (c *Context) GetBody() []byte {
 	return nil
 }
 
-// 获取body中
+// GetJSON 获取body中
 //
 // json类型数据体
 func (c *Context) GetJSON() (map[string]interface{}, error) {
@@ -64,7 +64,7 @@ func (c *Context) GetJSON() (map[string]interface{}, error) {
 	return res, nil
 }
 
-// 获取json对象中key对应的字符串
+// GetJsonParamStr 获取json对象中key对应的字符串
 //
 // 没有该key则返回""
 func GetJsonParamStr(key string, jsonObj map[string]interface{}) string {
@@ -75,19 +75,19 @@ func GetJsonParamStr(key string, jsonObj map[string]interface{}) string {
 	return strings.TrimSpace(fmt.Sprintf("%v", val))
 }
 
-// 获取query参数
+// GetQueryParam 获取query参数
 func (c *Context) GetQueryParam(key string) string {
 	return c.Request.URL.Query().Get(key)
 }
 
-// 获取去除querystring之后的请求路径
+// GetUri 获取去除querystring之后的请求路径
 //
 // 以 / 为开头
 func (c *Context) GetUri() string {
 	return c.Request.URL.Path
 }
 
-// 返回json类型数据
+// WriteJSON 返回json类型数据
 func (c *Context) WriteJSON(data interface{}) {
 	res, err := json.Marshal(data)
 	if err != nil {
@@ -213,7 +213,7 @@ func (c *Context) SetHeader(key string, value string) {
 	c.Response.Header().Set(key, value)
 }
 
-// 删除httpheader对应值
+// DelHeader 删除httpheader对应值
 func (c *Context) DelHeader(key string) {
 	c.Response.Header().Del(key)
 }
@@ -228,18 +228,26 @@ func newContext(w http.ResponseWriter, r *http.Request) Context {
 	}
 }
 
-// 获取http方法
+// GetMethod 获取http方法
 func (c *Context) GetMethod() string {
 	return c.Request.Method
 }
 
-// 返回json数据
+// JSON 返回json数据
 func (c *Context) JSON(jsonStr string) {
 	c.OK(ApplicationJson, []byte(jsonStr))
 }
 
-// 获取http请求address
+// RemoteAddr 获取http请求address
 func (c *Context) RemoteAddr() string {
+	xForward := c.Request.Header.Get("x-forwarded-for")
+	if len(xForward) > 0 {
+		return xForward
+	}
+	realIp := c.Request.Header.Get("X-Real-IP")
+	if len(realIp) > 0 {
+		return realIp
+	}
 	return c.Request.RemoteAddr
 }
 
