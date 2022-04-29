@@ -75,35 +75,12 @@ func (d Database) Ping() error {
 //
 // ? 代表参数
 func (d Database) Query(sql string, params ...interface{}) ([]map[string]string, error) {
-	result := []map[string]string{}
 	timeoutContext, _ := context.WithTimeout(context.Background(), d.timeoutSeconds)
 	rows, err := d.conn.QueryContext(timeoutContext, sql, params...)
 	if err != nil {
 		return nil, err
 	}
-	columns, _ := rows.Columns()
-	for rows.Next() {
-		data := make([]interface{}, len(columns))
-		columnPointers := make([]interface{}, len(columns))
-		for i, _ := range data {
-			columnPointers[i] = &data[i]
-		}
-		err = rows.Scan(columnPointers...)
-		if err != nil {
-			return nil, err
-		}
-		row := map[string]string{}
-		for i, _ := range columns {
-			if data[i] == nil {
-				row[columns[i]] = ""
-			} else {
-				row[columns[i]] = string(data[i].([]byte))
-			}
-		}
-		result = append(result, row)
-	}
-	rows.Close()
-	return result, nil
+	return RowsScan(rows)
 }
 
 // Exec 执行数据库写入更改删除
