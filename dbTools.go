@@ -2,8 +2,8 @@ package middleware
 
 import "database/sql"
 
-// RowsScan rows扫描
-func RowsScan(rows *sql.Rows) ([]map[string]string, error) {
+// ScanRows rows扫描
+func ScanRows(rows *sql.Rows) ([]map[string]string, error) {
 	result := []map[string]string{}
 	columns, _ := rows.Columns()
 	for rows.Next() {

@@ -80,7 +80,7 @@ func (d Database) Query(sql string, params ...interface{}) ([]map[string]string,
 	if err != nil {
 		return nil, err
 	}
-	return RowsScan(rows)
+	return ScanRows(rows)
 }
 
 // Exec 执行数据库写入更改删除
