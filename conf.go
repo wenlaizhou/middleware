@@ -1,6 +1,6 @@
 /*
 	config module
- */
+*/
 package middleware
 
 import (
@@ -87,7 +87,7 @@ func (c Config) Value(key string) (string, error) {
 	if !hasData {
 		return "", errors.New("没有匹配的value")
 	}
-	return v, nil
+	return strings.TrimSpace(v), nil
 }
 
 // 获取配置中的数值类型值
