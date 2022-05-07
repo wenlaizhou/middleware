@@ -103,6 +103,9 @@ func Schedule(name string, timeSchedule int, fun func()) {
 	}(name, timeSchedule, handle, fun)
 }
 
+// RegisterScheduleService 挂在schedule服务接口
+//
+// path 以/开头的路径
 func RegisterScheduleService(path string) []SwaggerPath {
 
 	RegisterHandler(path, func(context Context) {
