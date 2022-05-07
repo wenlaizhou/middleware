@@ -11,6 +11,7 @@ type ScheduleData struct {
 	TimeSchedule int    `json:"timeSchedule"`
 	Status       string `json:"status"`
 	handle       chan string
+	Counter      int64 `json:"counter"`
 }
 
 var scheduleRunner = map[string]ScheduleData{}
@@ -45,9 +46,13 @@ func ScheduleStop(name string) {
 	}()
 }
 
-// 注册定时任务
+// Schedule 注册定时任务
 //
-// 时间单位 秒
+// name 任务名称
+//
+// timeSchedule 时间单位 秒
+//
+// fun 任务
 func Schedule(name string, timeSchedule int, fun func()) {
 	mLogger.InfoF("注册定时任务: %v 间隔时间: %v秒", name, timeSchedule)
 	handle := make(chan string)
@@ -98,6 +103,7 @@ func Schedule(name string, timeSchedule int, fun func()) {
 				break
 			}
 			time.Sleep(time.Second * time.Duration(timeSchedule))
+			t.Counter += 1
 			fun()
 		}
 	}(name, timeSchedule, handle, fun)
@@ -106,6 +112,8 @@ func Schedule(name string, timeSchedule int, fun func()) {
 // RegisterScheduleService 挂在schedule服务接口
 //
 // path 以/开头的路径
+//
+// return 返回 swagger 路径数组
 func RegisterScheduleService(path string) []SwaggerPath {
 
 	RegisterHandler(path, func(context Context) {
