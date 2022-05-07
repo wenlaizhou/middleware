@@ -1,4 +1,4 @@
-module middleware
+module github.com/wenlaizhou/middleware
 
 go 1.17
 
