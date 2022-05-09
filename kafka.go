@@ -45,7 +45,7 @@ type MessageStats struct {
 // Send 发送多条消息
 //
 // messages 多条消息
-func (this MessageHandler) Send(messages ...kafka.Message) error {
+func (this *MessageHandler) Send(messages ...kafka.Message) error {
 	if messages == nil || len(messages) <= 0 {
 		return errors.New("未传递message")
 	}
@@ -54,7 +54,7 @@ func (this MessageHandler) Send(messages ...kafka.Message) error {
 }
 
 // Stats 获取消息统计信息
-func (this MessageHandler) Stats() MessageStats {
+func (this *MessageHandler) Stats() MessageStats {
 	return MessageStats{
 		KafkaServers:   this.kafkaServers,
 		TimeoutSeconds: this.timeoutSeconds,
