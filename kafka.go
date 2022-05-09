@@ -14,6 +14,9 @@ type MessageHandler struct {
 	// messageCounter 消息计数器
 	messageCounter uint64
 
+	// startTime 启动时间
+	startTime time.Time
+
 	// writer 消息通道
 	writer *kafka.Writer
 
@@ -40,6 +43,9 @@ type MessageStats struct {
 
 	// 发送消息总量
 	MessageCount uint64
+
+	// 启动时间
+	StartTime time.Time
 }
 
 // Send 发送多条消息
@@ -60,6 +66,7 @@ func (this *MessageHandler) Stats() MessageStats {
 		TimeoutSeconds: this.timeoutSeconds,
 		WriterStats:    this.writer.Stats(),
 		MessageCount:   this.messageCounter,
+		StartTime:      this.startTime,
 	}
 }
 
@@ -80,6 +87,7 @@ func CreateMessageHandler(kafkaServers string, timeoutSeconds int) MessageHandle
 		messageCounter: 0,
 		kafkaServers:   kafkaServers,
 		timeoutSeconds: timeoutSeconds,
+		startTime:      time.Now(),
 		writer: kafka.NewWriter(kafka.WriterConfig{
 			Brokers:  strings.Split(kafkaServers, ","),
 			Balancer: &kafka.RoundRobin{},
