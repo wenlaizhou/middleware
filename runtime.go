@@ -2,10 +2,55 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/disk"
+	"github.com/shirou/gopsutil/v3/load"
+	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/process"
 	"runtime"
 	"runtime/debug"
 	"strings"
 )
+
+type FullRuntimeInfo struct {
+	Memory      MemoryInfo   `json:"memory"`
+	OsMemory    OsMemoryInfo `json:"osMemory"`
+	Version     VersionInfo  `json:"version"`
+	CpuCount    int          `json:"cpuCount"`
+	CurrentDisk DiskInfo     `json:"currentDisk"`
+	DiskInfos   []DiskInfo   `json:"diskInfos"`
+	Load        LoadInfo     `json:"load"`
+}
+
+type DiskInfo struct {
+	Device      string  `json:"device"`
+	Mountpoint  string  `json:"mountpoint"`
+	Fstype      string  `json:"fstype"`
+	Total       uint64  `json:"total"`
+	Free        uint64  `json:"free"`
+	Used        uint64  `json:"used"`
+	UsedPercent float64 `json:"usedPercent"`
+}
+
+type LoadInfo struct {
+	Load1  float64 `json:"load1"`
+	Load5  float64 `json:"load5"`
+	Load15 float64 `json:"load15"`
+}
+
+type OsMemoryInfo struct {
+	Total       uint64  `json:"total"`
+	Available   uint64  `json:"available"`
+	Used        uint64  `json:"used"`
+	UsedPercent float64 `json:"usedPercent"`
+}
+
+type VersionInfo struct {
+	Dependencies   []map[string]string `json:"dependencies"`
+	RuntimeVersion string              `json:"runtimeVersion"`
+	Os             string              `json:"os"`
+	OsArch         string              `json:"osArch"`
+}
 
 type MemoryInfo struct {
 
@@ -36,17 +81,95 @@ type MemoryInfo struct {
 	NumGC uint32 `json:"numGc"`
 
 	LastGC uint64 `json:"lastGc"`
-
-	Os string `json:"os"`
-
-	OsArch string `json:"osArch"`
-
-	RuntimeVersion string `json:"runtimeVersion"`
-
-	Dependencies []map[string]string `json:"dependencies"`
 }
 
-func MemoryUsage() MemoryInfo {
+func GetFullRuntimeInfo() FullRuntimeInfo {
+	return FullRuntimeInfo{
+		Memory:      GetMemoryInfo(),
+		OsMemory:    GetOsMemoryInfo(),
+		Version:     GetVersionInfo(),
+		CpuCount:    GetCpuCount(),
+		CurrentDisk: GetDiskInfo(SelfDir()),
+		DiskInfos:   GetDiskInfos(),
+		Load:        GetLoadInfo(),
+	}
+}
+
+func GetLoadInfo() LoadInfo {
+	result := LoadInfo{}
+	if info, err := load.Avg(); err == nil {
+		result.Load1 = info.Load1
+		result.Load5 = info.Load5
+		result.Load15 = info.Load15
+	}
+	return result
+}
+
+func GetDiskInfos() []DiskInfo {
+	result := []DiskInfo{}
+	if partitions, err := disk.Partitions(true); err == nil {
+		for _, p := range partitions {
+			d := GetDiskInfo(p.Mountpoint)
+			d.Mountpoint = p.Mountpoint
+			d.Device = p.Device
+			d.Fstype = p.Fstype
+			result = append(result, d)
+		}
+	}
+	return result
+}
+
+func GetDiskInfo(dir string) DiskInfo {
+	res := DiskInfo{}
+	if usage, err := disk.Usage(dir); err == nil {
+		res.Total = usage.Total
+		res.UsedPercent = usage.UsedPercent
+		res.Used = usage.Used
+		res.Free = usage.Free
+	}
+	return res
+}
+
+func GetCpuCount() int {
+	if info, err := cpu.Info(); err == nil {
+		return len(info)
+	}
+	return -1
+}
+
+func GetOsMemoryInfo() OsMemoryInfo {
+	res := OsMemoryInfo{}
+	if memInfo, err := mem.VirtualMemory(); err == nil {
+		res.Total = memInfo.Total
+		res.UsedPercent = memInfo.UsedPercent
+		res.Used = memInfo.Used
+		res.Available = memInfo.Available
+	}
+	return res
+}
+
+func GetProcesses() ([]*process.Process, error) {
+	return process.Processes()
+}
+
+func GetVersionInfo() VersionInfo {
+	version := VersionInfo{}
+	version.RuntimeVersion = runtime.Version()
+	buildInfo, buildRes := debug.ReadBuildInfo()
+	if buildRes {
+		for _, dep := range buildInfo.Deps {
+			version.Dependencies = append(version.Dependencies, map[string]string{
+				"name":    dep.Path,
+				"version": dep.Version,
+			})
+		}
+	}
+	version.Os = runtime.GOOS
+	version.OsArch = runtime.GOARCH
+	return version
+}
+
+func GetMemoryInfo() MemoryInfo {
 	res := MemoryInfo{}
 	memStats := runtime.MemStats{}
 	runtime.ReadMemStats(&memStats)
@@ -60,18 +183,6 @@ func MemoryUsage() MemoryInfo {
 	res.CpuCount = runtime.NumCPU()
 	res.NumGoroutines = runtime.NumGoroutine()
 	res.NumCgoCalls = runtime.NumCgoCall()
-	res.Os = runtime.GOOS
-	res.OsArch = runtime.GOARCH
-	res.RuntimeVersion = runtime.Version()
-	buildInfo, buildRes := debug.ReadBuildInfo()
-	if buildRes {
-		for _, dep := range buildInfo.Deps {
-			res.Dependencies = append(res.Dependencies, map[string]string{
-				"name":    dep.Path,
-				"version": dep.Version,
-			})
-		}
-	}
 	return res
 }
 
@@ -150,20 +261,20 @@ func RegisterMemInfoService(path string, enableMetrics bool) []SwaggerPath {
 		SwaggerBuildPath(path, "middleware", "get", "memInfo"),
 	}
 	RegisterHandler(path, func(context Context) {
-		mem := MemoryUsage()
-		context.ApiResponse(0, "", mem)
+		context.ApiResponse(0, "", GetFullRuntimeInfo())
 	})
 	if enableMetrics {
 		res = append(res, SwaggerBuildPath("/metrics", "middleware", "get", "prometheus endpoint"))
 		RegisterHandler("/metrics", func(context Context) {
-			mem := MemoryUsage()
+			// runtimeInfo := GetFullRuntimeInfo()
 			resp := []string{"# middleware"}
-			resp = append(resp, fmt.Sprintf("mem_sys %v", mem.Sys))
-			resp = append(resp, fmt.Sprintf("numObjects %v", mem.NumObjects))
-			resp = append(resp, fmt.Sprintf("numFreeObjects %v", mem.NumFreeObjects))
-			resp = append(resp, fmt.Sprintf("cpuCount %v", mem.CpuCount))
-			resp = append(resp, fmt.Sprintf("numGoroutines %v", mem.NumGoroutines))
-			resp = append(resp, fmt.Sprintf("numGc %v", mem.NumGC))
+
+			// resp = append(resp, fmt.Sprintf("mem_sys %v", mem.Sys))
+			// resp = append(resp, fmt.Sprintf("numObjects %v", mem.NumObjects))
+			// resp = append(resp, fmt.Sprintf("numFreeObjects %v", mem.NumFreeObjects))
+			// resp = append(resp, fmt.Sprintf("cpuCount %v", mem.CpuCount))
+			// resp = append(resp, fmt.Sprintf("numGoroutines %v", mem.NumGoroutines))
+			// resp = append(resp, fmt.Sprintf("numGc %v", mem.NumGC))
 			context.OK(Plain, []byte(strings.Join(resp, "\n")))
 		})
 	}
