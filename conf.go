@@ -171,7 +171,15 @@ func (c Config) ArrayUnsafe(key string, spliter string) []string {
 		spliter = ","
 	}
 	if val, err := c.Value(key); err == nil {
-		return strings.Split(val, spliter)
+		if res := strings.Split(val, spliter); len(res) > 0 {
+			result := []string{}
+			for _, val := range res {
+				result = append(result, strings.TrimSpace(val))
+			}
+			return result
+		} else {
+			return nil
+		}
 	} else {
 		return nil
 	}
