@@ -48,7 +48,8 @@ func DbPool(addr string, user string, password string, dbName string, maxConnect
 	db.SetMaxOpenConns(maxConnections)
 
 	// Confirm a successful connection.
-	timeoutContext, _ := context.WithTimeout(context.Background(), time.Duration(timeoutSecond)*time.Second)
+	timeoutContext, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSecond)*time.Second)
+	defer cancel()
 	if err := db.PingContext(timeoutContext); err != nil {
 		return Database{}, err
 	}
@@ -67,7 +68,8 @@ func (d Database) Status() sql.DBStats {
 
 // Ping 数据库链接
 func (d Database) Ping() error {
-	timeoutContext, _ := context.WithTimeout(context.Background(), d.timeoutSeconds)
+	timeoutContext, cancel := context.WithTimeout(context.Background(), d.timeoutSeconds)
+	defer cancel()
 	return d.conn.PingContext(timeoutContext)
 }
 
@@ -75,7 +77,8 @@ func (d Database) Ping() error {
 //
 // ? 代表参数
 func (d Database) Query(sql string, params ...interface{}) ([]map[string]string, error) {
-	timeoutContext, _ := context.WithTimeout(context.Background(), d.timeoutSeconds)
+	timeoutContext, cancel := context.WithTimeout(context.Background(), d.timeoutSeconds)
+	defer cancel()
 	rows, err := d.conn.QueryContext(timeoutContext, sql, params...)
 	if err != nil {
 		return nil, err
@@ -87,7 +90,8 @@ func (d Database) Query(sql string, params ...interface{}) ([]map[string]string,
 //
 // ? 代表参数
 func (d Database) Exec(sql string, params ...interface{}) (int64, int64, error) {
-	timeoutContext, _ := context.WithTimeout(context.Background(), d.timeoutSeconds)
+	timeoutContext, cancel := context.WithTimeout(context.Background(), d.timeoutSeconds)
+	defer cancel()
 	rows, err := d.conn.ExecContext(timeoutContext, sql, params...)
 	if err != nil {
 		return -1, -1, err
