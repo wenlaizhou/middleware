@@ -126,6 +126,7 @@ func GetDiskInfo(dir string) DiskInfo {
 		res.UsedPercent = usage.UsedPercent
 		res.Used = usage.Used
 		res.Free = usage.Free
+		res.Mountpoint = dir
 	}
 	return res
 }
