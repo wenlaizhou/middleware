@@ -16,7 +16,7 @@ const ConfDir = "CONF_DIR"
 
 type Config map[string]string
 
-// 读取properties类型配置文件
+// LoadConfig 读取properties类型配置文件
 func LoadConfig(confPath string) Config {
 	res := make(Config)
 	if !Exists(confPath) {
@@ -69,7 +69,7 @@ func LoadConfig(confPath string) Config {
 	return res
 }
 
-// 获取配置值, 不存在该值, 则返回 ""
+// Unsafe 获取配置值, 不存在该值, 则返回 ""
 func (c Config) Unsafe(key string) string {
 	v, err := c.Value(key)
 	if err != nil {
@@ -78,7 +78,9 @@ func (c Config) Unsafe(key string) string {
 	return v
 }
 
-// 获取配置中的value值
+// Value 获取配置中的value值
+//
+// value 已做trim处理
 func (c Config) Value(key string) (string, error) {
 	if len(key) <= 0 {
 		return "", errors.New("key 不为空")
@@ -90,17 +92,16 @@ func (c Config) Value(key string) (string, error) {
 	return strings.TrimSpace(v), nil
 }
 
-// 获取配置中的数值类型值
+// Int 获取配置中的数值类型值
 func (c Config) Int(key string) (int, error) {
 	v, err := c.Value(key)
 	if err != nil {
 		return -1, err
 	}
-	vStr := fmt.Sprintf("%v", v)
-	return strconv.Atoi(vStr)
+	return strconv.Atoi(v)
 }
 
-// 获取配置中的数值类型值
+// IntUnsafe 获取配置中的数值类型值
 //
 // 错误返回-1
 func (c Config) IntUnsafe(key string) int {
@@ -108,11 +109,11 @@ func (c Config) IntUnsafe(key string) int {
 	if err != nil {
 		return -1
 	}
-	res, _ := strconv.Atoi(fmt.Sprintf("%v", v))
+	res, _ := strconv.Atoi(v)
 	return res
 }
 
-// 获取配置中的bool
+// Bool 获取配置中的bool
 //
 // 错误, 类型错误, 没有该值, 返回false
 // "1", "t", "true" 定义为true
@@ -121,14 +122,14 @@ func (c Config) Bool(key string) bool {
 	if err != nil {
 		return false
 	}
-	switch strings.ToLower(fmt.Sprintf("%v", v)) {
+	switch strings.ToLower(v) {
 	case "1", "t", "true":
 		return true
 	}
 	return false
 }
 
-// 获取配置文件内容并返回json
+// Print 获取配置文件内容并返回json
 func (c Config) Print() string {
 	if len(c) <= 0 {
 		return ""
@@ -149,20 +150,31 @@ func (c Config) IntUnsafeDefault(key string, defaultVal int) int {
 	if err != nil {
 		return -1
 	}
-	res, err := strconv.Atoi(fmt.Sprintf("%v", v))
+	res, err := strconv.Atoi(v)
 	if err != nil {
 		return defaultVal
 	}
 	return res
 }
 
-// 获取配置值, 不存在该值, 则返回 ""
+// UnsafeDefault 获取配置值, 不存在该值, 则返回 defaultVal
 func (c Config) UnsafeDefault(key string, defaultVal string) string {
 	v, err := c.Value(key)
 	if err != nil {
 		return defaultVal
 	}
 	return v
+}
+
+func (c Config) ArrayUnsafe(key string, spliter string) []string {
+	if len(spliter) <= 0 {
+		spliter = ","
+	}
+	if val, err := c.Value(key); err == nil {
+		return strings.Split(val, spliter)
+	} else {
+		return nil
+	}
 }
 
 // 获取配置值, 不存在该值, 则返回 ""
