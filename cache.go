@@ -5,27 +5,27 @@ import (
 	"time"
 )
 
-// 缓存数据
+// CacheData 缓存数据
 type CacheData struct {
 	Time time.Time
 	Data interface{}
 }
 
-// 缓存对象
+// Cache 缓存对象
 type Cache struct {
 	Expire time.Duration
 	Data   map[string]CacheData
 	Lock   sync.RWMutex
 }
 
-// 创建新缓存
-func NewCache(expire time.Duration) Cache {
-	res := Cache{
+// NewCache 创建新缓存
+func NewCache(expire time.Duration) *Cache {
+	res := &Cache{
 		Expire: expire,
 		Data:   make(map[string]CacheData),
 		Lock:   sync.RWMutex{},
 	}
-	go func(cache Cache) {
+	go func(cache *Cache) {
 		for {
 			time.Sleep(cache.Expire)
 			cache.CacheClean()
@@ -34,7 +34,7 @@ func NewCache(expire time.Duration) Cache {
 	return res
 }
 
-// 插入数据
+// InsertData 插入数据
 func (cache *Cache) InsertData(key string, data interface{}) {
 	t := time.Now().Add(cache.Expire)
 	cache.Lock.Lock()
@@ -45,8 +45,10 @@ func (cache *Cache) InsertData(key string, data interface{}) {
 	}
 }
 
-// 获取缓存数据
+// GetData 获取缓存数据
 func (cache *Cache) GetData(key string) interface{} {
+	cache.Lock.RLock()
+	defer cache.Lock.RUnlock()
 	value, hasData := cache.Data[key]
 	if !hasData {
 		return nil
@@ -54,16 +56,18 @@ func (cache *Cache) GetData(key string) interface{} {
 	return value.Data
 }
 
-// 获取全部缓存数据
+// GetAllKeys 获取全部缓存数据
 func (cache *Cache) GetAllKeys() []string {
 	var res []string
+	cache.Lock.RLock()
+	defer cache.Lock.RUnlock()
 	for k, _ := range cache.Data {
 		res = append(res, k)
 	}
 	return res
 }
 
-// 清除过期数据
+// CacheClean 清除过期数据
 func (cache *Cache) CacheClean() {
 	cache.Lock.Lock()
 	for k, v := range cache.Data {
