@@ -159,11 +159,11 @@ func (c Config) IntUnsafeDefault(key string, defaultVal int) int {
 
 // UnsafeDefault 获取配置值, 不存在该值, 则返回 defaultVal
 func (c Config) UnsafeDefault(key string, defaultVal string) string {
-	v, err := c.Value(key)
-	if err != nil {
+	if v, err := c.Value(key); err != nil {
 		return defaultVal
+	} else {
+		return v
 	}
-	return v
 }
 
 func (c Config) ArrayUnsafe(key string, spliter string) []string {
@@ -174,7 +174,9 @@ func (c Config) ArrayUnsafe(key string, spliter string) []string {
 		if res := strings.Split(val, spliter); len(res) > 0 {
 			result := []string{}
 			for _, val := range res {
-				result = append(result, strings.TrimSpace(val))
+				if valTrim := strings.TrimSpace(val); len(valTrim) > 0 {
+					result = append(result, valTrim)
+				}
 			}
 			return result
 		} else {
