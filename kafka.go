@@ -55,19 +55,25 @@ func (this *MessageHandler) Send(messages ...kafka.Message) error {
 	if messages == nil || len(messages) <= 0 {
 		return errors.New("未传递message")
 	}
+	if this.writer == nil {
+		return errors.New("kafka连接初始化错误")
+	}
 	this.messageCounter += uint64(len(messages))
 	return this.writer.WriteMessages(context.Background(), messages...)
 }
 
 // Stats 获取消息统计信息
 func (this *MessageHandler) Stats() MessageStats {
-	return MessageStats{
+	res := MessageStats{
 		KafkaServers:   this.kafkaServers,
 		TimeoutSeconds: this.timeoutSeconds,
-		WriterStats:    this.writer.Stats(),
 		MessageCount:   this.messageCounter,
 		StartTime:      this.startTime,
 	}
+	if this.writer != nil {
+		res.WriterStats = this.writer.Stats()
+	}
+	return res
 }
 
 // CreateMessageHandler 创建消息发送通道
@@ -75,7 +81,7 @@ func (this *MessageHandler) Stats() MessageStats {
 // kafkaServers kafka broker 地址,使用,分隔集群
 //
 // timeoutSeconds 超时时间, 单位秒
-func CreateMessageHandler(kafkaServers string, timeoutSeconds int) MessageHandler {
+func CreateMessageHandler(kafkaServers string, timeoutSeconds int) (MessageHandler, error) {
 	if timeoutSeconds <= 0 {
 		timeoutSeconds = 20
 	}
@@ -83,15 +89,20 @@ func CreateMessageHandler(kafkaServers string, timeoutSeconds int) MessageHandle
 		Timeout:   time.Second * time.Duration(timeoutSeconds),
 		DualStack: true, // DualStack enables RFC 6555-compliant "Happy Eyeballs"
 	}
-	return MessageHandler{
+	res := MessageHandler{
 		messageCounter: 0,
 		kafkaServers:   kafkaServers,
 		timeoutSeconds: timeoutSeconds,
 		startTime:      time.Now(),
-		writer: kafka.NewWriter(kafka.WriterConfig{
-			Brokers:  strings.Split(kafkaServers, ","),
-			Balancer: &kafka.RoundRobin{},
-			Dialer:   dialer,
-		}),
+	}
+	if writer := kafka.NewWriter(kafka.WriterConfig{
+		Brokers:  strings.Split(kafkaServers, ","),
+		Balancer: &kafka.RoundRobin{},
+		Dialer:   dialer,
+	}); writer != nil {
+		res.writer = writer
+		return res, nil
+	} else {
+		return res, errors.New("kafka 连接错误")
 	}
 }
