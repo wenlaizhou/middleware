@@ -14,7 +14,7 @@ type ScheduleData struct {
 	Counter      int64 `json:"counter"`
 }
 
-var scheduleRunner = map[string]ScheduleData{}
+var scheduleRunner = map[string]*ScheduleData{}
 
 func SchedulePause(name string) {
 	go func() {
@@ -56,7 +56,8 @@ func ScheduleStop(name string) {
 func Schedule(name string, timeSchedule int, fun func()) {
 	mLogger.InfoF("注册定时任务: %v 间隔时间: %v秒", name, timeSchedule)
 	handle := make(chan string)
-	scheduleRunner[name] = ScheduleData{
+	scheduleRunner[name] = &ScheduleData{
+		Counter:      0,
 		Name:         name,
 		TimeSchedule: timeSchedule,
 		handle:       handle,
