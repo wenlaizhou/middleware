@@ -133,6 +133,8 @@ func (this *MessageHandler) RegisterConsumer(topic string, groupId string, cache
 			// By default, CommitMessages will synchronously commit offsets to Kafka.
 			// For improved performance, you can instead periodically commit offsets to Kafka by setting CommitInterval on the ReaderConfig.
 			CommitInterval: time.Second,
+
+			StartOffset: kafka.LastOffset,
 		})
 		cache := []kafka.Message{}
 		next := time.Now().Add(time.Duration(cacheSeconds) * time.Second)
