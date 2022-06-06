@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/segmentio/kafka-go"
 	"strings"
 	"time"
@@ -105,4 +106,33 @@ func CreateMessageHandler(kafkaServers string, timeoutSeconds int) (MessageHandl
 	} else {
 		return res, errors.New("kafka 连接错误")
 	}
+}
+
+func (this *MessageHandler) RegisterConsumer(topic string, groupId string, cacheSize int, handler func([]kafka.Message)) {
+	go func() {
+		logger := GetLogger(fmt.Sprintf("consumer-%v-%v", topic, groupId))
+		r := kafka.NewReader(kafka.ReaderConfig{
+			Brokers: strings.Split(this.kafkaServers, ","),
+			Topic:   topic,
+			GroupID: groupId,
+		})
+		cache := []kafka.Message{}
+		for {
+			if m, err := r.ReadMessage(context.Background()); err == nil {
+				logger.InfoF("消费消息: offset: %v, 消息时间: %v, val: %v", m.Offset, m.Time.Format(TimeFormat), string(m.Value))
+				if cacheSize <= 0 {
+					handler([]kafka.Message{m})
+					continue
+				}
+				cache = append(cache, m)
+				if len(cache) >= cacheSize {
+					handler(cache)
+					cache = nil
+				}
+			} else {
+				logger.ErrorF("消费消息错误, %v, %v, %v, 停止消费, 错误信息: %v", this.kafkaServers, topic, groupId, err.Error())
+				break
+			}
+		}
+	}()
 }
