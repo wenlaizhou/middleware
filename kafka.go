@@ -127,6 +127,11 @@ func (this *MessageHandler) RegisterConsumer(topic string, groupId string, cache
 				Timeout:   time.Second * time.Duration(this.timeoutSeconds),
 				DualStack: true, // DualStack enables RFC 6555-compliant "Happy Eyeballs"
 			},
+
+			// flushes commits to Kafka every second
+			// By default, CommitMessages will synchronously commit offsets to Kafka.
+			// For improved performance, you can instead periodically commit offsets to Kafka by setting CommitInterval on the ReaderConfig.
+			CommitInterval: time.Second,
 		})
 		cache := []kafka.Message{}
 		next := time.Now().Add(time.Duration(cacheSeconds) * time.Second)
