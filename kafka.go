@@ -12,8 +12,11 @@ import (
 // MessageHandler 消息发送通道
 type MessageHandler struct {
 
-	// messageCounter 消息计数器
-	messageCounter uint64
+	// sendMessageCounter 消息计数器
+	sendMessageCounter uint64
+
+	// receiveMessageCounter 消息计数器
+	receiveMessageCounter uint64
 
 	// startTime 启动时间
 	startTime time.Time
@@ -43,7 +46,10 @@ type MessageStats struct {
 	kafka.WriterStats
 
 	// 发送消息总量
-	MessageCount uint64
+	SendMessageCounter uint64
+
+	// receiveMessageCounter 消息计数器
+	ReceiveMessageCounter uint64
 
 	// 启动时间
 	StartTime time.Time
@@ -59,17 +65,18 @@ func (this *MessageHandler) Send(messages ...kafka.Message) error {
 	if this.writer == nil {
 		return errors.New("kafka连接初始化错误")
 	}
-	this.messageCounter += uint64(len(messages))
+	this.sendMessageCounter += uint64(len(messages))
 	return this.writer.WriteMessages(context.Background(), messages...)
 }
 
 // Stats 获取消息统计信息
 func (this *MessageHandler) Stats() MessageStats {
 	res := MessageStats{
-		KafkaServers:   this.kafkaServers,
-		TimeoutSeconds: this.timeoutSeconds,
-		MessageCount:   this.messageCounter,
-		StartTime:      this.startTime,
+		KafkaServers:          this.kafkaServers,
+		TimeoutSeconds:        this.timeoutSeconds,
+		SendMessageCounter:    this.sendMessageCounter,
+		ReceiveMessageCounter: this.receiveMessageCounter,
+		StartTime:             this.startTime,
 	}
 	if this.writer != nil {
 		res.WriterStats = this.writer.Stats()
@@ -91,10 +98,11 @@ func CreateMessageHandler(kafkaServers string, timeoutSeconds int) (MessageHandl
 		DualStack: true, // DualStack enables RFC 6555-compliant "Happy Eyeballs"
 	}
 	res := MessageHandler{
-		messageCounter: 0,
-		kafkaServers:   kafkaServers,
-		timeoutSeconds: timeoutSeconds,
-		startTime:      time.Now(),
+		sendMessageCounter:    0,
+		receiveMessageCounter: 0,
+		kafkaServers:          kafkaServers,
+		timeoutSeconds:        timeoutSeconds,
+		startTime:             time.Now(),
 	}
 	if writer := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  strings.Split(kafkaServers, ","),
@@ -115,6 +123,10 @@ func (this *MessageHandler) RegisterConsumer(topic string, groupId string, cache
 			Brokers: strings.Split(this.kafkaServers, ","),
 			Topic:   topic,
 			GroupID: groupId,
+			Dialer: &kafka.Dialer{
+				Timeout:   time.Second * time.Duration(this.timeoutSeconds),
+				DualStack: true, // DualStack enables RFC 6555-compliant "Happy Eyeballs"
+			},
 		})
 		cache := []kafka.Message{}
 		next := time.Now().Add(time.Duration(cacheSeconds) * time.Second)
@@ -127,6 +139,7 @@ func (this *MessageHandler) RegisterConsumer(topic string, groupId string, cache
 				next = time.Now().Add(time.Duration(cacheSeconds) * time.Second)
 			}
 			if m, err := r.ReadMessage(context.Background()); err == nil {
+				this.receiveMessageCounter++
 				logger.InfoF("消费消息: offset: %v, 消息时间: %v, val: %v", m.Offset, m.Time.Format(TimeFormat), string(m.Value))
 				if cacheSeconds <= 0 {
 					handler([]kafka.Message{m})
