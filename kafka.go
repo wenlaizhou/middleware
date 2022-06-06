@@ -180,11 +180,11 @@ type KafkaBroker struct {
 }
 
 // ClusterInfo 获取kafka集群信息
-func (this *MessageHandler) ClusterInfo() ([]KafkaPartition, error) {
+func (this *MessageHandler) ClusterInfo(brokerAddr string) ([]KafkaPartition, error) {
 	result := []KafkaPartition{}
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(this.timeoutSeconds))
 	defer cancel()
-	conn, err := kafka.DialContext(timeoutCtx, "tcp", this.kafkaServers)
+	conn, err := kafka.DialContext(timeoutCtx, "tcp", brokerAddr)
 	if err != nil {
 		return result, err
 	}
