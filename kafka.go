@@ -116,6 +116,7 @@ func CreateMessageHandler(kafkaServers string, timeoutSeconds int) (MessageHandl
 	}
 }
 
+// RegisterConsumer 注册消息订阅
 func (this *MessageHandler) RegisterConsumer(topic string, groupId string, cacheSeconds int, handler func([]kafka.Message)) {
 	go func() {
 		logger := GetLogger(fmt.Sprintf("consumer-%v-%v", topic, groupId))
@@ -157,4 +158,77 @@ func (this *MessageHandler) RegisterConsumer(topic string, groupId string, cache
 			}
 		}
 	}()
+}
+
+type KafkaPartition struct {
+	// Name of the topic that the partition belongs to, and its index in the
+	// topic.
+	Topic string `json:"topic"`
+	ID    int    `json:"id"`
+
+	// Leader, replicas, and ISR for the partition.
+	Leader   KafkaBroker   `json:"leader"`
+	Replicas []KafkaBroker `json:"replicas"`
+	Isr      []KafkaBroker `json:"isr"`
+}
+
+type KafkaBroker struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
+	ID   int    `json:"id"`
+	Rack string `json:"rack"`
+}
+
+// ClusterInfo 获取kafka集群信息
+func (this *MessageHandler) ClusterInfo() ([]KafkaPartition, error) {
+	result := []KafkaPartition{}
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(this.timeoutSeconds))
+	defer cancel()
+	conn, err := kafka.DialContext(timeoutCtx, "tcp", this.kafkaServers)
+	if err != nil {
+		return result, err
+	}
+	defer conn.Close()
+	partitions, err := conn.ReadPartitions()
+	if err != nil {
+		return result, err
+	}
+
+	for _, p := range partitions {
+		result = append(result, KafkaPartition{
+			Topic:    p.Topic,
+			ID:       p.ID,
+			Leader:   toKafkaBroker(p.Leader),
+			Replicas: toKafkaBrokers(p.Replicas),
+			Isr:      toKafkaBrokers(p.Isr),
+		})
+	}
+
+	return result, nil
+}
+
+func toKafkaBroker(broker kafka.Broker) KafkaBroker {
+
+	return KafkaBroker{
+		Host: broker.Host,
+		Port: broker.Port,
+		ID:   broker.ID,
+		Rack: broker.Rack,
+	}
+}
+
+func toKafkaBrokers(brokers []kafka.Broker) []KafkaBroker {
+	res := []KafkaBroker{}
+	if len(brokers) <= 0 {
+		return res
+	}
+	for _, broker := range brokers {
+		res = append(res, KafkaBroker{
+			Host: broker.Host,
+			Port: broker.Port,
+			ID:   broker.ID,
+			Rack: broker.Rack,
+		})
+	}
+	return res
 }
