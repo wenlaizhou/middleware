@@ -108,7 +108,7 @@ func CreateMessageHandler(kafkaServers string, timeoutSeconds int) (MessageHandl
 	}
 }
 
-func (this *MessageHandler) RegisterConsumer(topic string, groupId string, cacheSize int, handler func([]kafka.Message)) {
+func (this *MessageHandler) RegisterConsumer(topic string, groupId string, cacheSeconds int, handler func([]kafka.Message)) {
 	go func() {
 		logger := GetLogger(fmt.Sprintf("consumer-%v-%v", topic, groupId))
 		r := kafka.NewReader(kafka.ReaderConfig{
@@ -117,18 +117,22 @@ func (this *MessageHandler) RegisterConsumer(topic string, groupId string, cache
 			GroupID: groupId,
 		})
 		cache := []kafka.Message{}
+		next := time.Now().Add(time.Duration(cacheSeconds) * time.Second)
 		for {
+			if cacheSeconds > 0 && time.Now().After(next) {
+				if len(cache) > 0 {
+					handler(cache)
+				}
+				cache = nil
+				next = time.Now().Add(time.Duration(cacheSeconds) * time.Second)
+			}
 			if m, err := r.ReadMessage(context.Background()); err == nil {
 				logger.InfoF("消费消息: offset: %v, 消息时间: %v, val: %v", m.Offset, m.Time.Format(TimeFormat), string(m.Value))
-				if cacheSize <= 0 {
+				if cacheSeconds <= 0 {
 					handler([]kafka.Message{m})
 					continue
 				}
 				cache = append(cache, m)
-				if len(cache) >= cacheSize {
-					handler(cache)
-					cache = nil
-				}
 			} else {
 				logger.ErrorF("消费消息错误, %v, %v, %v, 停止消费, 错误信息: %v", this.kafkaServers, topic, groupId, err.Error())
 				break
