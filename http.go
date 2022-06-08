@@ -162,19 +162,62 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (t *Server) RegisterDefaultIndex(link string) {
+// RegisterDefaultIndex 注册默认的主页, link格式为: name,link
+func (t *Server) RegisterDefaultIndex(title string, centerContentLines []string, enterLink string,
+	headerLinks []string, footerLinks []string, poweredBy string, enableSwagger bool) {
+	// <a class="nav-link" href="/swagger-ui" target="_blank">Swagger</a>
+	headerlinkTpl := `<a class="nav-link" href="%s" target="_blank">%s</a>`
+	footerLinkTpl := `<a href="%s" target="_blank" class="text-white">%s</a>`
+	centerContentTpl := `<p class="lead">%s</p>`
+	centerContent := ""
+	headerLink := ""
+	footerLink := ""
+	if len(headerLinks) > 0 {
+		for _, link := range headerLinks {
+			if len(link) <= 0 {
+				continue
+			}
+			links := strings.Split(link, ",")
+			if len(links) <= 1 {
+				continue
+			}
+			headerLink = fmt.Sprintf("%s%s", headerLink,
+				fmt.Sprintf(headerlinkTpl, strings.TrimSpace(links[1]), strings.TrimSpace(links[0])))
+		}
+	}
+	if enableSwagger {
+		headerLink = fmt.Sprintf("%s%s", headerLink, `<a class="nav-link" href="/swagger-ui" target="_blank">Swagger</a>`)
+	}
+	if len(footerLinks) > 0 {
+		for _, link := range footerLinks {
+			if len(link) <= 0 {
+				continue
+			}
+			links := strings.Split(link, ",")
+			if len(links) <= 1 {
+				continue
+			}
+			footerLink = fmt.Sprintf("%s%s", footerLink,
+				fmt.Sprintf(footerLinkTpl, strings.TrimSpace(links[1]), strings.TrimSpace(links[0])))
+		}
+	}
+
+	if len(centerContentLines) > 0 {
+		for _, center := range centerContentLines {
+			centerContent = fmt.Sprintf("%s%s", centerContent, fmt.Sprintf(centerContentTpl, strings.TrimSpace(center)))
+		}
+	}
+
+	// // DefaultIndex 1: title, 2: header link, 3: title, 4: centerContent, 5: enter link, 6: powered by 7: footerlink
 	t.RegisterIndex(func(context Context) {
-		context.OK(Html, []byte(fmt.Sprintf(DefaultIndex, link)))
+		context.OK(Html, []byte(fmt.Sprintf(DefaultIndex, title, headerLink, title, centerContent, enterLink, poweredBy, footerLink)))
 	})
 	t.RegisterHandler("/static/default/css/bootstrap.v5.min", func(context Context) {
 		context.OK(Css, []byte(BootstrapCss))
 	})
-	t.RegisterHandler("/static/default/images/default_background", func(context Context) {
-		context.OK(Jpeg, defaultBackground)
-	})
 }
 
-//设置静态文件目录
+// 设置静态文件目录
 func (t *Server) Static(path string) {
 	if !strings.HasSuffix(path, "/") {
 		path = fmt.Sprintf("%s/", path)
@@ -207,8 +250,11 @@ func (t *Server) RegisterFrontendDist(distPath string) {
 	})
 }
 
-func RegisterDefaultIndex(link string) {
-	globalServer.RegisterDefaultIndex(link)
+func RegisterDefaultIndex(title string, centerContentLines []string, enterLink string,
+	headerLinks []string, footerLinks []string, poweredBy string, enableSwagger bool) {
+
+	globalServer.RegisterDefaultIndex(title, centerContentLines, enterLink,
+		headerLinks, footerLinks, poweredBy, enableSwagger)
 }
 
 // 注册首页处理器
