@@ -21,6 +21,7 @@ type FullRuntimeInfo struct {
 	CurrentDisk DiskInfo     `json:"currentDisk"`
 	DiskInfos   []DiskInfo   `json:"diskInfos"`
 	Load        LoadInfo     `json:"load"`
+	Net         NetInfo      `json:"net"`
 }
 
 type DiskInfo struct {
@@ -54,6 +55,11 @@ type VersionInfo struct {
 }
 
 type NetInfo struct {
+	Connections []string `json:"connections"` // 连入地址
+	Interfaces  []string `json:"interfaces"`  // 网络地址列表
+	Listens     []string `json:"listens"`     // 监听端口列表
+	TimeWaits   []string `json:"time_waits"`  // time wait
+	CloseWaits  []string `json:"close_waits"` // close wait
 }
 
 type MemoryInfo struct {
@@ -96,10 +102,13 @@ func GetFullRuntimeInfo() FullRuntimeInfo {
 		CurrentDisk: GetDiskInfo(SelfDir()),
 		DiskInfos:   GetDiskInfos(),
 		Load:        GetLoadInfo(),
+		Net:         GetNetInfo(),
 	}
 }
 
 func GetNetInfo() NetInfo {
+
+	// netConnectionKindMap :
 	// 	"all":   {kindTCP4, kindTCP6, kindUDP4, kindUDP6},
 	//	"tcp":   {kindTCP4, kindTCP6},
 	//	"tcp4":  {kindTCP4},
@@ -110,9 +119,60 @@ func GetNetInfo() NetInfo {
 	//	"inet":  {kindTCP4, kindTCP6, kindUDP4, kindUDP6},
 	//	"inet4": {kindTCP4, kindUDP4},
 	//	"inet6": {kindTCP6, kindUDP6},
-	net.ConnectionsPid("tcp", 10)
-	net.NewConntrackStatList()
-	return NetInfo{}
+	interfaces := []string{}
+	if ifs, err := net.Interfaces(); err == nil {
+		for _, netAddr := range ifs {
+			interfaces = append(interfaces, netAddr.String())
+		}
+	} else {
+		mLogger.ErrorF("获取网络接口错误: %v", err.Error())
+	}
+
+	// // http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
+	// var tcpStatuses = map[string]string{
+	//	"01": "ESTABLISHED",
+	//	"02": "SYN_SENT",
+	//	"03": "SYN_RECV",
+	//	"04": "FIN_WAIT1",
+	//	"05": "FIN_WAIT2",
+	//	"06": "TIME_WAIT",
+	//	"07": "CLOSE",
+	//	"08": "CLOSE_WAIT",
+	//	"09": "LAST_ACK",
+	//	"0A": "LISTEN",
+	//	"0B": "CLOSING",
+	// }
+	connectionList := []string{}
+	listens := []string{}
+	timewaits := []string{}
+	closewaits := []string{}
+	if conns, err := net.Connections("tcp"); err == nil {
+		for _, conn := range conns {
+			switch conn.Status {
+			case "LISTEN":
+				listens = append(listens, conn.String())
+				break
+			case "TIME_WAIT":
+				timewaits = append(timewaits, conn.String())
+				break
+			case "CLOSE_WAIT":
+				closewaits = append(closewaits, conn.String())
+			case "ESTABLISHED":
+				connectionList = append(connectionList, conn.String())
+				break
+			}
+		}
+	} else {
+		mLogger.ErrorF("获取网络接口错误: %v", err.Error())
+	}
+
+	return NetInfo{
+		Connections: connectionList,
+		Interfaces:  interfaces,
+		Listens:     listens,
+		TimeWaits:   timewaits,
+		CloseWaits:  closewaits,
+	}
 }
 
 func GetLoadInfo() LoadInfo {
