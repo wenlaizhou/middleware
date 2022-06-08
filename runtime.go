@@ -6,6 +6,7 @@ import (
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/load"
 	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/net"
 	"github.com/shirou/gopsutil/v3/process"
 	"runtime"
 	"runtime/debug"
@@ -52,6 +53,9 @@ type VersionInfo struct {
 	OsArch         string              `json:"osArch"`
 }
 
+type NetInfo struct {
+}
+
 type MemoryInfo struct {
 
 	// 堆对象申请的总内存空间, 申请就会增长, 该值为累计值[bytes]
@@ -93,6 +97,22 @@ func GetFullRuntimeInfo() FullRuntimeInfo {
 		DiskInfos:   GetDiskInfos(),
 		Load:        GetLoadInfo(),
 	}
+}
+
+func GetNetInfo() NetInfo {
+	// 	"all":   {kindTCP4, kindTCP6, kindUDP4, kindUDP6},
+	//	"tcp":   {kindTCP4, kindTCP6},
+	//	"tcp4":  {kindTCP4},
+	//	"tcp6":  {kindTCP6},
+	//	"udp":   {kindUDP4, kindUDP6},
+	//	"udp4":  {kindUDP4},
+	//	"udp6":  {kindUDP6},
+	//	"inet":  {kindTCP4, kindTCP6, kindUDP4, kindUDP6},
+	//	"inet4": {kindTCP4, kindUDP4},
+	//	"inet6": {kindTCP6, kindUDP6},
+	net.ConnectionsPid("tcp", 10)
+	net.NewConntrackStatList()
+	return NetInfo{}
 }
 
 func GetLoadInfo() LoadInfo {
@@ -257,28 +277,28 @@ func RegisterConfService(conf Config, path string, hidden string) SwaggerPath {
 	return SwaggerBuildPath(path, "middleware", "get", "config service")
 }
 
-func RegisterMemInfoService(path string, enableMetrics bool) []SwaggerPath {
+func RegisterRuntimeInfoService(path string, enableMetrics bool) []SwaggerPath {
 	res := []SwaggerPath{
 		SwaggerBuildPath(path, "middleware", "get", "memInfo"),
 	}
 	RegisterHandler(path, func(context Context) {
 		context.ApiResponse(0, "", GetFullRuntimeInfo())
 	})
-	if enableMetrics {
-		res = append(res, SwaggerBuildPath("/metrics", "middleware", "get", "prometheus endpoint"))
-		RegisterHandler("/metrics", func(context Context) {
-			// runtimeInfo := GetFullRuntimeInfo()
-			resp := []string{"# middleware"}
-
-			// resp = append(resp, fmt.Sprintf("mem_sys %v", mem.Sys))
-			// resp = append(resp, fmt.Sprintf("numObjects %v", mem.NumObjects))
-			// resp = append(resp, fmt.Sprintf("numFreeObjects %v", mem.NumFreeObjects))
-			// resp = append(resp, fmt.Sprintf("cpuCount %v", mem.CpuCount))
-			// resp = append(resp, fmt.Sprintf("numGoroutines %v", mem.NumGoroutines))
-			// resp = append(resp, fmt.Sprintf("numGc %v", mem.NumGC))
-			context.OK(Plain, []byte(strings.Join(resp, "\n")))
-		})
-	}
+	// if enableMetrics {
+	// 	res = append(res, SwaggerBuildPath("/metrics", "middleware", "get", "prometheus endpoint"))
+	// 	RegisterHandler("/metrics", func(context Context) {
+	// 		runtimeInfo := GetFullRuntimeInfo()
+	// 		resp := []string{"# middleware"}
+	// 		resp = append(resp, fmt.Sprintf("mem_sys %v", runtimeInfo.OsMemory.Total))
+	// 		resp = append(resp, fmt.Sprintf("numObjects %v", mem.NumObjects))
+	// 		resp = append(resp, fmt.Sprintf("numFreeObjects %v", mem.NumFreeObjects))
+	// 		resp = append(resp, fmt.Sprintf("cpuCount %v", mem.CpuCount))
+	// 		resp = append(resp, fmt.Sprintf("numGoroutines %v", mem.NumGoroutines))
+	// 		resp = append(resp, fmt.Sprintf("numGc %v", runtimeInfo.Memory.NumGC))
+	// 		resp = append(resp, fmt.Sprintf("", runtimeInfo.Load.Load15))
+	// 		context.OK(Plain, []byte(strings.Join(resp, "\n")))
+	// 	})
+	// }
 	return res
 }
 
