@@ -36,11 +36,34 @@ type ServiceEndpoint struct {
 }
 
 // RegisterEndpointService 注册注册服务
-func RegisterEndpointService(enableQuery bool, key string) ([]SwaggerPath, map[string]ServiceEndpoint, *sync.RWMutex) {
+//
+// enableQuery 是否启动注册中心查询服务
+//
+// peers 伙伴, 使用, 分隔, 例如: http://192.168.0.11,https://10.21.0.1
+// key 是否有认证的key
+func RegisterEndpointService(enableQuery bool, peers string, key string) ([]SwaggerPath, map[string]ServiceEndpoint, *sync.RWMutex) {
 
 	swaggerRes := []SwaggerPath{}
 
 	services := map[string]ServiceEndpoint{}
+
+	peerList := []string{}
+
+	peers = strings.TrimSpace(peers)
+
+	if len(peers) > 0 {
+		for _, peer := range strings.Split(peers, ",") {
+			peer := strings.TrimSpace(peer)
+			if len(peer) <= 0 {
+				continue
+			}
+			if !strings.HasPrefix(peer, "http://") && !strings.HasPrefix(peer, "https://") {
+				mLogger.ErrorF("注册中心服务peer错误: %v", peer)
+				continue
+			}
+			peerList = append(peerList, peer)
+		}
+	}
 
 	lock := sync.RWMutex{}
 
@@ -54,9 +77,15 @@ func RegisterEndpointService(enableQuery bool, key string) ([]SwaggerPath, map[s
 		endpoint := ServiceEndpoint{}
 		if err := json.Unmarshal(context.GetBody(), &endpoint); err == nil {
 			lock.Lock()
-			defer lock.Unlock()
 			endpoint.RegisterTime = time.Now()
 			services[endpoint.Name] = endpoint
+			lock.Unlock()
+			if len(peerList) > 0 && len(context.GetQueryParam("noSpread")) <= 0 {
+				for _, peer := range peerList {
+					sendEndpoint(fmt.Sprintf("%v/_service/endpoint/registry", peer),
+						endpoint.Name, endpoint.Status, endpoint.Properties, key, false)
+				}
+			}
 		}
 	})
 
@@ -90,17 +119,29 @@ func RegisterEndpointService(enableQuery bool, key string) ([]SwaggerPath, map[s
 	return swaggerRes, services, &lock
 }
 
-// RegisterEndpoint 注册到注册中心
-func RegisterEndpoint(server string, name string, status string, properties map[string]string) {
+// SendEndpoint 注册到注册中心
+func SendEndpoint(server string, name string, status string, properties map[string]string, key string) {
+	sendEndpoint(server, name, status, properties, key, true)
+}
+
+func sendEndpoint(server string, name string, status string, properties map[string]string, key string, spread bool) {
 	param := ServiceEndpoint{
 		RuntimeInfo: GetFullRuntimeInfo(),
 		Name:        name,
 		Status:      status,
 		Properties:  properties,
 	}
-	if code, _, _, err := PostJsonWithTimeout(
-		10, fmt.Sprintf("%v/_service/endpoint/registry", server),
-		param); err != nil || code != 200 {
+	headers := map[string]string{}
+	if len(key) > 0 {
+		headers["registry-key"] = key
+	}
+	url := fmt.Sprintf("%v/_service/endpoint/registry", server)
+	if !spread {
+		url = fmt.Sprintf("%v?noSpread=true", url)
+	}
+	if code, _, _, err := PostJsonFull(10,
+		fmt.Sprintf("%v/_service/endpoint/registry", server),
+		headers, param); err != nil || code != 200 {
 		errorMsg := ""
 		if err != nil {
 			errorMsg = err.Error()
