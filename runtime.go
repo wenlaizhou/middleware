@@ -13,6 +13,16 @@ import (
 	"strings"
 )
 
+// ServiceEndpoint 服务注册
+type ServiceEndpoint struct {
+
+	// 运行时信息
+	RuntimeInfo FullRuntimeInfo `json:"runtimeInfo"`
+
+	// 服务名称
+	Name string `json:"name"`
+}
+
 type FullRuntimeInfo struct {
 	Memory      MemoryInfo   `json:"memory"`
 	OsMemory    OsMemoryInfo `json:"osMemory"`
