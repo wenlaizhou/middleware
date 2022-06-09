@@ -197,7 +197,7 @@ func (t *Server) RegisterDefaultIndex(title string, centerContentLines []string,
 			if len(links) <= 1 {
 				continue
 			}
-			footerLink = fmt.Sprintf("%s%s", footerLink,
+			footerLink = fmt.Sprintf("%s, %s", footerLink,
 				fmt.Sprintf(footerLinkTpl, strings.TrimSpace(links[1]), strings.TrimSpace(links[0])))
 		}
 	}
@@ -214,6 +214,9 @@ func (t *Server) RegisterDefaultIndex(title string, centerContentLines []string,
 	})
 	t.RegisterHandler("/static/default/css/bootstrap.v5.min", func(context Context) {
 		context.OK(Css, []byte(BootstrapCss))
+	})
+	t.RegisterHandler("/static/default/images/default_background", func(context Context) {
+		context.OK(Jpeg, defaultBackground)
 	})
 }
 
