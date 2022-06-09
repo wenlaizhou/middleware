@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
@@ -11,6 +12,8 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strings"
+	"sync"
+	"time"
 )
 
 // ServiceEndpoint 服务注册
@@ -21,6 +24,64 @@ type ServiceEndpoint struct {
 
 	// 服务名称
 	Name string `json:"name"`
+
+	// 服务状态
+	Status string `json:"status"`
+
+	// 注册时间
+	RegisterTime time.Time
+}
+
+// RegisterEndpointService 注册注册服务
+func RegisterEndpointService() (map[string]ServiceEndpoint, *sync.RWMutex) {
+
+	services := map[string]ServiceEndpoint{}
+
+	lock := sync.RWMutex{}
+
+	RegisterHandler("/service/endpoint/registry", func(context Context) {
+		endpoint := ServiceEndpoint{}
+		if err := json.Unmarshal(context.GetBody(), &endpoint); err == nil {
+			lock.Lock()
+			defer lock.Unlock()
+			endpoint.RegisterTime = time.Now()
+			services[endpoint.Name] = endpoint
+		}
+	})
+
+	go func() {
+		for {
+			time.Sleep(time.Second * 60 * 10)
+			lock.Lock()
+			defer lock.Unlock()
+			for name, ep := range services {
+				if time.Now().Sub(ep.RegisterTime) >= time.Second*500 {
+					ep.Status = "offline"
+					services[name] = ep
+				}
+			}
+		}
+	}()
+
+	return services, &lock
+}
+
+// RegisterEndpoint 注册到注册中心
+func RegisterEndpoint(server string, name string, status string) {
+	param := ServiceEndpoint{
+		RuntimeInfo: GetFullRuntimeInfo(),
+		Name:        name,
+		Status:      status,
+	}
+	if code, _, _, err := PostJsonWithTimeout(
+		10, fmt.Sprintf("%v/service/endpoint/registry", server),
+		param); err != nil || code != 200 {
+		errorMsg := ""
+		if err != nil {
+			errorMsg = err.Error()
+		}
+		mLogger.ErrorF("注册服务错误: %v, %v", code, errorMsg)
+	}
 }
 
 type FullRuntimeInfo struct {
