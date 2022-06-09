@@ -28,18 +28,29 @@ type ServiceEndpoint struct {
 	// 服务状态
 	Status string `json:"status"`
 
+	// 服务属性
+	Properties map[string]string `json:"properties"`
+
 	// 注册时间
 	RegisterTime time.Time
 }
 
 // RegisterEndpointService 注册注册服务
-func RegisterEndpointService() (map[string]ServiceEndpoint, *sync.RWMutex) {
+func RegisterEndpointService(enableQuery bool, key string) ([]SwaggerPath, map[string]ServiceEndpoint, *sync.RWMutex) {
+
+	swaggerRes := []SwaggerPath{}
 
 	services := map[string]ServiceEndpoint{}
 
 	lock := sync.RWMutex{}
 
-	RegisterHandler("/service/endpoint/registry", func(context Context) {
+	RegisterHandler("/_service/endpoint/registry", func(context Context) {
+		if len(key) > 0 {
+			if context.GetHeader("registry-key") != key {
+				context.ApiResponse(-1, "key error", nil)
+				return
+			}
+		}
 		endpoint := ServiceEndpoint{}
 		if err := json.Unmarshal(context.GetBody(), &endpoint); err == nil {
 			lock.Lock()
@@ -48,6 +59,19 @@ func RegisterEndpointService() (map[string]ServiceEndpoint, *sync.RWMutex) {
 			services[endpoint.Name] = endpoint
 		}
 	})
+
+	swaggerRes = append(swaggerRes, SwaggerBuildPath("/_service/endpoint/registry",
+		"registry", "POST", "注册中心注册接口"))
+
+	if enableQuery {
+		RegisterHandler("/_service/endpoints", func(context Context) {
+			lock.RLock()
+			defer lock.RUnlock()
+			context.ApiResponse(0, "", services)
+		})
+		swaggerRes = append(swaggerRes, SwaggerBuildPath("/_service/endpoints",
+			"registry", "GET", "服务查询接口"))
+	}
 
 	go func() {
 		for {
@@ -63,18 +87,19 @@ func RegisterEndpointService() (map[string]ServiceEndpoint, *sync.RWMutex) {
 		}
 	}()
 
-	return services, &lock
+	return swaggerRes, services, &lock
 }
 
 // RegisterEndpoint 注册到注册中心
-func RegisterEndpoint(server string, name string, status string) {
+func RegisterEndpoint(server string, name string, status string, properties map[string]string) {
 	param := ServiceEndpoint{
 		RuntimeInfo: GetFullRuntimeInfo(),
 		Name:        name,
 		Status:      status,
+		Properties:  properties,
 	}
 	if code, _, _, err := PostJsonWithTimeout(
-		10, fmt.Sprintf("%v/service/endpoint/registry", server),
+		10, fmt.Sprintf("%v/_service/endpoint/registry", server),
 		param); err != nil || code != 200 {
 		errorMsg := ""
 		if err != nil {
