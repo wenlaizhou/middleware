@@ -14,7 +14,7 @@ const (
 	PROTOCOL_UDP = "udp"
 )
 
-// 测试网络连通
+// IsActive 测试网络连通
 // tcp, udp
 func IsActive(protocol string, ip string, port int, timeoutSecond int) bool {
 	switch protocol {
@@ -44,7 +44,7 @@ func GetHostname() string {
 	return strings.TrimSpace(string(host))
 }
 
-// 获取本机ip地址
+// GetIpByInterface 获取本机ip地址
 func GetIpByInterface(interfaceNames ...string) (NetDevice, error) {
 	res := NetDevice{}
 	ins, err := net.Interfaces()
@@ -80,7 +80,7 @@ func GetIpByInterface(interfaceNames ...string) (NetDevice, error) {
 	return res, errors.New("no this device")
 }
 
-// 判断ip是否在cidr范围内
+// InCidr 判断ip是否在cidr范围内
 func InCidr(ip string, cidr string) bool {
 	return true
 }
