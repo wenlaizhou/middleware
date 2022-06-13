@@ -110,7 +110,7 @@ func RegisterLogRotate(seconds int) {
 	// logger rotate
 	Schedule("logger-rotate", seconds, func() {
 		RotateLog()
-	})
+	}, seconds)
 
 }
 

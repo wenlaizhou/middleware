@@ -53,7 +53,7 @@ func ScheduleStop(name string) {
 // timeSchedule 时间单位 秒
 //
 // fun 任务
-func Schedule(name string, timeSchedule int, fun func()) {
+func Schedule(name string, timeSchedule int, fun func(), delaySeconds int) {
 	mLogger.InfoF("注册定时任务: %v 间隔时间: %v秒", name, timeSchedule)
 	handle := make(chan string)
 	scheduleRunner[name] = &ScheduleData{
@@ -62,6 +62,9 @@ func Schedule(name string, timeSchedule int, fun func()) {
 		TimeSchedule: timeSchedule,
 		handle:       handle,
 		Status:       "running",
+	}
+	if delaySeconds >= 0 {
+		time.Sleep(time.Second * time.Duration(delaySeconds))
 	}
 	go func(name string, timeSchedule int, sig chan string, fun func()) {
 		defer func() {
@@ -103,9 +106,9 @@ func Schedule(name string, timeSchedule int, fun func()) {
 			default:
 				break
 			}
-			time.Sleep(time.Second * time.Duration(timeSchedule))
 			t.Counter += 1
 			fun()
+			time.Sleep(time.Second * time.Duration(timeSchedule))
 		}
 	}(name, timeSchedule, handle, fun)
 }
