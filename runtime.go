@@ -153,7 +153,6 @@ func sendEndpoint(server string, name string, status string, properties map[stri
 type FullRuntimeInfo struct {
 	Memory      MemoryInfo   `json:"memory"`
 	OsMemory    OsMemoryInfo `json:"osMemory"`
-	Version     VersionInfo  `json:"version"`
 	CpuCount    int          `json:"cpuCount"`
 	CurrentDisk DiskInfo     `json:"currentDisk"`
 	DiskInfos   []DiskInfo   `json:"diskInfos"`
@@ -234,7 +233,6 @@ func GetFullRuntimeInfo() FullRuntimeInfo {
 	return FullRuntimeInfo{
 		Memory:      GetMemoryInfo(),
 		OsMemory:    GetOsMemoryInfo(),
-		Version:     GetVersionInfo(),
 		CpuCount:    GetCpuCount(),
 		CurrentDisk: GetDiskInfo(SelfDir()),
 		DiskInfos:   GetDiskInfos(),
