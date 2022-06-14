@@ -474,7 +474,7 @@ func RegisterConfService(conf Config, path string, hidden string) SwaggerPath {
 
 func RegisterRuntimeInfoService(path string, labels map[string]string, enableMetrics bool) []SwaggerPath {
 	res := []SwaggerPath{
-		SwaggerBuildPath(path, "middleware", "get", "memInfo"),
+		SwaggerBuildPath(path, "middleware", "get", "runtime info"),
 	}
 	if !enableMetrics {
 		RegisterHandler(path, func(context Context) {
@@ -562,22 +562,6 @@ func RegisterRuntimeInfoService(path string, labels map[string]string, enableMet
 			return
 		})
 	}
-
-	// if enableMetrics {
-	// 	res = append(res, SwaggerBuildPath("/metrics", "middleware", "get", "prometheus endpoint"))
-	// 	RegisterHandler("/metrics", func(context Context) {
-	// 		runtimeInfo := GetFullRuntimeInfo()
-	// 		resp := []string{"# middleware"}
-	// 		resp = append(resp, fmt.Sprintf("mem_sys %v", runtimeInfo.OsMemory.Total))
-	// 		resp = append(resp, fmt.Sprintf("numObjects %v", mem.NumObjects))
-	// 		resp = append(resp, fmt.Sprintf("numFreeObjects %v", mem.NumFreeObjects))
-	// 		resp = append(resp, fmt.Sprintf("cpuCount %v", mem.CpuCount))
-	// 		resp = append(resp, fmt.Sprintf("numGoroutines %v", mem.NumGoroutines))
-	// 		resp = append(resp, fmt.Sprintf("numGc %v", runtimeInfo.Memory.NumGC))
-	// 		resp = append(resp, fmt.Sprintf("", runtimeInfo.Load.Load15))
-	// 		context.OK(Plain, []byte(strings.Join(resp, "\n")))
-	// 	})
-	// }
 	return res
 }
 
