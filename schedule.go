@@ -36,14 +36,13 @@ func ScheduleContinue(name string) {
 	}()
 }
 
+// ScheduleStop 停止定时任务, 等待
 func ScheduleStop(name string) {
-	go func() {
-		s, hasS := scheduleRunner[name]
-		if !hasS {
-			return
-		}
-		s.handle <- "stop"
-	}()
+	s, hasS := scheduleRunner[name]
+	if !hasS {
+		return
+	}
+	s.handle <- "stop"
 }
 
 // Schedule 注册定时任务
