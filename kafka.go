@@ -63,7 +63,11 @@ func (this *MessageHandler) Send(messages ...kafka.Message) error {
 		return errors.New("未传递message")
 	}
 	if this.writer == nil {
-		return errors.New("kafka连接初始化错误")
+		// 重试连接
+		var err error
+		if this.writer, err = this.connectKafka(); err != nil {
+			return errors.New(fmt.Sprintf("kafka连接初始化错误: %v", err.Error()))
+		}
 	}
 	this.sendMessageCounter += uint64(len(messages))
 	return this.writer.WriteMessages(context.Background(), messages...)
@@ -93,10 +97,7 @@ func CreateMessageHandler(kafkaServers string, timeoutSeconds int) (MessageHandl
 	if timeoutSeconds <= 0 {
 		timeoutSeconds = 20
 	}
-	dialer := &kafka.Dialer{
-		Timeout:   time.Second * time.Duration(timeoutSeconds),
-		DualStack: true, // DualStack enables RFC 6555-compliant "Happy Eyeballs"
-	}
+	kafkaServers = strings.TrimSpace(kafkaServers)
 	res := MessageHandler{
 		sendMessageCounter:    0,
 		receiveMessageCounter: 0,
@@ -104,15 +105,27 @@ func CreateMessageHandler(kafkaServers string, timeoutSeconds int) (MessageHandl
 		timeoutSeconds:        timeoutSeconds,
 		startTime:             time.Now(),
 	}
+	if len(kafkaServers) <= 0 {
+		return res, errors.New("kafka server 为空")
+	}
+	var err error
+	res.writer, err = res.connectKafka()
+	return res, err
+}
+
+func (this *MessageHandler) connectKafka() (*kafka.Writer, error) {
+	dialer := &kafka.Dialer{
+		Timeout:   time.Second * time.Duration(this.timeoutSeconds),
+		DualStack: true, // DualStack enables RFC 6555-compliant "Happy Eyeballs"
+	}
 	if writer := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  strings.Split(kafkaServers, ","),
+		Brokers:  strings.Split(this.kafkaServers, ","),
 		Balancer: &kafka.RoundRobin{},
 		Dialer:   dialer,
 	}); writer != nil {
-		res.writer = writer
-		return res, nil
+		return writer, nil
 	} else {
-		return res, errors.New("kafka 连接错误")
+		return nil, errors.New("kafka 连接错误")
 	}
 }
 
