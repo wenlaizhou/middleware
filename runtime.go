@@ -524,6 +524,11 @@ func RegisterRuntimeInfoService(path string, labels map[string]string, enableMet
 				Tags:  tag,
 			})
 			metrics = append(metrics, MetricsData{
+				Key:   "memory_used",
+				Value: int64(runtimeInfo.Memory.HeapAlloc),
+				Tags:  tag,
+			})
+			metrics = append(metrics, MetricsData{
 				Key:   "node_cpu_total",
 				Value: int64(runtimeInfo.CpuCount),
 				Tags:  tag,
