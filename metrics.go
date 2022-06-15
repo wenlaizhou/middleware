@@ -29,7 +29,7 @@ func FormatMetricsData(data MetricsData) string {
 }
 
 func PrintMetricsData(data []MetricsData, context Context) {
-	context.OK(defaultContentType, []byte(GetMetricsData(data)))
+	context.OK("text/plain", []byte(GetMetricsData(data)))
 }
 
 func GetMetricsData(data []MetricsData) string {
