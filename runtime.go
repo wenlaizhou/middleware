@@ -473,7 +473,7 @@ func RegisterConfService(conf Config, path string, hidden string) SwaggerPath {
 }
 
 func RegisterRuntimeInfoService(path string, labels map[string]string,
-	extendedMetrics []MetricsData, enableMetrics bool) []SwaggerPath {
+	extendedMetrics func() []MetricsData, enableMetrics bool) []SwaggerPath {
 
 	res := []SwaggerPath{
 		SwaggerBuildPath(path, "middleware", "get", "runtime info"),
@@ -564,7 +564,9 @@ func RegisterRuntimeInfoService(path string, labels map[string]string,
 				Value: int64(runtimeInfo.Load.Load15),
 				Tags:  tag,
 			})
-			metrics = append(metrics, extendedMetrics...)
+			if extendedMetrics != nil {
+				metrics = append(metrics, extendedMetrics()...)
+			}
 			PrintMetricsData(metrics, context)
 			return
 		})
