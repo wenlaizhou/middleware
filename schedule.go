@@ -68,7 +68,7 @@ func Schedule(name string, timeSchedule int, fun func(), delaySeconds int) {
 	go func(name string, timeSchedule int, sig chan string, fun func()) {
 		defer func() {
 			if err := recover(); err != nil {
-				mLogger.ErrorF("schedule 退出: %#v", err)
+				mLogger.ErrorF("schedule %v 退出: %#v", name, err)
 			}
 		}()
 		for {
