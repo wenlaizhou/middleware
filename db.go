@@ -435,8 +435,13 @@ func RegisterDbHandler(d *Database, prefix string) []SwaggerPath {
 		}
 		deleteSql := fmt.Sprintf("delete from %s where id = ?", table)
 		dbHandlerLogger.InfoF("sql: %s, params: %v", deleteSql, id)
-		c.ApiResponse(0, deleteSql, id)
-		return
+		if _, _, err := d.Exec(deleteSql, id); err == nil {
+			c.ApiResponse(0, "", nil)
+			return
+		} else {
+			c.ApiResponse(-1, "", err.Error())
+			return
+		}
 	})
 
 	return []SwaggerPath{schemaSwagger, statusSwagger, selectSwagger, insertSwagger, updateSwagger, deleteSwagger}
