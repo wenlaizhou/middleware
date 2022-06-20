@@ -322,10 +322,16 @@ func RegisterDbHandler(d *Database, prefix string) []SwaggerPath {
 		insertSql = fmt.Sprintf("%s %s", insertSql, values)
 
 		dbHandlerLogger.InfoF("sql: %s, params: %v", insertSql, sqlParams)
-		c.ApiResponse(0, insertSql, sqlParams)
-		return
-		// d.Exec(insertSql, sqlParams...)
 
+		if _, LastModified, err := d.Exec(insertSql, sqlParams...); err == nil {
+			c.ApiResponse(0, "", map[string]interface{}{
+				"id": LastModified,
+			})
+			return
+		} else {
+			c.ApiResponse(-1, "", err.Error())
+			return
+		}
 	})
 
 	updateSwagger := SwaggerBuildPath(fmt.Sprintf("%s/update/{table}", prefix), d.dbName, "post", "update table")
