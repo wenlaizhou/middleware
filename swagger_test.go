@@ -4,12 +4,10 @@ import "testing"
 
 func TestSwaggerGenerate(t *testing.T) {
 
-	swaggerData := SwaggerData{
-		Title:       "Middleware",
-		Version:     "1.0.0",
-		Description: "First Api",
-		Host:        "ai.mycyclone.com",
-	}
+	swaggerData := SwaggerBuildModel("Middleware",
+		"1.0.0",
+		"First Api",
+	)
 	path := SwaggerPath{
 		Path:        "/hello",
 		Method:      "get",
@@ -22,6 +20,6 @@ func TestSwaggerGenerate(t *testing.T) {
 		Default:     "0",
 		Required:    false,
 	})
-	swaggerData.AddPath(path)
+	swaggerData.AddPath(path).AddPath(SwaggerBuildPath("a", "a", "get", "aaa"))
 	println(GenerateSwagger(swaggerData))
 }

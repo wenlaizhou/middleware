@@ -40,8 +40,8 @@ type SwaggerData struct {
 	Apis        []SwaggerPath
 }
 
-func SwaggerBuildModel(title string, desc string, version string) SwaggerData {
-	return SwaggerData{
+func SwaggerBuildModel(title string, desc string, version string) *SwaggerData {
+	return &SwaggerData{
 		Title:       title,
 		Version:     version,
 		Description: desc,
@@ -49,14 +49,17 @@ func SwaggerBuildModel(title string, desc string, version string) SwaggerData {
 	}
 }
 
-func (thisSelf *SwaggerData) AddPath(path SwaggerPath) SwaggerData {
+func (thisSelf *SwaggerData) AddPath(path SwaggerPath) *SwaggerData {
 	thisSelf.Apis = append(thisSelf.Apis, path)
-	return *thisSelf
+	return thisSelf
 }
 
-func (thisSelf *SwaggerData) AddPathList(p []SwaggerPath) SwaggerData {
+func (thisSelf *SwaggerData) AddPathList(p []SwaggerPath) *SwaggerData {
+	if len(p) <= 0 {
+		return thisSelf
+	}
 	thisSelf.Apis = append(thisSelf.Apis, p...)
-	return *thisSelf
+	return thisSelf
 }
 
 func SwaggerBuildPath(path string, group string, method string, description string) SwaggerPath {
@@ -111,7 +114,7 @@ paths:
             type: string
 */
 
-func GenerateSwagger(model SwaggerData) string {
+func GenerateSwagger(model *SwaggerData) string {
 	swaggerJson := map[string]interface{}{}
 	swaggerJson["swagger"] = "2.0"
 	swaggerJson["host"] = model.Host
@@ -173,7 +176,7 @@ func GenerateSwagger(model SwaggerData) string {
 	}
 	swaggerJson["paths"] = paths
 	result, _ := json.Marshal(swaggerJson)
-	//result, _ := yml.Marshal(swaggerJson)
+	// result, _ := yml.Marshal(swaggerJson)
 	return string(result)
 }
 
@@ -236,8 +239,8 @@ const swaggerHtml = `
 `
 
 //
-//// path参数需指定http://host:port
-//func RegisterSwagger(data SwaggerData) {
+// // path参数需指定http://host:port
+// func RegisterSwagger(data SwaggerData) {
 //
 //	RegisterHandler("/static/swagger-ui-bundle.js", func(context Context) {
 //		context.OK(Js, []byte(SwaggerJs))
@@ -255,10 +258,10 @@ const swaggerHtml = `
 //		context.OK(Json, []byte(GenerateSwagger(data)))
 //	})
 //
-//}
+// }
 //
-//// 根据Swagger配置文件, 生成swagger文档
-//func (this *Server) EnableSwaggerWithConf(swaggerConf string) {
+// // 根据Swagger配置文件, 生成swagger文档
+// func (this *Server) EnableSwaggerWithConf(swaggerConf string) {
 //	if !Exists(swaggerConf) {
 //		mLogger.ErrorF("swagger 配置文件不存在在: %v", swaggerConf)
 //		return
@@ -292,10 +295,10 @@ const swaggerHtml = `
 //	this.RegisterHandler("/swagger-ui.json", func(context Context) {
 //		context.OK(Json, []byte(GenerateSwagger(*this.swagger)))
 //	})
-//}
+// }
 
 // 启动swagger服务
-func (t *Server) EnableSwagger(swaggerData SwaggerData) {
+func (t *Server) EnableSwagger(swaggerData *SwaggerData) {
 
 	swaggerData.AddPath(SwaggerBuildPath("/swagger-ui", "swagger", "get", "swagger-ui"))
 	swaggerData.AddPath(SwaggerBuildPath("/swagger-ui.json", "swagger", "get", "swagger-json"))
@@ -317,11 +320,11 @@ func (t *Server) EnableSwagger(swaggerData SwaggerData) {
 	})
 }
 
-func EnableSwagger(data SwaggerData) {
+func EnableSwagger(data *SwaggerData) {
 	globalServer.EnableSwagger(data)
 }
 
 //
-//func EnableSwaggerWithConf(swaggerConf string) {
+// func EnableSwaggerWithConf(swaggerConf string) {
 //	globalServer.EnableSwaggerWithConf(swaggerConf)
-//}
+// }
