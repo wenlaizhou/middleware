@@ -41,9 +41,9 @@ type ServiceEndpoint struct {
 //
 // peers 伙伴, 使用, 分隔, 例如: http://192.168.0.11,https://10.21.0.1
 // key 是否有认证的key
-func RegisterEndpointService(enableQuery bool, peers string, key string) ([]SwaggerPath, map[string]ServiceEndpoint, *sync.RWMutex) {
+func RegisterEndpointService(enableQuery bool, peers string, key string) ([]*SwaggerPath, map[string]ServiceEndpoint, *sync.RWMutex) {
 
-	swaggerRes := []SwaggerPath{}
+	swaggerRes := []*SwaggerPath{}
 
 	services := map[string]ServiceEndpoint{}
 
@@ -435,7 +435,7 @@ func checkHidden(key string, hiddens []string) bool {
 	return false
 }
 
-func RegisterConfService(conf Config, path string, hidden string) SwaggerPath {
+func RegisterConfService(conf Config, path string, hidden string) *SwaggerPath {
 
 	hiddenList := []string{ConfDir}
 	if len(hidden) >= 0 {
@@ -473,9 +473,9 @@ func RegisterConfService(conf Config, path string, hidden string) SwaggerPath {
 }
 
 func RegisterRuntimeInfoService(path string, labels map[string]string,
-	extendedMetrics func() []MetricsData, enableMetrics bool) []SwaggerPath {
+	extendedMetrics func() []MetricsData, enableMetrics bool) []*SwaggerPath {
 
-	res := []SwaggerPath{
+	res := []*SwaggerPath{
 		SwaggerBuildPath(path, "middleware", "get", "runtime info"),
 	}
 	if !enableMetrics {

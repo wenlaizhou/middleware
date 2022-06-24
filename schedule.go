@@ -117,7 +117,7 @@ func Schedule(name string, timeSchedule int, fun func(), delaySeconds int) {
 // path 以/开头的路径
 //
 // return 返回 swagger 路径数组
-func RegisterScheduleService(path string) []SwaggerPath {
+func RegisterScheduleService(path string) []*SwaggerPath {
 
 	RegisterHandler(path, func(context Context) {
 		context.ApiResponse(0, "", scheduleRunner)
@@ -201,7 +201,7 @@ func RegisterScheduleService(path string) []SwaggerPath {
 		context.ApiResponse(0, "", nil)
 	})
 
-	return []SwaggerPath{
+	return []*SwaggerPath{
 		SwaggerBuildPath(path, "middleware", "get", "middleware schedule"),
 		pauseSwagger, continueSwagger, stopSwagger,
 	}

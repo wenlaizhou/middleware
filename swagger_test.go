@@ -20,6 +20,15 @@ func TestSwaggerGenerate(t *testing.T) {
 		Default:     "0",
 		Required:    false,
 	})
-	swaggerData.AddPath(path).AddPath(SwaggerBuildPath("a", "a", "get", "aaa"))
+	swaggerData.AddPath(SwaggerBuildPath("a", "a", "get", "aaa").AddParameter(
+		SwaggerParameter{
+			Name:        "aaa",
+			Description: "bbb",
+			Example: `{
+  "hello" : "world"
+}`,
+			In:       "body",
+			Required: true,
+		}))
 	println(GenerateSwagger(swaggerData))
 }

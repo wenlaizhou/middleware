@@ -185,7 +185,7 @@ func SqlParamIsTp(p string) bool {
 // RegisterDbHandler 注册数据库处理接口, 包含所有表的增删改查
 //
 // 返回Swagger对象
-func RegisterDbHandler(d *Database, prefix string) []SwaggerPath {
+func RegisterDbHandler(d *Database, prefix string) []*SwaggerPath {
 
 	dbHandlerLogger := GetLogger(fmt.Sprintf("db-%s", d.dbName))
 
@@ -444,5 +444,5 @@ func RegisterDbHandler(d *Database, prefix string) []SwaggerPath {
 		}
 	})
 
-	return []SwaggerPath{schemaSwagger, statusSwagger, selectSwagger, insertSwagger, updateSwagger, deleteSwagger}
+	return []*SwaggerPath{schemaSwagger, statusSwagger, selectSwagger, insertSwagger, updateSwagger, deleteSwagger}
 }

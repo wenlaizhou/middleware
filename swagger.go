@@ -37,7 +37,7 @@ type SwaggerData struct {
 	Version     string
 	Description string
 	Host        string
-	Apis        []SwaggerPath
+	Apis        []*SwaggerPath
 }
 
 func SwaggerBuildModel(title string, desc string, version string) *SwaggerData {
@@ -49,12 +49,12 @@ func SwaggerBuildModel(title string, desc string, version string) *SwaggerData {
 	}
 }
 
-func (thisSelf *SwaggerData) AddPath(path SwaggerPath) *SwaggerData {
+func (thisSelf *SwaggerData) AddPath(path *SwaggerPath) *SwaggerData {
 	thisSelf.Apis = append(thisSelf.Apis, path)
 	return thisSelf
 }
 
-func (thisSelf *SwaggerData) AddPathList(p []SwaggerPath) *SwaggerData {
+func (thisSelf *SwaggerData) AddPathList(p []*SwaggerPath) *SwaggerData {
 	if len(p) <= 0 {
 		return thisSelf
 	}
@@ -62,8 +62,8 @@ func (thisSelf *SwaggerData) AddPathList(p []SwaggerPath) *SwaggerData {
 	return thisSelf
 }
 
-func SwaggerBuildPath(path string, group string, method string, description string) SwaggerPath {
-	return SwaggerPath{
+func SwaggerBuildPath(path string, group string, method string, description string) *SwaggerPath {
+	return &SwaggerPath{
 		Path:        path,
 		Group:       group,
 		Method:      method,
