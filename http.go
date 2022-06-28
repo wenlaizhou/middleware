@@ -96,7 +96,7 @@ func (t *Server) Start() {
 	log.Fatal(http.ListenAndServe(hostStr, nil))
 }
 
-var accessLogger = GetLoggerClear("access")
+var accessLogger = GetCleanLogger("access")
 
 // 核心处理逻辑
 func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
