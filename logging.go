@@ -10,45 +10,45 @@ import (
 
 var LogFormatter = "%s %v"
 
-// 日志对象
+// Logger 日志对象
 type Logger interface {
-	// 打印字符串类型日志
+	// Log 打印字符串类型日志
 	Log(msg string)
 
-	// 打印格式化内容日志
+	// LogF 打印格式化内容日志
 	LogF(formatter string, records ...interface{})
 
-	// 打印模板类型日志
+	// LogTemplate 打印模板类型日志
 	LogTemplate(template string, models ...interface{})
 
-	// 打印字符串类型日志
+	// Info 打印字符串类型日志
 	Info(msg string)
 
-	// 逐行打印info日志信息
+	// InfoLn 逐行打印info日志信息
 	InfoLn(v ...interface{})
 
-	// 打印格式化内容日志
+	// InfoF 打印格式化内容日志
 	InfoF(formatter string, records ...interface{})
 
-	// 打印模板类型日志
+	// InfoTemplate 打印模板类型日志
 	InfoTemplate(template string, models ...interface{})
 
-	// 打印字符串类型日志
+	// Warn 打印字符串类型日志
 	Warn(msg string)
 
-	// 打印格式化内容日志
+	// WarnF 打印格式化内容日志
 	WarnF(formatter string, records ...interface{})
 
-	// 打印模板类型日志
+	// WarnTemplate 打印模板类型日志
 	WarnTemplate(template string, models ...interface{})
 
-	// 打印字符串类型日志
+	// Error 打印字符串类型日志
 	Error(msg string)
 
-	// 打印格式化内容日志
+	// ErrorF 打印格式化内容日志
 	ErrorF(formatter string, records ...interface{})
 
-	// 打印模板类型日志
+	// ErrorTemplate 打印模板类型日志
 	ErrorTemplate(template string, models ...interface{})
 }
 
@@ -57,7 +57,7 @@ type logger struct {
 	fs *os.File
 }
 
-// 获取日志服务
+// GetLogger 获取日志服务
 func GetLogger(name string) Logger {
 	res, hasEle := loggerContainer[name]
 	if hasEle {
@@ -81,8 +81,8 @@ func GetLogger(name string) Logger {
 	return &res
 }
 
-// 获取日志服务
-func GetLoggerClear(name string) Logger {
+// GetCleanLogger 获取日志服务
+func GetCleanLogger(name string) Logger {
 	res, hasEle := loggerContainer[name]
 	if hasEle {
 		return &res
@@ -102,7 +102,7 @@ func GetLoggerClear(name string) Logger {
 	return &res
 }
 
-// 注册日志滚动服务
+// RegisterLogRotate 注册日志滚动服务
 //
 // seconds: 设置日志滚动时间 单位: 秒
 func RegisterLogRotate(seconds int) {
@@ -114,7 +114,7 @@ func RegisterLogRotate(seconds int) {
 
 }
 
-// 日志滚动
+// RotateLog 日志滚动
 func RotateLog() {
 	loggerLocker.Lock()
 	for loggerName, loggerInstance := range loggerContainer {
@@ -161,22 +161,22 @@ var loggerContainer = map[string]logger{}
 
 var loggerLocker = sync.Mutex{}
 
-// 记录一行日志
+// Log 记录一行日志
 func (this *logger) Log(msg string) {
 	this.Println(msg)
 }
 
-// 记录一行格式化日志
+// LogF 记录一行格式化日志
 func (this *logger) LogF(formatter string, records ...interface{}) {
 	this.Printf(formatter, records...)
 }
 
-// 记录模板日志
+// LogTemplate 记录模板日志
 func (this *logger) LogTemplate(tpl string, models ...interface{}) {
 	this.Printf(tpl, models...)
 }
 
-// 记录一行日志
+// Info 记录一行日志
 func (this *logger) Info(msg string) {
 	this.Printf(LogFormatter, "INFO", msg)
 }
@@ -185,12 +185,12 @@ func (this *logger) InfoLn(v ...interface{}) {
 	this.Println(v...)
 }
 
-// 记录一行格式化日志
+// InfoF 记录一行格式化日志
 func (this *logger) InfoF(formatter string, records ...interface{}) {
 	this.Printf(LogFormatter, "INFO", fmt.Sprintf(formatter, records...))
 }
 
-// 记录模板日志
+// InfoTemplate 记录模板日志
 func (this *logger) InfoTemplate(tpl string, models ...interface{}) {
 	this.Printf(LogFormatter, "INFO", fmt.Sprintf(tpl, models...))
 }
@@ -200,27 +200,27 @@ func (this *logger) Error(msg string) {
 	this.Printf(LogFormatter, "ERROR", msg)
 }
 
-// 记录一行格式化日志
+// ErrorF 记录一行格式化日志
 func (this *logger) ErrorF(formatter string, records ...interface{}) {
 	this.Printf(LogFormatter, "ERROR", fmt.Sprintf(formatter, records...))
 }
 
-// 记录模板日志
+// ErrorTemplate 记录模板日志
 func (this *logger) ErrorTemplate(tpl string, models ...interface{}) {
 	this.Printf(LogFormatter, "ERROR", fmt.Sprintf(tpl, models...))
 }
 
-// 记录一行日志
+// Warn 记录一行日志
 func (this *logger) Warn(msg string) {
 	this.Printf(LogFormatter, "WARN", msg)
 }
 
-// 记录一行格式化日志
+// WarnF 记录一行格式化日志
 func (this *logger) WarnF(formatter string, records ...interface{}) {
 	this.Printf(LogFormatter, "WARN", fmt.Sprintf(formatter, records...))
 }
 
-// 记录模板日志
+// WarnTemplate 记录模板日志
 func (this *logger) WarnTemplate(tpl string, models ...interface{}) {
 	this.Printf(LogFormatter, "WARN", fmt.Sprintf(tpl, models...))
 }
