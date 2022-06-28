@@ -62,15 +62,16 @@ func Schedule(name string, timeSchedule int, fun func(), delaySeconds int) {
 		handle:       handle,
 		Status:       "running",
 	}
-	if delaySeconds >= 0 {
-		time.Sleep(time.Second * time.Duration(delaySeconds))
-	}
+
 	go func(name string, timeSchedule int, sig chan string, fun func()) {
 		defer func() {
 			if err := recover(); err != nil {
 				mLogger.ErrorF("schedule %v 退出: %#v", name, err)
 			}
 		}()
+		if delaySeconds >= 0 {
+			time.Sleep(time.Second * time.Duration(delaySeconds))
+		}
 		for {
 			t, hasT := scheduleRunner[name]
 			if !hasT {
