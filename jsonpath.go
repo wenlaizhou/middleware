@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"go/token"
@@ -9,6 +10,16 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+)
+
+const (
+	JSONPATH_ROOT      = "$"          // $ 根节点
+	JSONPATH_SPLIT     = "."          // . 分隔符
+	JSONPATH_CURRENT   = "@"          // @ 当前节点
+	JSONPATH_ALL_MATCH = ".."         // .. 匹配所有符合条件的节点
+	JSONPATH_INDEX     = "[%v]"       // [] 数组选择其中的一个
+	JSONPATH_SLICE     = "[%v:%v:%v]" // [start:end:step] 数组切片
+	JSONPATH_ALL       = "*"          // * 所有节点
 )
 
 var ErrGetFromNullObj = errors.New("get attribute from null object")
@@ -41,6 +52,14 @@ func MustCompile(jpath string) *JsonpathCompiled {
 	return c
 }
 
+func JsonpathLookup(jsonPath string, jsonStr string) (interface{}, error) {
+	compiled, err := JsonpathCompile(jsonPath)
+	if err != nil {
+		return nil, err
+	}
+	return compiled.StringLookup(jsonStr)
+}
+
 func JsonpathCompile(jpath string) (*JsonpathCompiled, error) {
 	tokens, err := jsonpathTokenize(jpath)
 	if err != nil {
@@ -66,6 +85,14 @@ func JsonpathCompile(jpath string) (*JsonpathCompiled, error) {
 
 func (c *JsonpathCompiled) String() string {
 	return fmt.Sprintf("JsonpathCompiled lookup: %s", c.path)
+}
+
+func (c *JsonpathCompiled) StringLookup(jsonStr string) (interface{}, error) {
+	var obj interface{}
+	if err := json.Unmarshal([]byte(jsonStr), &obj); err != nil {
+		return nil, err
+	}
+	return c.Lookup(obj)
 }
 
 func (c *JsonpathCompiled) Lookup(obj interface{}) (interface{}, error) {
