@@ -148,7 +148,7 @@ func (c Config) Print() string {
 func (c Config) IntUnsafeDefault(key string, defaultVal int) int {
 	v, err := c.Value(key)
 	if err != nil {
-		return -1
+		return defaultVal
 	}
 	res, err := strconv.Atoi(v)
 	if err != nil {
@@ -266,7 +266,7 @@ func ConfPrint(conf Config) string {
 func ConfIntUnsafeDefault(conf Config, key string, defaultVal int) int {
 	v, err := ConfValue(conf, key)
 	if err != nil {
-		return -1
+		return defaultVal
 	}
 	res, err := strconv.Atoi(fmt.Sprintf("%v", v))
 	if err != nil {
