@@ -239,15 +239,33 @@ func (t *Server) RegisterIndex(handler func(Context)) {
 }
 
 // 结合 react 前端, 注册前端dist目录
-func (t *Server) RegisterFrontendDist(distPath string) {
+func (t *Server) RegisterFrontendDist(distPath string, prefix string) {
 	exp := regexp.MustCompile("\\.html$|\\.js$|\\.css$|\\.svg$|\\.icon$|\\.ico$|\\.png$|\\.jpg$|\\.jpeg$|\\.gif$")
-	t.RegisterFilter("/.*", func(context Context) bool {
+	filterPath := "/.*"
+	if len(prefix) > 0 {
+		if !strings.HasSuffix(prefix, "/") {
+			prefix = fmt.Sprintf("%v/", prefix)
+		}
+		filterPath = fmt.Sprintf("%v.*", prefix)
+	}
+	t.RegisterFilter(filterPath, func(context Context) bool {
 		if exp.MatchString(context.Request.URL.Path) {
-			http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/%s", distPath, context.Request.URL.Path[1:]))
+			urlPath := context.Request.URL.Path
+			if len(prefix) > 0 {
+				urlPath = strings.Replace(urlPath, prefix, "", 1)
+			}
+			filePath := fmt.Sprintf("%s/%s", distPath, urlPath[1:])
+			http.ServeFile(context.Response, context.Request, filePath)
 			return false
 		}
 		return true
 	})
+	if len(prefix) > 0 {
+		t.RegisterHandler(prefix[:len(prefix)-2], func(context Context) {
+			http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/index.html", distPath))
+		})
+	}
+
 	t.RegisterIndex(func(context Context) {
 		http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/index.html", distPath))
 	})
@@ -271,8 +289,8 @@ func RegisterStatic(path string) {
 }
 
 // 注册前端编译后程序路径
-func RegisterFrontendDist(distPath string) {
-	globalServer.RegisterFrontendDist(distPath)
+func RegisterFrontendDist(distPath string, prefix string) {
+	globalServer.RegisterFrontendDist(distPath, prefix)
 }
 
 // 注册模板服务
