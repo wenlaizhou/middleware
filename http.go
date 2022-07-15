@@ -268,6 +268,10 @@ func (t *Server) RegisterFrontendDist(distPath string, prefix string) {
 			println(context.Request.URL.Path)
 			http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/index.html", distPath))
 		})
+		t.RegisterHandler(prefix, func(context Context) {
+			println(context.Request.URL.Path)
+			http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/index.html", distPath))
+		})
 	} else {
 		t.RegisterIndex(func(context Context) {
 			http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/index.html", distPath))
