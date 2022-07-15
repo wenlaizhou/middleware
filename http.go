@@ -246,6 +246,9 @@ func (t *Server) RegisterFrontendDist(distPath string, prefix string) {
 		if !strings.HasSuffix(prefix, "/") {
 			prefix = fmt.Sprintf("%v/", prefix)
 		}
+		if !strings.HasPrefix(prefix, "/") {
+			prefix = fmt.Sprintf("/%v", prefix)
+		}
 		filterPath = fmt.Sprintf("%v.*", prefix)
 	}
 	t.RegisterFilter(filterPath, func(context Context) bool {
@@ -254,21 +257,22 @@ func (t *Server) RegisterFrontendDist(distPath string, prefix string) {
 			if len(prefix) > 0 {
 				urlPath = strings.Replace(urlPath, prefix, "", 1)
 			}
-			filePath := fmt.Sprintf("%s/%s", distPath, urlPath[1:])
+			filePath := fmt.Sprintf("%s/%s", distPath, urlPath)
 			http.ServeFile(context.Response, context.Request, filePath)
 			return false
 		}
 		return true
 	})
 	if len(prefix) > 0 {
-		t.RegisterHandler(prefix[:len(prefix)-2], func(context Context) {
+		t.RegisterHandler(prefix[:(len(prefix)-1)], func(context Context) {
+			println(context.Request.URL.Path)
+			http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/index.html", distPath))
+		})
+	} else {
+		t.RegisterIndex(func(context Context) {
 			http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/index.html", distPath))
 		})
 	}
-
-	t.RegisterIndex(func(context Context) {
-		http.ServeFile(context.Response, context.Request, fmt.Sprintf("%s/index.html", distPath))
-	})
 }
 
 func RegisterDefaultIndex(title string, centerContentLines []string, enterLink string,
