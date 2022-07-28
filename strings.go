@@ -77,24 +77,7 @@ func IsEmpty(param interface{}) bool {
 // StringFormat 格式化字符串
 //
 // ${name}
-func StringFormat(formatter string, params map[string]string) string {
-	res := formatter
-	if len(params) <= 0 {
-		return res
-	}
-	for k, v := range params {
-		if len(k) <= 0 {
-			continue
-		}
-		res = strings.ReplaceAll(res, fmt.Sprintf("${%v}", k), strings.TrimSpace(v))
-	}
-	return res
-}
-
-// StringFormatInterface 格式化字符串
-//
-// ${name}
-func StringFormatInterface(formatter string, params map[string]interface{}) string {
+func StringFormat(formatter string, params map[string]interface{}) string {
 	res := formatter
 	if len(params) <= 0 {
 		return res
@@ -104,6 +87,23 @@ func StringFormatInterface(formatter string, params map[string]interface{}) stri
 			continue
 		}
 		res = strings.ReplaceAll(res, fmt.Sprintf("${%v}", k), fmt.Sprintf("%v", v))
+	}
+	return res
+}
+
+// StringFormatInterface 格式化字符串
+//
+// ${name}
+func StringFormatMap(formatter string, params map[string]string) string {
+	res := formatter
+	if len(params) <= 0 {
+		return res
+	}
+	for k, v := range params {
+		if len(k) <= 0 {
+			continue
+		}
+		res = strings.ReplaceAll(res, fmt.Sprintf("${%v}", k), strings.TrimSpace(v))
 	}
 	return res
 }
