@@ -207,3 +207,11 @@ func RegisterScheduleService(path string) []*SwaggerPath {
 		pauseSwagger, continueSwagger, stopSwagger,
 	}
 }
+
+// Once 定时执行一次
+func Once(timeSeconds int, fun func()) {
+	go func() {
+		time.Sleep(time.Second * time.Duration(timeSeconds))
+		fun()
+	}()
+}
