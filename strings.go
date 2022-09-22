@@ -91,7 +91,7 @@ func StringFormat(formatter string, params map[string]interface{}) string {
 	return res
 }
 
-// StringFormatInterface 格式化字符串
+// StringFormatMap 格式化字符串
 //
 // ${name}
 func StringFormatMap(formatter string, params map[string]string) string {
@@ -106,4 +106,20 @@ func StringFormatMap(formatter string, params map[string]string) string {
 		res = strings.ReplaceAll(res, fmt.Sprintf("${%v}", k), strings.TrimSpace(v))
 	}
 	return res
+}
+
+// StringFirstNotEmpty 选择参数中首个非空字符串
+//
+//
+func StringFirstNotEmpty(params ...string) string {
+	if len(params) <= 0 {
+		return ""
+	}
+	for i := 0; i < len(params); i++ {
+		p := strings.TrimSpace(params[i])
+		if len(p) > 0 {
+			return p
+		}
+	}
+	return ""
 }
