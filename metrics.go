@@ -33,6 +33,9 @@ func PrintMetricsData(data []MetricsData, context Context) {
 }
 
 func GetMetricsData(data []MetricsData) string {
+	if len(data) <= 0 {
+		return ""
+	}
 	var lines []string
 	for _, metric := range data {
 		lines = append(lines, FormatMetricsData(metric))

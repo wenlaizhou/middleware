@@ -485,85 +485,7 @@ func RegisterRuntimeInfoService(path string, labels map[string]string,
 		return res
 	} else {
 		RegisterHandler(path, func(context Context) {
-			runtimeInfo := GetFullRuntimeInfo()
-			metrics := []MetricsData{}
-			var tag map[string]string
-			if labels != nil && len(labels) > 0 {
-				tag = labels
-			} else {
-				tag = map[string]string{
-					"framework": "middleware",
-				}
-			}
-			metrics = append(metrics, MetricsData{
-				Key:   "connections",
-				Value: int64(len(runtimeInfo.Net.Connections)),
-				Tags:  tag,
-			})
-			metrics = append(metrics, MetricsData{
-				Key:   "listens",
-				Value: int64(len(runtimeInfo.Net.Listens)),
-				Tags:  tag,
-			})
-			metrics = append(metrics, MetricsData{
-				Key:   "timewaits",
-				Value: int64(len(runtimeInfo.Net.TimeWaits)),
-				Tags:  tag,
-			})
-			metrics = append(metrics, MetricsData{
-				Key:   "closewaits",
-				Value: int64(len(runtimeInfo.Net.CloseWaits)),
-				Tags:  tag,
-			})
-			metrics = append(metrics, MetricsData{
-				Key:   "node_memory_total",
-				Value: int64(runtimeInfo.OsMemory.Total),
-				Tags:  tag,
-			})
-			metrics = append(metrics, MetricsData{
-				Key:   "node_memory_used",
-				Value: int64(runtimeInfo.OsMemory.Used),
-				Tags:  tag,
-			})
-			metrics = append(metrics, MetricsData{
-				Key:   "memory_used",
-				Value: int64(runtimeInfo.Memory.HeapAlloc),
-				Tags:  tag,
-			})
-			metrics = append(metrics, MetricsData{
-				Key:   "node_cpu_total",
-				Value: int64(runtimeInfo.CpuCount),
-				Tags:  tag,
-			})
-			metrics = append(metrics, MetricsData{
-				Key:   "current_disk_total",
-				Value: int64(runtimeInfo.CurrentDisk.Total),
-				Tags: map[string]string{
-					"path": runtimeInfo.CurrentDisk.Mountpoint,
-				},
-			})
-			metrics = append(metrics, MetricsData{
-				Key:   "current_disk_used",
-				Value: int64(runtimeInfo.CurrentDisk.Used),
-				Tags: map[string]string{
-					"path": runtimeInfo.CurrentDisk.Mountpoint,
-				},
-			})
-			metrics = append(metrics, MetricsData{
-				Key:   "node_load_1",
-				Value: int64(runtimeInfo.Load.Load1),
-				Tags:  tag,
-			})
-			metrics = append(metrics, MetricsData{
-				Key:   "node_load_5",
-				Value: int64(runtimeInfo.Load.Load5),
-				Tags:  tag,
-			})
-			metrics = append(metrics, MetricsData{
-				Key:   "node_load_15",
-				Value: int64(runtimeInfo.Load.Load15),
-				Tags:  tag,
-			})
+			metrics := GetRuntimeMetrics(labels)
 			if extendedMetrics != nil {
 				metrics = append(metrics, extendedMetrics()...)
 			}
@@ -572,6 +494,89 @@ func RegisterRuntimeInfoService(path string, labels map[string]string,
 		})
 	}
 	return res
+}
+
+func GetRuntimeMetrics(labels map[string]string) []MetricsData {
+	runtimeInfo := GetFullRuntimeInfo()
+	metrics := []MetricsData{}
+	var tag map[string]string
+	if labels != nil && len(labels) > 0 {
+		tag = labels
+	} else {
+		tag = map[string]string{
+			"framework": "middleware",
+		}
+	}
+	metrics = append(metrics, MetricsData{
+		Key:   "connections",
+		Value: int64(len(runtimeInfo.Net.Connections)),
+		Tags:  tag,
+	})
+	metrics = append(metrics, MetricsData{
+		Key:   "listens",
+		Value: int64(len(runtimeInfo.Net.Listens)),
+		Tags:  tag,
+	})
+	metrics = append(metrics, MetricsData{
+		Key:   "timewaits",
+		Value: int64(len(runtimeInfo.Net.TimeWaits)),
+		Tags:  tag,
+	})
+	metrics = append(metrics, MetricsData{
+		Key:   "closewaits",
+		Value: int64(len(runtimeInfo.Net.CloseWaits)),
+		Tags:  tag,
+	})
+	metrics = append(metrics, MetricsData{
+		Key:   "node_memory_total",
+		Value: int64(runtimeInfo.OsMemory.Total),
+		Tags:  tag,
+	})
+	metrics = append(metrics, MetricsData{
+		Key:   "node_memory_used",
+		Value: int64(runtimeInfo.OsMemory.Used),
+		Tags:  tag,
+	})
+	metrics = append(metrics, MetricsData{
+		Key:   "memory_used",
+		Value: int64(runtimeInfo.Memory.HeapAlloc),
+		Tags:  tag,
+	})
+	metrics = append(metrics, MetricsData{
+		Key:   "node_cpu_total",
+		Value: int64(runtimeInfo.CpuCount),
+		Tags:  tag,
+	})
+	metrics = append(metrics, MetricsData{
+		Key:   "current_disk_total",
+		Value: int64(runtimeInfo.CurrentDisk.Total),
+		Tags: map[string]string{
+			"path": runtimeInfo.CurrentDisk.Mountpoint,
+		},
+	})
+	metrics = append(metrics, MetricsData{
+		Key:   "current_disk_used",
+		Value: int64(runtimeInfo.CurrentDisk.Used),
+		Tags: map[string]string{
+			"path": runtimeInfo.CurrentDisk.Mountpoint,
+		},
+	})
+	metrics = append(metrics, MetricsData{
+		Key:   "node_load_1",
+		Value: int64(runtimeInfo.Load.Load1),
+		Tags:  tag,
+	})
+	metrics = append(metrics, MetricsData{
+		Key:   "node_load_5",
+		Value: int64(runtimeInfo.Load.Load5),
+		Tags:  tag,
+	})
+	metrics = append(metrics, MetricsData{
+		Key:   "node_load_15",
+		Value: int64(runtimeInfo.Load.Load15),
+		Tags:  tag,
+	})
+	return metrics
 }
 
 func (thisSelf Checker) End() {
