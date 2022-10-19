@@ -176,16 +176,16 @@ type defaultIndexStruct struct {
 type DefaultIndexStruct struct {
 	Title              string
 	BackgroundUrl      string
-	HeaderLinks        []string
+	HeaderLinks        []DefaultIndexLink
 	CenterContentLines []string
-	Buttons            []DefaultIndexButton
+	Buttons            []DefaultIndexLink
 	PoweredBy          string
-	FooterLinks        []string
+	FooterLinks        []DefaultIndexLink
 	ExtendedStyle      string
 	EnableSwagger      bool
 }
 
-type DefaultIndexButton struct {
+type DefaultIndexLink struct {
 	Text string
 	Link string
 }
@@ -194,51 +194,37 @@ type DefaultIndexButton struct {
 // DefaultIndex title, backgroundUrl headerLinks, centerContent, enterLink, poweredBy, footerLinks
 func (t *Server) RegisterDefaultIndex(params DefaultIndexStruct) {
 	// <a class="nav-link" href="/swagger-ui" target="_blank">Swagger</a>
-	headerlinkTpl := `<a class="nav-link" href="%s" target="_blank">%s</a>`
-	footerLinkTpl := `<a href="%s" target="_blank" class="text-white">%s</a>`
+	headerlinkTpl := `<a class="nav-link" href="${link}" target="_blank">${text}</a>`
+	footerLinkTpl := `<a href="${link}" target="_blank" class="text-white">${text}</a>`
+	buttonTpl := `<a href="${link}" class="btn btn-lg btn-secondary fw-bold border-white bg-white">${text}</a>`
 	centerContentTpl := `<p class="lead">%s</p>`
 	centerContent := ""
 	headerLink := ""
 	footerLink := ""
 	if len(params.HeaderLinks) > 0 {
 		for _, link := range params.HeaderLinks {
-			if len(link) <= 0 {
-				continue
-			}
-			links := strings.Split(link, ",")
-			if len(links) <= 1 {
-				continue
-			}
-			headerLink = fmt.Sprintf("%s%s", headerLink,
-				fmt.Sprintf(headerlinkTpl, strings.TrimSpace(links[1]), strings.TrimSpace(links[0])))
+			headerLink = fmt.Sprintf("%s %s", headerLink, StringFormatStructs(headerlinkTpl, link))
 		}
 	}
 	if params.EnableSwagger {
-		headerLink = fmt.Sprintf("%s%s", headerLink, `<a class="nav-link" href="/swagger-ui" target="_blank">Swagger</a>`)
+		headerLink = fmt.Sprintf("%s %s", headerLink, `<a class="nav-link" href="/swagger-ui" target="_blank">Swagger</a>`)
 	}
 	if len(params.FooterLinks) > 0 {
 		for _, link := range params.FooterLinks {
-			if len(link) <= 0 {
-				continue
-			}
-			links := strings.Split(link, ",")
-			if len(links) <= 1 {
-				continue
-			}
-			footerLink = fmt.Sprintf("%s, %s", footerLink,
-				fmt.Sprintf(footerLinkTpl, strings.TrimSpace(links[1]), strings.TrimSpace(links[0])))
+			footerLink = fmt.Sprintf("%s, %s", footerLink, StringFormatStructs(footerLinkTpl, link))
 		}
 	}
 
 	if len(params.CenterContentLines) > 0 {
 		for _, center := range params.CenterContentLines {
-			centerContent = fmt.Sprintf("%s%s", centerContent, fmt.Sprintf(centerContentTpl, strings.TrimSpace(center)))
+			centerContent = fmt.Sprintf("%s %s", centerContent, fmt.Sprintf(centerContentTpl, strings.TrimSpace(center)))
 		}
 	}
 
 	if len(params.BackgroundUrl) <= 0 {
 		params.BackgroundUrl = "/static/default/images/default_background"
 		t.RegisterHandler(params.BackgroundUrl, func(context Context) {
+			context.AddCacheHeader(3600 * 24 * 30)
 			context.OK(Jpeg, defaultBackground)
 		})
 	}
@@ -247,15 +233,9 @@ func (t *Server) RegisterDefaultIndex(params DefaultIndexStruct) {
 
 	if len(params.Buttons) > 0 {
 		for _, btn := range params.Buttons {
-			buttons = StringFormatMap(`${origin} <a href="${link}" class="btn btn-lg btn-secondary fw-bold border-white bg-white">${text}</a>`, map[string]string{
-				"origin": buttons,
-				"link":   btn.Link,
-				"text":   btn.Text,
-			})
+			buttons = fmt.Sprintf("%s %s", buttons, StringFormatStructs(buttonTpl, btn))
 		}
 	}
-
-	// <a href="${enterLink}" class="btn btn-lg btn-secondary fw-bold border-white bg-white">进入系统</a>
 
 	t.RegisterHandler("/static/default/css/bootstrap.v5.min", func(context Context) {
 		context.OK(Css, []byte(BootstrapCss))
