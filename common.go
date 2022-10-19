@@ -354,7 +354,7 @@ const DefaultIndex = `
             box-shadow: inset 0 0 5rem rgba(0, 0, 0, .5);
 			background-image: url("${backgroundUrl}");
             background-repeat: no-repeat;
-			background-size: 100%% 100%%;
+			background-size: cover;
         }
         .cover-container {
             max-width: 42em;

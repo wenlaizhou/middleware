@@ -135,7 +135,7 @@ func StringFormatStructs(formatter string, obj interface{}) string {
 	for i := 0; i < val.NumField(); i++ {
 		fieldName := typ.Field(i).Name
 		fieldName = StringFirstLower(fieldName)
-		fieldStr := convertVal(val.Field(i).Elem())
+		fieldStr := convertVal(val.Field(i))
 		res = strings.ReplaceAll(res, fmt.Sprintf("${%v}", fieldName), fmt.Sprintf("%v", fieldStr))
 	}
 	return res
