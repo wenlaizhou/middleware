@@ -331,6 +331,7 @@ const DefaultIndex = `
     <title>${title}</title>
     <link href="/static/default/css/bootstrap.v5.min" rel="stylesheet">
     <style>
+		${style}
         .bd-placeholder-img {
             font-size: 1.125rem;
             text-anchor: middle;
@@ -393,7 +394,7 @@ const DefaultIndex = `
         <p class="lead"></p>
 		${centerContent}
         <p class="lead">
-            <a href="${enterLink}" class="btn btn-lg btn-secondary fw-bold border-white bg-white">进入系统</a>
+			${buttons}
         </p>
     </main>
     <footer class="mt-auto text-white-50">

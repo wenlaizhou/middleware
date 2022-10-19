@@ -163,13 +163,14 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type defaultIndexStruct struct {
+	Style         string
 	Title         string
 	BackgroundUrl string
 	HeaderLinks   string
 	CenterContent string
-	EnterLink     string
 	PoweredBy     string
 	FooterLinks   string
+	Buttons       string
 }
 
 type DefaultIndexStruct struct {
@@ -177,10 +178,16 @@ type DefaultIndexStruct struct {
 	BackgroundUrl      string
 	HeaderLinks        []string
 	CenterContentLines []string
-	EnterLink          string
+	Buttons            []DefaultIndexButton
 	PoweredBy          string
 	FooterLinks        []string
+	ExtendedStyle      string
 	EnableSwagger      bool
+}
+
+type DefaultIndexButton struct {
+	Text string
+	Link string
 }
 
 // RegisterDefaultIndex 注册默认的主页, link格式为: name,link
@@ -236,19 +243,34 @@ func (t *Server) RegisterDefaultIndex(params DefaultIndexStruct) {
 		})
 	}
 
+	buttons := ""
+
+	if len(params.Buttons) > 0 {
+		for _, btn := range params.Buttons {
+			buttons = StringFormatMap(`${origin} <a href="${link}" class="btn btn-lg btn-secondary fw-bold border-white bg-white">${text}</a>`, map[string]string{
+				"origin": buttons,
+				"link":   btn.Link,
+				"text":   btn.Text,
+			})
+		}
+	}
+
+	// <a href="${enterLink}" class="btn btn-lg btn-secondary fw-bold border-white bg-white">进入系统</a>
+
 	t.RegisterHandler("/static/default/css/bootstrap.v5.min", func(context Context) {
 		context.OK(Css, []byte(BootstrapCss))
 	})
 
 	t.RegisterIndex(func(context Context) {
 		context.OK(Html, []byte(StringFormatStructs(DefaultIndex, defaultIndexStruct{
+			Style:         params.ExtendedStyle,
 			Title:         params.Title,
 			BackgroundUrl: params.BackgroundUrl,
 			HeaderLinks:   headerLink,
 			CenterContent: centerContent,
-			EnterLink:     params.EnterLink,
 			PoweredBy:     params.PoweredBy,
 			FooterLinks:   footerLink,
+			Buttons:       buttons,
 		})))
 	})
 }
