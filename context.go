@@ -291,6 +291,10 @@ func (c *Context) WriteNotModified() error {
 	return nil
 }
 
+func (c *Context) AddCacheHeader(cacheSeconds int) {
+	c.SetHeader("Cache-Control", fmt.Sprintf("max-age=%v", cacheSeconds))
+}
+
 // 下载二进制文件
 func (c *Context) DownloadContent(fileName string, data []byte) {
 	c.SetHeader("Content-disposition", fmt.Sprintf("attachment;filename=%s", fileName))
