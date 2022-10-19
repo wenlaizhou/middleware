@@ -162,9 +162,30 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+type defaultIndexStruct struct {
+	Title         string
+	BackgroundUrl string
+	HeaderLinks   string
+	CenterContent string
+	EnterLink     string
+	PoweredBy     string
+	FooterLinks   string
+}
+
+type DefaultIndexStruct struct {
+	Title              string
+	BackgroundUrl      string
+	HeaderLinks        []string
+	CenterContentLines []string
+	EnterLink          string
+	PoweredBy          string
+	FooterLinks        []string
+	EnableSwagger      bool
+}
+
 // RegisterDefaultIndex 注册默认的主页, link格式为: name,link
-func (t *Server) RegisterDefaultIndex(title string, centerContentLines []string, enterLink string,
-	headerLinks []string, footerLinks []string, poweredBy string, enableSwagger bool) {
+// DefaultIndex title, backgroundUrl headerLinks, centerContent, enterLink, poweredBy, footerLinks
+func (t *Server) RegisterDefaultIndex(params DefaultIndexStruct) {
 	// <a class="nav-link" href="/swagger-ui" target="_blank">Swagger</a>
 	headerlinkTpl := `<a class="nav-link" href="%s" target="_blank">%s</a>`
 	footerLinkTpl := `<a href="%s" target="_blank" class="text-white">%s</a>`
@@ -172,8 +193,8 @@ func (t *Server) RegisterDefaultIndex(title string, centerContentLines []string,
 	centerContent := ""
 	headerLink := ""
 	footerLink := ""
-	if len(headerLinks) > 0 {
-		for _, link := range headerLinks {
+	if len(params.HeaderLinks) > 0 {
+		for _, link := range params.HeaderLinks {
 			if len(link) <= 0 {
 				continue
 			}
@@ -185,11 +206,11 @@ func (t *Server) RegisterDefaultIndex(title string, centerContentLines []string,
 				fmt.Sprintf(headerlinkTpl, strings.TrimSpace(links[1]), strings.TrimSpace(links[0])))
 		}
 	}
-	if enableSwagger {
+	if params.EnableSwagger {
 		headerLink = fmt.Sprintf("%s%s", headerLink, `<a class="nav-link" href="/swagger-ui" target="_blank">Swagger</a>`)
 	}
-	if len(footerLinks) > 0 {
-		for _, link := range footerLinks {
+	if len(params.FooterLinks) > 0 {
+		for _, link := range params.FooterLinks {
 			if len(link) <= 0 {
 				continue
 			}
@@ -202,21 +223,33 @@ func (t *Server) RegisterDefaultIndex(title string, centerContentLines []string,
 		}
 	}
 
-	if len(centerContentLines) > 0 {
-		for _, center := range centerContentLines {
+	if len(params.CenterContentLines) > 0 {
+		for _, center := range params.CenterContentLines {
 			centerContent = fmt.Sprintf("%s%s", centerContent, fmt.Sprintf(centerContentTpl, strings.TrimSpace(center)))
 		}
 	}
 
-	// // DefaultIndex 1: title, 2: header link, 3: title, 4: centerContent, 5: enter link, 6: powered by 7: footerlink
-	t.RegisterIndex(func(context Context) {
-		context.OK(Html, []byte(fmt.Sprintf(DefaultIndex, title, headerLink, title, centerContent, enterLink, poweredBy, footerLink)))
-	})
+	if len(params.BackgroundUrl) <= 0 {
+		params.BackgroundUrl = "/static/default/images/default_background"
+		t.RegisterHandler(params.BackgroundUrl, func(context Context) {
+			context.OK(Jpeg, defaultBackground)
+		})
+	}
+
 	t.RegisterHandler("/static/default/css/bootstrap.v5.min", func(context Context) {
 		context.OK(Css, []byte(BootstrapCss))
 	})
-	t.RegisterHandler("/static/default/images/default_background", func(context Context) {
-		context.OK(Jpeg, defaultBackground)
+
+	t.RegisterIndex(func(context Context) {
+		context.OK(Html, []byte(StringFormatStructs(DefaultIndex, defaultIndexStruct{
+			Title:         params.Title,
+			BackgroundUrl: params.BackgroundUrl,
+			HeaderLinks:   headerLink,
+			CenterContent: centerContent,
+			EnterLink:     params.EnterLink,
+			PoweredBy:     params.PoweredBy,
+			FooterLinks:   footerLink,
+		})))
 	})
 }
 
@@ -279,11 +312,8 @@ func (t *Server) RegisterFrontendDist(distPath string, prefix string) {
 	}
 }
 
-func RegisterDefaultIndex(title string, centerContentLines []string, enterLink string,
-	headerLinks []string, footerLinks []string, poweredBy string, enableSwagger bool) {
-
-	globalServer.RegisterDefaultIndex(title, centerContentLines, enterLink,
-		headerLinks, footerLinks, poweredBy, enableSwagger)
+func RegisterDefaultIndex(params DefaultIndexStruct) {
+	globalServer.RegisterDefaultIndex(params)
 }
 
 // 注册首页处理器

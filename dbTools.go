@@ -29,7 +29,7 @@ func ScanRows(rows *sql.Rows) ([]map[string]string, error) {
 				row[columns[i]] = ""
 				continue
 			}
-			row[columns[i]] = convertVal(data[i])
+			row[columns[i]] = convertInterface(data[i])
 		}
 		result = append(result, row)
 	}
@@ -37,7 +37,7 @@ func ScanRows(rows *sql.Rows) ([]map[string]string, error) {
 	return result, nil
 }
 
-func convertVal(param interface{}) string {
+func convertInterface(param interface{}) string {
 	dataVal := reflect.ValueOf(param)
 	switch dataVal.Kind() {
 	case reflect.Ptr:
@@ -45,7 +45,7 @@ func convertVal(param interface{}) string {
 		if dataVal.IsNil() {
 			return ""
 		} else {
-			return convertVal(dataVal.Elem().Interface())
+			return convertInterface(dataVal.Elem().Interface())
 		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return fmt.Sprintf("%v", dataVal.Int())
