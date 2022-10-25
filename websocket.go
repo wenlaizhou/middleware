@@ -151,7 +151,7 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 	homeTempl.Execute(w, &v)
 }
 
-func main() {
+func WebsocketMain() {
 	flag.Parse()
 	if flag.NArg() != 1 {
 		log.Fatal("filename not specified")
