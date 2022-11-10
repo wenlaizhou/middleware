@@ -7,6 +7,8 @@ import (
 
 // GetProperty
 // 获取bean实例的属性值
+//
+// bean 应为 struct
 func GetProperty(bean interface{}, name string) interface{} {
 	if bean == nil {
 		return nil
@@ -26,6 +28,8 @@ func GetProperty(bean interface{}, name string) interface{} {
 
 // SetProperty
 // 设置bean实例的属性值
+//
+// bean 应为 指向 struct指针
 func SetProperty(bean interface{}, name string, value interface{}) {
 	if bean == nil {
 		return
