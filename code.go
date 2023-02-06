@@ -134,6 +134,8 @@ func DistFrontend2Code(pkg string, distPath string, urlPrefix string) (string, e
 		case ".jsx":
 			contentType = Js
 			break
+		case ".svg":
+			contentType = Svg
 		case ".css":
 			contentType = Css
 			break
