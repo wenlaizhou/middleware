@@ -46,12 +46,12 @@ func StartServer(host string, port int) {
 }
 
 // 获取全局唯一Server
-func GetGlobalServer() Server {
+func GetGlobalServer() *Server {
 	return globalServer
 }
 
 // 创建服务
-func NewServer(host string, port int) Server {
+func NewServer(host string, port int) *Server {
 	srv := Server{
 		Host:        host,
 		Port:        port,
@@ -68,7 +68,7 @@ func NewServer(host string, port int) Server {
 	}
 
 	srv.pathNodes = make(map[string]pathProcessor)
-	return srv
+	return &srv
 }
 
 func (t *Server) GetStatus() int {
@@ -275,7 +275,7 @@ func (t *Server) RegisterIndex(handler func(Context)) {
 
 // 结合 react 前端, 注册前端dist目录
 func (t *Server) RegisterFrontendDist(distPath string, prefix string) {
-	exp := regexp.MustCompile("\\.html$|\\.js$|\\.css$|\\.svg$|\\.icon$|\\.ico$|\\.png$|\\.jpg$|\\.jpeg$|\\.gif$")
+	exp := regexp.MustCompile(`\.html$|\.js$|\.jsx$|\.ts$|\.tsx$|\.css$|\.svg$|\.icon$|\.ico$|\.png$|\.jpg$|\.jpeg$|\.gif$`)
 	filterPath := "/.*"
 	if len(prefix) > 0 {
 		if !strings.HasSuffix(prefix, "/") {
