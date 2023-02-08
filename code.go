@@ -20,7 +20,7 @@ import (
 	"github.com/wenlaizhou/middleware"
 )
 
-func init() {
+func EnableUI() {
 	${code}
 }
 `
@@ -43,7 +43,6 @@ type pageCode struct {
 }
 
 // DistFrontend2Code 将前端编译代码即静态资源直接编译为go代码
-//
 //
 // pkg: 包名 package ${pkg}
 //
