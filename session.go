@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-var globalSession = make(map[string]Session)
+var globalSession = make(map[string]*Session)
 
 var globalSessionLock sync.RWMutex
 
@@ -20,7 +20,7 @@ type Session struct {
 	lastTouchTime time.Time
 }
 
-func newSession(context Context) Session {
+func newSession(context Context) *Session {
 
 	id := Guid()
 	s := Session{
@@ -34,12 +34,12 @@ func newSession(context Context) Session {
 		HttpOnly: true,
 	})
 	globalSessionLock.Lock()
-	globalSession[id] = s
+	globalSession[id] = &s
 	globalSessionLock.Unlock()
-	return s
+	return &s
 }
 
-func getSession(context Context) Session {
+func getSession(context Context) *Session {
 	s, ok := globalSession[context.GetCookie("sessionId")]
 	if ok {
 		return s
@@ -47,16 +47,16 @@ func getSession(context Context) Session {
 	return newSession(context)
 }
 
-func (this Session) Set(key string, val interface{}) {
-	this.data[key] = val
+func (t *Session) Set(key string, val interface{}) {
+	t.data[key] = val
 }
 
-func (this Session) Get(key string) interface{} {
-	return this.data[key]
+func (t *Session) Get(key string) interface{} {
+	return t.data[key]
 }
 
-func (this Session) Id() string {
-	return this.id
+func (t *Session) Id() string {
+	return t.id
 }
 
 func init() {
