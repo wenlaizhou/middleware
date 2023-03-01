@@ -20,13 +20,13 @@ import (
 	"github.com/wenlaizhou/middleware"
 )
 
-func EnableUI() {
+func EnableUI(s *middleware.Server) {
 	${code}
 }
 `
 
 const varTpl = "var ${name}, _ = base64.StdEncoding.DecodeString(`${value}`)\n" + `
-	middleware.RegisterHandler("${path}", func(context middleware.Context) {
+	s.RegisterHandler("${path}", func(context middleware.Context) {
 		context.OK("${contentType}", ${name})
 	})`
 
@@ -93,13 +93,13 @@ func DistFrontend2Code(pkg string, distPath string, urlPrefix string) (string, e
 					ContentType: Html,
 				}))
 				indexCode := fmt.Sprintf(`
-	middleware.RegisterHandler("%v%v" ,func(context middleware.Context) {
+	s.RegisterHandler("%v%v" ,func(context middleware.Context) {
 		context.AddCacheHeader(3600 * 24 * 30)
 		context.OK(middleware.Html, %v)
 	})
 `, urlPrefix, subPath, name)
 				indexCode2 := fmt.Sprintf(`
-	middleware.RegisterHandler("%v%v/index.html" ,func(context middleware.Context) {
+	s.RegisterHandler("%v%v/index.html" ,func(context middleware.Context) {
 		context.AddCacheHeader(3600 * 24 * 30)
 		context.OK(middleware.Html, %v)
 	})
@@ -159,14 +159,14 @@ func DistFrontend2Code(pkg string, distPath string, urlPrefix string) (string, e
 	}
 	if urlPrefix == "/" {
 		codeBuilder.WriteString(`
-	middleware.RegisterIndex(func(context middleware.Context) {
+	s.RegisterIndex(func(context middleware.Context) {
 		context.AddCacheHeader(3600 * 24 * 30)
 		context.OK(middleware.Html, index_html)
 	})
 `)
 	} else {
 		codeBuilder.WriteString(fmt.Sprintf(`
-	middleware.RegisterHandler("%v", func(context middleware.Context) {
+	s.RegisterHandler("%v", func(context middleware.Context) {
 		context.AddCacheHeader(3600 * 24 * 30)
 		context.OK(middleware.Html, index_html)
 	})
