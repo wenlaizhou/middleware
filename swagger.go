@@ -37,6 +37,8 @@ type SwaggerData struct {
 	Version     string
 	Description string
 	Host        string
+	BasePath    string
+	Schemes     []string
 	Apis        []*SwaggerPath
 }
 
@@ -84,6 +86,9 @@ func (thisSelf *SwaggerPath) AddResponseProperty(param SwaggerResponseProperty) 
 /*
 swagger: '2.0'
 host: 'localhost'
+basePath: /v1
+schemes:
+  - https
 info:
   title: Middleware
   version: 0.0.1
@@ -118,6 +123,12 @@ func GenerateSwagger(model *SwaggerData) string {
 	swaggerJson := map[string]interface{}{}
 	swaggerJson["swagger"] = "2.0"
 	swaggerJson["host"] = model.Host
+	if len(model.BasePath) > 0 {
+		swaggerJson["basePath"] = model.BasePath
+	}
+	if len(model.Schemes) > 0 {
+		swaggerJson["schemes"] = model.Schemes
+	}
 	swaggerJson["info"] = map[string]string{
 		"title":       model.Title,
 		"version":     model.Version,
