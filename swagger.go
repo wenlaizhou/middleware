@@ -134,7 +134,7 @@ func GenerateSwagger(model *SwaggerData) string {
 		"version":     model.Version,
 		"description": model.Description,
 	}
-	paths := map[string]interface{}{}
+	paths := map[string]map[string]interface{}{}
 	for _, api := range model.Apis {
 		var parameters []map[string]interface{} = make([]map[string]interface{}, 0)
 		if api.Parameters != nil && len(api.Parameters) > 0 {
@@ -167,8 +167,8 @@ func GenerateSwagger(model *SwaggerData) string {
 		if len(api.Group) > 0 {
 			tags = append(tags, api.Group)
 		}
-		paths[api.Path] = map[string]interface{}{
-			strings.ToLower(api.Method): map[string]interface{}{
+		if _, has := paths[api.Path]; has {
+			paths[api.Path][strings.ToLower(api.Method)] = map[string]interface{}{
 				"summary":    api.Description,
 				"parameters": parameters,
 				"produces": []string{
@@ -182,7 +182,25 @@ func GenerateSwagger(model *SwaggerData) string {
 						"schema": apiResponse,
 					},
 				},
-			},
+			}
+		} else {
+			paths[api.Path] = map[string]interface{}{
+				strings.ToLower(api.Method): map[string]interface{}{
+					"summary":    api.Description,
+					"parameters": parameters,
+					"produces": []string{
+						"application/json",
+						"text/plain",
+						"application/xml",
+					},
+					"tags": tags,
+					"responses": map[string]interface{}{
+						"default": map[string]interface{}{
+							"schema": apiResponse,
+						},
+					},
+				},
+			}
 		}
 	}
 	swaggerJson["paths"] = paths
