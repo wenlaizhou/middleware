@@ -1,5 +1,5 @@
 /*
-	config module
+config module
 */
 package middleware
 
@@ -17,18 +17,17 @@ const ConfDir = "CONF_DIR"
 type Config map[string]string
 
 // LoadConfig 读取properties类型配置文件
-func LoadConfig(confPath string) Config {
+func LoadConfig(confOrPath string) Config {
 	res := make(Config)
-	if !Exists(confPath) {
-		return nil
+	if Exists(confOrPath) {
+		data, err := ioutil.ReadFile(confOrPath)
+		if ProcessError(err) {
+			return nil
+		}
+		res[ConfDir] = filepath.Dir(confOrPath)
+		confOrPath = string(data)
 	}
-	data, err := ioutil.ReadFile(confPath)
-	if ProcessError(err) {
-		return nil
-	}
-	res[ConfDir] = filepath.Dir(confPath)
-	confStr := string(data)
-	lines := strings.Split(strings.TrimSpace(confStr), "\n")
+	lines := strings.Split(strings.TrimSpace(confOrPath), "\n")
 	if len(lines) <= 0 {
 		return res
 	}
